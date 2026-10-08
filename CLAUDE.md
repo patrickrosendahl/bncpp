@@ -58,7 +58,8 @@ it); `minitick-api`, `miniwiki-api`, `binaryninja-mcp` are relative links into t
 ## Git / remote
 
 - Remote `origin` (Gitea on the LAN): `ssh://git@mackup.local:222/patrick/binary-cpp.git`
-  (web: <http://mackup.local:3000/patrick/binary-cpp>), default branch `main`, public like binary-jvm.
+  (web: <http://mackup.local:3000/patrick/binary-cpp>), default branch `main`, public like binary-jvm. No GitHub mirror (binary-jvm has one) -- the user's
+  decision, 2026-10-08; don't add one unless asked.
 - Gitea API token: `~/.config/gitea-token` (`Authorization: token …`, `http://mackup.local:3000/api/v1`);
   push-to-create is disabled on the server, so new repos go through `POST /api/v1/user/repos`.
 - Gitea sometimes sleeps; if a push hangs, the host (`mackup.local`) or the service may be down -- retry shortly.
