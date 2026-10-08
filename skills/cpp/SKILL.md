@@ -1,0 +1,27 @@
+---
+name: cpp
+description: Project skill for binary-cpp, a Binary Ninja plugin for readable C++ ("Pseudo Cpp" language view; try/catch rebuilt from Itanium / MSVC exception tables, readability passes on HLIL), seeded from the binary-jvm project. Use when working in /Users/patrick/dev/binary-cpp -- designing or writing the plugin, building or dumping the C++ test suite, inspecting HLIL in the running Binary Ninja, or re-using code and test tooling from binary-jvm.
+---
+
+# binary-cpp project workflow
+
+Documentation: miniwiki project `bncpp` (skill `miniwiki-api`); backlog: minitick project `bncpp` (skill
+`minitick-api`); environment, commands and rules: `CLAUDE.md`. Generic Binary Ninja mechanics (MCP tools, `bnrun`,
+usage lock, Personal-license workarounds): skill `binaryninja-mcp`.
+
+## Workflow per ticket
+1. `minitick show bncpp-N --expand comment`; set it IN PROGRESS.
+2. Read the binary-jvm equivalent first (wiki `reuse-from-binary-jvm.md`).
+3. Change the code; add or extend a suite test (`tests/suite/src/TestX.cpp` + `TESTS` in `suite.py`).
+4. `suite.py build` (if sources changed) → `bn_dev_load.py` → `bn_dump.py` → `suite.py compare --diff`;
+   review every difference, then `suite.py accept`.
+5. One commit; ticket comment with the numbers; RESOLVED. Findings into the wiki pages.
+
+## Gotchas (details: wiki `plugin-architecture.md`, `eh-in-hlil.md`)
+- BN calls `perform_get_expr_text` once with the root block. Copying Pseudo C needs `settings=None`, empty
+  lines → `scope_separator()`, and a final `new_line()`.
+- Exceptions inside `perform_*` callbacks are swallowed by BN (logged only) → an empty `{ }` body.
+- BN cannot unregister a language: every dev load registers "Pseudo Cpp devN"; `bn_dump.py` uses the latest.
+- Landing pads are separate functions in BN, and some handler code is in no function at all (bncpp-4).
+- Shared code (`shared/`): no imports from `cpp/`, hooks for language specifics, provenance header, row in the
+  wiki `code-structure.md` table; mirror the split in binary-jvm (jvm-68, bncpp-14).

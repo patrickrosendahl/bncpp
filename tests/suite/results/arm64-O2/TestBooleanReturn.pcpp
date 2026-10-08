@@ -1,0 +1,27 @@
+// is_small(int32_t) @ 0x400338
+{
+    return (uint64_t)(arg1 < 0xb ? 1 : 0);
+}
+
+// in_range(int32_t, int32_t, int32_t) @ 0x400344
+{
+    bool v;
+    bool z;
+    bool n;
+
+    if (arg1 >= arg2)
+    {
+        v = (arg1 + -(arg3)) ^ arg3 == 0x80000000;
+        z = arg1 == arg3;
+        n = arg1 - arg3 < 0;
+    }
+    else
+    {
+        n = false;
+        z = false;
+        v = false;
+    }
+
+    return (uint64_t)(z || n != v ? 1 : 0);
+}
+

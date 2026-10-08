@@ -1,0 +1,114 @@
+// may_throw(int32_t) @ 0x400640
+{
+    if (arg1 > 2)
+    {
+        struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
+        std::runtime_error::runtime_error(thrown_exception, "too big");
+        ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+            std::runtime_error::~runtime_error);
+        /* no return */
+    }
+
+    if (arg1 >= 0)
+        return (uint64_t)(arg1 << 1);
+
+    int32_t* thrown_exception_1 = ___cxa_allocate_exception(4);
+    *(uint32_t*)thrown_exception_1 = arg1;
+    ___cxa_throw(thrown_exception_1, typeinfo_for_int32_t, nullptr);
+    /* no return */
+}
+
+// log_line(char const*) @ 0x4006e0
+{
+    return _puts(arg1);
+}
+
+// next_value() @ 0x400700
+{
+    uint64_t result = (uint64_t)(next_value()::n + 1);
+    next_value()::n = (uint32_t)result;
+    return result;
+}
+
+// Guard::Guard(struct Guard* this, char const*) @ 0x400720
+{
+    *(uint64_t*)this = arg2;
+    struct Guard* rax_1;
+    (uint8_t)rax_1 = 0;
+    _printf("enter %s\n", *(uint64_t*)this);
+}
+
+// Guard::Guard(struct Guard* this, char const*) @ 0x400760
+{
+    Guard::Guard(this, arg2);
+}
+
+// Guard::~Guard(struct Guard* this) @ 0x400790
+{
+    _printf("leave %s\n", *(uint64_t*)this);
+}
+
+// sub_4007b9 @ 0x4007b9
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x4007d0
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// Guard::~Guard(struct Guard* this) @ 0x4007e0
+{
+    Guard::~Guard(this);
+}
+
+// catch_by_type(int32_t) @ 0x400800
+{
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int32_t var_c = may_throw(arg1);
+    /* tailcall */
+    return sub_400888(&var_8, var_8);
+}
+
+// sub_400820 @ 0x400820
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
+        /* tailcall */
+        return sub_400891(arg5);
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+    *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400888(arg5);
+}
+
+// sub_400873 @ 0x400873
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400891(arg5);
+}
+
+// sub_400888 @ 0x400888
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_400891 @ 0x400891
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+

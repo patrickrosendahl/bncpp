@@ -1,0 +1,16 @@
+# Local test material -- large, not part of the plugin
+/sample/
+
+# Python / editor cruft
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store
+*.bndb
+.idea/
+.vscode/
+
+# Claude Code: local only (skills are linked from skills/, see CLAUDE.md)
+.claude/
+.scratch/
+tests/out/

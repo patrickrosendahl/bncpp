@@ -1,0 +1,140 @@
+// rethrow(int32_t) @ 0x4005f8
+{
+    return (uint64_t)may_throw(arg1);
+}
+
+// sub_40061c @ 0x40061c
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+
+    if (*(uint32_t*)((char*)arg3 - 0x14) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
+
+    int64_t arg_0 =
+        (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10)) + 0x10))();
+    _printf("rethrowing %s\n");
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x4006b0
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// throw_other(int32_t) @ 0x4006c0
+{
+    return (uint64_t)may_throw(arg1);
+}
+
+// sub_4006e4 @ 0x4006e4
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+
+    if (*(uint32_t*)((char*)arg3 - 0x14) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
+
+    *(uint32_t*)((char*)arg3 - 0x18) =
+        *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+    char arg_17 = 1;
+    struct std::runtime_error* thrown_exception;
+    int32_t x1;
+    thrown_exception = ___cxa_allocate_exception(0x10);
+    std::basic_string arg_18;
+    std::operator+[abi:ne200100]<char>("int ", &arg_18,
+        std::to_string((uint64_t)*(uint32_t*)((char*)arg3 - 0x18), x1));
+    std::string arg_30;
+    std::runtime_error::runtime_error(thrown_exception, &arg_30);
+    arg_17 = 0;
+    ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+        std::runtime_error::~runtime_error);
+    /* no return */
+}
+
+// std::operator+[abi:ne200100]<char>(struct std* this, std::basic_string const*, std::allocator<char>&&) @ 0x400814
+{
+    std::string* entry_result;
+    std::string* entry_result_1 = entry_result;
+    std::string::string[abi:ne200100](entry_result, std::string::insert(arg2, 0, this));
+    return entry_result;
+}
+
+// std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400858
+{
+    std::string* this_1 = this;
+    std::string::string[abi:ne200100](this, arg2);
+}
+
+// std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x40088c
+{
+    std::string* this_1 = this;
+    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
+         var_29;
+    std::string& x0_1 = std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(
+        &var_29, arg2);
+    *(uint128_t*)this = *(uint128_t*)x0_1;
+    *(uint64_t*)((char*)this + 0x10) = *(uint64_t*)((char*)x0_1 + 0x10);
+    int64_t var_40 = 0;
+    *(uint128_t*)arg2 = 0;
+    *(uint64_t*)((char*)arg2 + 0x10) = 0;
+    std::string::__is_long[abi:ne200100](this);
+}
+
+// sub_40093c @ 0x40093c
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)* this, std::string&) const @ 0x400940
+{
+    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
+        * this_1 = this;
+    std::string::__is_long[abi:ne200100](arg2);
+    return arg2;
+}
+
+// std::string::__annotate_new[abi:ne200100](std::string* this, uint64_t) const @ 0x400980
+{
+    std::string* this_1 = this;
+    uint64_t var_10 = arg2;
+}
+
+// std::string::__is_long[abi:ne200100](std::string* this) const @ 0x400994
+{
+    return (uint64_t)((uint32_t)*(uint8_t*)((char*)this + 0x17) >> 7 ? 1 : 0);
+}
+
+// std::string::size[abi:ne200100](std::string* this) const @ 0x4009b8
+{
+    if (!(std::string::__is_long[abi:ne200100](this) & 1))
+        return std::string::__get_short_size[abi:ne200100](this);
+
+    return std::string::__get_long_size[abi:ne200100](this);
+}
+
+// std::string::__annotate_delete[abi:ne200100](std::string* this) const @ 0x400a0c
+{
+    std::string* this_1 = this;
+}
+
+// std::string::__get_long_size[abi:ne200100](std::string* this) const @ 0x400a1c
+{
+    return *(uint64_t*)((char*)this + 8);
+}
+
+// std::string::__get_short_size[abi:ne200100](std::string* this) const @ 0x400a34
+{
+    return (uint64_t)*(uint8_t*)((char*)this + 0x17) & 0x7f;
+}
+

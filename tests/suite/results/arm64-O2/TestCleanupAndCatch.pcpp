@@ -1,0 +1,67 @@
+// cleanup_and_catch(int32_t) @ 0x400600
+{
+    struct Guard var_28;
+    Guard::Guard(&var_28, "outer");
+    struct Guard var_30;
+    Guard::Guard(&var_30, "inner");
+    int64_t x0_3 = may_throw(arg1);
+    Guard::~Guard(&var_30);
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400648(x0_3, entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400648 @ 0x400648
+{
+    struct Guard arg_18;
+    Guard::~Guard(&arg_18);
+    return arg1;
+}
+
+// sub_400664 @ 0x400664
+{
+    struct Guard arg_10;
+    Guard::~Guard(&arg_10);
+
+    if (arg2 != 1)
+    {
+        struct Guard arg_18;
+        Guard::~Guard(&arg_18);
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    _printf("caught %s\n");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400648(0xfffffffc);
+}
+
+// sub_400678 @ 0x400678
+{
+    if (arg2 != 1)
+    {
+        struct Guard arg_18;
+        Guard::~Guard(&arg_18);
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    _printf("caught %s\n");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400648(0xfffffffc);
+}
+
+// sub_4006b8 @ 0x4006b8
+{
+    struct Guard arg_18;
+    Guard::~Guard(&arg_18);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

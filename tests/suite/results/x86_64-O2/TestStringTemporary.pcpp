@@ -1,0 +1,58 @@
+// string_temporary(int32_t) @ 0x4005f0
+{
+    std::string* result = arg1;
+    *(uint8_t*)arg1 = 0xc;
+    __builtin_strncpy(arg1 + 1, "value ", 7);
+    char var_30;
+    int32_t entry_rsi;
+    std::to_string(&var_30, may_throw(entry_rsi));
+    uint32_t rdx = (uint32_t)var_30;
+    char* var_20;
+    uint64_t rdx_1;
+    char* rsi_1;
+
+    if (!((uint8_t)rdx & 1))
+    {
+        rdx_1 = (uint64_t)(rdx >> 1);
+        void var_2f;
+        rsi_1 = &var_2f;
+    }
+    else
+    {
+        rsi_1 = var_20;
+        uint64_t var_28;
+        rdx_1 = var_28;
+    }
+
+    std::string::append(result, rsi_1, rdx_1);
+
+    if (var_30 & 1)
+        operator delete(var_20);
+
+    return result;
+}
+
+// sub_400660 @ 0x400660
+{
+    if (*(uint8_t*)((char*)arg3 - 0x28) & 1)
+    {
+        operator delete(*(uint64_t*)((char*)arg3 - 0x18));
+
+        if (*(uint8_t*)arg2 & 1)
+        {
+            operator delete(*(uint64_t*)(arg2 + 0x10));
+            __Unwind_Resume(arg1);
+            /* no return */
+        }
+    }
+    else if (*(uint8_t*)arg2 & 1)
+    {
+        operator delete(*(uint64_t*)(arg2 + 0x10));
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

@@ -1,0 +1,29 @@
+// is_small(int32_t) @ 0x400330
+{
+    char var_9;
+
+    var_9 = arg1 <= 0xa ? 1 : 0;
+
+    int64_t result;
+    (uint8_t)result = var_9;
+    (uint8_t)result &= 1;
+    return result;
+}
+
+// in_range(int32_t, int32_t, int32_t) @ 0x400350
+{
+    uint64_t result = 0;
+    char var_15 = 0;
+
+    if (arg1 >= arg2)
+    {
+        result = (uint64_t)arg1;
+        (uint8_t)result = (int32_t)result <= arg3;
+        var_15 = (uint8_t)result;
+    }
+
+    (uint8_t)result = var_15;
+    (uint8_t)result &= 1;
+    return result;
+}
+

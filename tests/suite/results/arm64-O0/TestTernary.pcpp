@@ -1,0 +1,23 @@
+// pick(int32_t, int32_t, int32_t) @ 0x4005a8
+{
+    int32_t var_20;
+
+    if (arg1 <= 0)
+        var_20 = arg3 - next_value();
+    else
+        var_20 = arg2 + next_value();
+
+    return (uint64_t)var_20;
+}
+
+// sign_name(int32_t) @ 0x400618
+{
+    if (arg1 & 0x80000000)
+        return "negative";
+
+    if (!arg1)
+        return "zero";
+
+    return "positive";
+}
+

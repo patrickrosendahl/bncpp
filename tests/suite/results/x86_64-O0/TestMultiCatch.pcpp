@@ -1,0 +1,133 @@
+// catch_two_types(int32_t) @ 0x4005f0
+{
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int32_t var_c = may_throw(arg1);
+    /* tailcall */
+    return sub_4006cc(&var_8, var_8);
+}
+
+// sub_400613 @ 0x400613
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    int32_t rax_1 = *(uint32_t*)((char*)arg5 - 0x14);
+    *(uint32_t*)((char*)arg5 - 0x28) = rax_1;
+
+    if (rax_1 == 2)
+    {
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4006cc(arg5);
+    }
+
+    if (*(uint32_t*)((char*)arg5 - 0x28) != 1)
+        /* tailcall */
+        return sub_4006d5(arg5);
+
+    *(uint32_t*)((char*)arg5 - 0x18) =
+        *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    _printf("int: %d\n", (uint64_t)*(uint32_t*)((char*)arg5 - 0x18));
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006cc(arg5);
+}
+
+// sub_4006a4 @ 0x4006a4
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006d5(arg5);
+}
+
+// sub_4006b7 @ 0x4006b7
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006d5(arg5);
+}
+
+// sub_4006cc @ 0x4006cc
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_4006d5 @ 0x4006d5
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x4006f0
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// catch_base_and_derived(int32_t) @ 0x400700
+{
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int32_t var_c = may_throw(arg1);
+    /* tailcall */
+    return sub_4007d8(&var_8, var_8);
+}
+
+// sub_400723 @ 0x400723
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    int32_t rax_1 = *(uint32_t*)((char*)arg5 - 0x14);
+    *(uint32_t*)((char*)arg5 - 0x30) = rax_1;
+
+    if (rax_1 == 2)
+    {
+        *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4007d8(arg5);
+    }
+
+    if (*(uint32_t*)((char*)arg5 - 0x30) != 1)
+        /* tailcall */
+        return sub_4007e1(arg5);
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007d8(arg5);
+}
+
+// sub_4007ae @ 0x4007ae
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007e1(arg5);
+}
+
+// sub_4007d8 @ 0x4007d8
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_4007e1 @ 0x4007e1
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+

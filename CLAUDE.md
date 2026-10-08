@@ -1,0 +1,56 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+**Documentation lives in the miniwiki project `bncpp`, the work backlog in the minitick project `bncpp`.** The
+repo holds only code, this file and the skills -- no README, design notes or TODO files. Start with
+`miniwiki cat bncpp/index.md` and `minitick query -p bncpp 'not status in ("RESOLVED", "MERGED", "REJECTED")' --full --fields title,status,priority`.
+New findings go into the wiki, new work into tickets.
+
+## What this is
+
+A Binary Ninja plugin for readable C++: a **"Pseudo Cpp"** language view (try/catch from the compiler's
+exception tables, readability passes on HLIL). The repo root is the plugin package; it is linked into
+`~/Library/Application Support/Binary Ninja/plugins/binary-cpp`. Sister project of
+**`/Users/patrick/dev/binary-jvm`** (wiki / minitick `jvm`): before writing something, read its equivalent (wiki
+`reuse-from-binary-jvm.md`) and its gotchas (binary-jvm `CLAUDE.md`, `skills/jvm/SKILL.md`); do not copy JVM
+specifics. Language-neutral code goes into `shared/` (rules + shared-file table: wiki `code-structure.md`).
+
+## Commands
+
+```bash
+python3 tests/suite/suite.py build                     # tests/suite/src/TestX.cpp -> bin/<arch>-O<n>/TestX.dylib
+B=/Users/patrick/dev/bn-script-bridge/bnrun
+$B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp devN" (BN can't unregister)
+$B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc} (~6.5 min)
+python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)
+python3 tests/suite/suite.py accept TestX…             # reviewed output -> reference
+```
+Details and the suite layout (Fernflower style): wiki `testing.md`.
+
+## Environment (this machine)
+
+- **Binary Ninja 6.1**, **Personal license = no headless API**: all testing happens in the running GUI through
+  the MCP tools / the `bnrun` bridge (skill `binaryninja-mcp`). Always pass `--timeout N`; serialized lane for
+  dev loads, `--parallel` for scripts on their own views. Restart BN only with the user's OK (`bnrestart`) --
+  the installed plugin only reloads on restart, so iterate with dev loads.
+- Grep the installed API source before using a new call:
+  `/Applications/Binary Ninja.app/Contents/Resources/python/binaryninja/`.
+- Apple clang (Itanium ABI, Mach-O); the shell may run under Rosetta, so builds pass `-arch`. No MSVC.
+- More: wiki `environment.md`.
+
+## Skills
+
+`skills/` is tracked; `.claude/` is git-ignored and Claude Code finds the skills through a local symlink -- after
+a fresh clone run `mkdir -p .claude && ln -s ../skills .claude/skills`. `skills/cpp` is the project skill (load
+it); `minitick-api`, `miniwiki-api`, `binaryninja-mcp` are relative links into the sibling repos.
+
+## How to work
+
+- **One thing at a time, in the foreground**: no background agents, no parallel BN runs (heavy scripts next to
+  each other time out).
+- Measure first; one commit per ticket, with the before/after numbers in a ticket comment; finished tickets go
+  to RESOLVED with a verification comment (no reviewer).
+- Never lose code: a rendering failure prints the original HLIL as a comment (`emit_error`).
+- External documentation (ABI specs, LSDA format, MSVC EH) is linked or attached on wiki `references.md`.
+- Ask before creating a git remote (ticket bncpp-18) or restarting Binary Ninja.

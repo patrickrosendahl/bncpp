@@ -1,0 +1,59 @@
+// rethrow(int32_t) @ 0x4005f8
+{
+    return may_throw(arg1);
+}
+
+// sub_40061c @ 0x40061c
+{
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    _printf("rethrowing %s\n");
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400668
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// throw_other(int32_t) @ 0x400678
+{
+    return may_throw(arg1);
+}
+
+// sub_4006a4 @ 0x4006a4
+{
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    uint64_t x20 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
+    struct std::runtime_error* thrown_exception;
+    int32_t x1;
+    thrown_exception = ___cxa_allocate_exception(0x10);
+    std::to_string(x20, x1);
+    std::string arg_8;
+    int64_t* x0_4;
+    int128_t v0;
+    x0_4 = std::string::insert(&arg_8, 0, "int ");
+    (uint64_t)v0 = *(uint64_t*)x0_4;
+    *(uint64_t*)((char*)&v0 + 8) = x0_4[1];
+    int64_t arg_30 = x0_4[2];
+    int128_t arg_20 = v0;
+    __builtin_memset(x0_4, 0, 0x18);
+    std::runtime_error::runtime_error(thrown_exception, &arg_20);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+        std::runtime_error::~runtime_error);
+    /* no return */
+}
+

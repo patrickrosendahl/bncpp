@@ -1,0 +1,48 @@
+// cleanup_only(int32_t) @ 0x400600
+{
+    struct Guard var_28;
+    Guard::Guard(&var_28, "cleanup_only");
+    int64_t result = may_throw(arg1);
+    Guard::~Guard(&var_28);
+    return result;
+}
+
+// sub_40064c @ 0x40064c
+{
+    struct Guard arg_8;
+    Guard::~Guard(&arg_8);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// two_guards(int32_t) @ 0x400660
+{
+    struct Guard var_28;
+    Guard::Guard(&var_28, "a");
+    int32_t x0_2 = may_throw(arg1);
+    struct Guard var_30;
+    Guard::Guard(&var_30, "b");
+    int32_t x0_5 = may_throw(x0_2);
+    Guard::~Guard(&var_30);
+    Guard::~Guard(&var_28);
+    return (uint64_t)(x0_5 + x0_2);
+}
+
+// sub_4006d0 @ 0x4006d0
+{
+    struct Guard arg_0;
+    Guard::~Guard(&arg_0);
+    struct Guard arg_8;
+    Guard::~Guard(&arg_8);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_4006e0 @ 0x4006e0
+{
+    struct Guard arg_8;
+    Guard::~Guard(&arg_8);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

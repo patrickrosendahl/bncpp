@@ -1,0 +1,47 @@
+// count_until(int32_t) @ 0x400558
+{
+    int32_t var_18 = 0;
+
+    while (true)
+    {
+        int32_t x0 = next_value();
+        int32_t var_1c_1 = x0;
+
+        if (x0 >= arg1)
+            break;
+
+        var_18 += 1;
+    }
+
+    return (uint64_t)var_18;
+}
+
+// sum_odd(int32_t const*, int32_t) @ 0x4005a8
+{
+    int32_t var_10 = 0;
+
+    for (int32_t i = 0; i < arg2; i += 1)
+    {
+        if (arg1[(int64_t)i] % 2)
+        {
+            if (arg1[(int64_t)i] & 0x80000000)
+                break;
+
+            var_10 += arg1[(int64_t)i];
+        }
+    }
+
+    return (uint64_t)var_10;
+}
+
+// do_while(int32_t) @ 0x40064c
+{
+    int32_t i = arg1;
+
+    do
+        i = i / 2 + next_value();
+     while (i > 0x64);
+
+    return (uint64_t)i;
+}
+

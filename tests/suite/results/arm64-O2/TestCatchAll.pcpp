@@ -1,0 +1,51 @@
+// catch_all(int32_t) @ 0x4005f8
+{
+    return may_throw(arg1);
+}
+
+// sub_400630 @ 0x400630
+{
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400644
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// catch_type_then_all(int32_t) @ 0x400654
+{
+    may_throw(arg1);
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400664(entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400664 @ 0x400664
+{
+    return;
+}
+
+// sub_400670 @ 0x400670
+{
+    void* x0 = ___cxa_begin_catch(arg1);
+
+    if (arg2 != 2)
+    {
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400664();
+    }
+
+    *(uint32_t*)x0;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400664();
+}
+

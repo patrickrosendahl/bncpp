@@ -1,0 +1,50 @@
+// cleanup_only(int32_t) @ 0x4005f0
+{
+    struct Guard var_18;
+    Guard::Guard(&var_18, "cleanup_only");
+    int32_t rax = may_throw(arg1);
+    Guard::~Guard(&var_18);
+    return (uint64_t)rax;
+}
+
+// sub_40062a @ 0x40062a
+{
+    *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
+    Guard::~Guard((char*)arg5 - 0x10);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
+    /* no return */
+}
+
+// two_guards(int32_t) @ 0x400650
+{
+    struct Guard var_18;
+    Guard::Guard(&var_18, "a");
+    int32_t rax = may_throw(arg1);
+    struct Guard var_38;
+    Guard::Guard(&var_38, "b");
+    int32_t rax_2 = may_throw(rax);
+    Guard::~Guard(&var_38);
+    Guard::~Guard(&var_18);
+    return (uint64_t)(rax + rax_2);
+}
+
+// sub_4006c6 @ 0x4006c6
+{
+    *(uint64_t*)((char*)arg5 - 0x20) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x24) = arg3;
+    Guard::~Guard((char*)arg5 - 0x10);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x20));
+    /* no return */
+}
+
+// sub_4006d4 @ 0x4006d4
+{
+    *(uint64_t*)((char*)arg5 - 0x20) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x24) = arg3;
+    Guard::~Guard((char*)arg5 - 0x30);
+    Guard::~Guard((char*)arg5 - 0x10);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x20));
+    /* no return */
+}
+

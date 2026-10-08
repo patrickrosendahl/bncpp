@@ -1,0 +1,15 @@
+{
+    "pluginmetadataversion": 2,
+    "name": "Pseudo Cpp",
+    "type": ["helper"],
+    "api": ["python3"],
+    "description": "Readable C++ in Binary Ninja: try/catch from exception tables, readability passes on HLIL",
+    "longdescription": "Adds a \"Pseudo Cpp\" language representation for native code. Planned: try/catch rebuilt from the compiler's exception tables (Itanium LSDA, MSVC EH) and readability passes on HLIL (ternaries, boolean returns, x++ as a value, loop conditions, folded temporaries). Sister project of binary-jvm.",
+    "license": {
+        "name": "0BSD"
+    },
+    "version": "0.1.0-dev",
+    "author": "patrick",
+    "minimumbinaryninjaversion": 0,
+    "platforms": ["Darwin", "Linux", "Windows"]
+}

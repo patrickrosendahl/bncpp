@@ -1,0 +1,103 @@
+// nested_try(int32_t) @ 0x4005f0
+{
+    may_throw(arg1);
+    int64_t entry_rbp;
+    int64_t entry_r14;
+    /* tailcall */
+    return sub_4005fc(entry_r14, entry_rbp);
+}
+
+// sub_4005fc @ 0x4005fc
+{
+    return;
+}
+
+// sub_400601 @ 0x400601
+{
+    if (arg3 == 2)
+    {
+        int32_t rbx_1 = *(uint32_t*)___cxa_begin_catch(arg4);
+        _printf("inner int %d\n", (uint64_t)rbx_1);
+        may_throw(rbx_1 + 0xa);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4005fc();
+    }
+
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    void* rax_4 = ___cxa_begin_catch(arg4);
+    _printf("outer %s\n", (*(uint64_t*)(*(uint64_t*)rax_4 + 0x10))(rax_4));
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4005fc();
+}
+
+// sub_40063c @ 0x40063c
+{
+    ___cxa_end_catch();
+
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    void* rax = ___cxa_begin_catch(arg4);
+    _printf("outer %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4005fc();
+}
+
+// try_in_loop(int32_t) @ 0x400680
+{
+    int64_t rax;
+    int64_t var_28 = rax;
+
+    if (arg1 <= 0)
+        return 0;
+
+    int32_t rbx = 0;
+    int32_t r15_1 = 0;
+
+    do
+    {
+        rbx += may_throw(r15_1);
+        r15_1 += 1;
+    } while (arg1 != r15_1);
+
+    return (uint64_t)rbx;
+}
+
+// sub_4006b4 @ 0x4006b4
+{
+    if (arg3 != 1)
+    {
+        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+        /* tailcall */
+        return __Unwind_Resume(arg4);
+    }
+
+    ___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    int32_t rax = -1;
+
+    while (true)
+    {
+        arg5 += rax;
+        arg7 += 1;
+
+        if (arg6 == arg7)
+            break;
+
+        rax = may_throw(arg7);
+    }
+
+    return (uint64_t)arg5;
+}
+

@@ -1,0 +1,53 @@
+// string_temporary(int32_t) @ 0x400600
+{
+    std::string* entry_x8;
+    *(uint8_t*)((char*)entry_x8 + 0x17) = 6;
+    __builtin_strncpy(entry_x8, "value ", 7);
+    struct std* x0;
+    int32_t x1;
+    x0 = may_throw(arg1);
+    std::to_string(x0, x1);
+    char var_21;
+    uint64_t x8 = (uint64_t)var_21;
+    int32_t x9 = (int32_t)(char)(uint32_t)x8;
+    char* var_38;
+    char* x1_1;
+
+    x1_1 = x9 < 0 ? var_38 : &var_38;
+
+    uint64_t x2;
+    uint64_t var_30;
+
+    x2 = x9 < 0 ? var_30 : x8;
+    int64_t result = std::string::append(entry_x8, x1_1, x2);
+
+    if (!((int32_t)var_21 & 0x80000000))
+        return result;
+
+    return operator delete(var_38);
+}
+
+// sub_400684 @ 0x400684
+{
+    if ((int32_t)arg4 & 0x80000000)
+    {
+        operator delete(arg3);
+
+        if ((int32_t)*(uint8_t*)((char*)arg2 + 0x17) & 0x80000000)
+        {
+            operator delete(*(uint64_t*)arg2);
+            __Unwind_Resume(arg1);
+            /* no return */
+        }
+    }
+    else if ((int32_t)*(uint8_t*)((char*)arg2 + 0x17) & 0x80000000)
+    {
+        operator delete(*(uint64_t*)arg2);
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

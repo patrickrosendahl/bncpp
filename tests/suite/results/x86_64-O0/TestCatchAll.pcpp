@@ -1,0 +1,75 @@
+// catch_all(int32_t) @ 0x4005f0
+{
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int32_t var_c = may_throw(arg1);
+    /* tailcall */
+    return sub_400656(&var_8, var_8);
+}
+
+// sub_400610 @ 0x400610
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    log_line("something");
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffd;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400656(arg5);
+}
+
+// sub_400641 @ 0x400641
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40065f(arg5);
+}
+
+// sub_400656 @ 0x400656
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_40065f @ 0x40065f
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400670
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// catch_type_then_all(int32_t) @ 0x400680
+{
+    return (uint64_t)may_throw(arg1);
+}
+
+// sub_4006a0 @ 0x4006a0
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 2)
+    {
+        ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffd;
+        ___cxa_end_catch();
+    }
+    else
+    {
+        *(uint32_t*)((char*)arg5 - 0x18) =
+            *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x18);
+        ___cxa_end_catch();
+    }
+
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
+}
+

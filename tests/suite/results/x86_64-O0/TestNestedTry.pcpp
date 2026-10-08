@@ -1,0 +1,126 @@
+// nested_try(int32_t) @ 0x4005f0
+{
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int32_t var_c = may_throw(arg1);
+    /* tailcall */
+    return sub_4006d6(&var_8, var_8);
+}
+
+// sub_400613 @ 0x400613
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) == 2)
+    {
+        *(uint32_t*)((char*)arg5 - 0x18) =
+            *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("inner int %d\n", (uint64_t)*(uint32_t*)((char*)arg5 - 0x18));
+        *(uint32_t*)((char*)arg5 - 0x28) = may_throw(*(uint32_t*)((char*)arg5 - 0x18) + 0xa);
+        *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x28);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4006d6(arg5);
+    }
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
+        /* tailcall */
+        return sub_4006df(arg5);
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    _printf("outer %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+    /* tailcall */
+    return sub_4006b3(arg5);
+}
+
+// sub_400669 @ 0x400669
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
+        /* tailcall */
+        return sub_4006df(arg5);
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    _printf("outer %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+    /* tailcall */
+    return sub_4006b3(arg5);
+}
+
+// sub_4006b3 @ 0x4006b3
+{
+    *(uint32_t*)((char*)arg1 - 4) = 0xfffffffb;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006d6(arg1);
+}
+
+// sub_4006c1 @ 0x4006c1
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006df(arg5);
+}
+
+// sub_4006d6 @ 0x4006d6
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_4006df @ 0x4006df
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x4006f0
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// try_in_loop(int32_t) @ 0x400700
+{
+    int32_t var_10 = 0;
+
+    for (int32_t i = 0; i < arg1; i += 1)
+        var_10 += may_throw(i);
+
+    return (uint64_t)var_10;
+}
+
+// sub_400739 @ 0x400739
+{
+    *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x1c) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
+        /* no return */
+    }
+
+    *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
+    *(uint32_t*)((char*)arg5 - 8) -= 1;
+    ___cxa_end_catch();
+
+    while (true)
+    {
+        *(uint32_t*)((char*)arg5 - 0xc) += 1;
+
+        if (*(uint32_t*)((char*)arg5 - 0xc) >= *(uint32_t*)((char*)arg5 - 4))
+            break;
+
+        *(uint32_t*)((char*)arg5 - 0x2c) = may_throw(*(uint32_t*)((char*)arg5 - 0xc));
+        *(uint32_t*)((char*)arg5 - 8) += *(uint32_t*)((char*)arg5 - 0x2c);
+    }
+
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 8);
+}
+

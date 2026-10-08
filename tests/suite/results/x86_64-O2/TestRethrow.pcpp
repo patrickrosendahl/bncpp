@@ -1,0 +1,57 @@
+// rethrow(int32_t) @ 0x4005f0
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    return may_throw(arg1);
+}
+
+// sub_400602 @ 0x400602
+{
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    void* rax = ___cxa_begin_catch(arg4);
+    _printf("rethrowing %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400650
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// throw_other(int32_t) @ 0x400660
+{
+    return may_throw(arg1);
+}
+
+// sub_40067d @ 0x40067d
+{
+    if (arg3 != 1)
+    {
+        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+        /* tailcall */
+        return __Unwind_Resume(arg4);
+    }
+
+    int32_t r14 = *(uint32_t*)___cxa_begin_catch(arg4);
+    struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
+    std::to_string((char*)arg5 - 0x30, r14);
+    int128_t* rax_1 = std::string::insert((char*)arg5 - 0x30, 0, "int ");
+    *(uint64_t*)((char*)arg5 - 0x40) = rax_1[1];
+    *(uint128_t*)((char*)arg5 - 0x50) = *(uint128_t*)rax_1;
+    __builtin_memset(rax_1, 0, 0x18);
+    int64_t r15;
+    (uint8_t)r15 = 1;
+    std::runtime_error::runtime_error(thrown_exception, (char*)arg5 - 0x50);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+        std::runtime_error::~runtime_error);
+    /* no return */
+}
+

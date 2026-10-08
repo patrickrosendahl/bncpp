@@ -1,0 +1,52 @@
+// count_until(int32_t) @ 0x400550
+{
+    int32_t rbx = -1;
+    int32_t rax_1;
+
+    do
+    {
+        rax_1 = next_value();
+        rbx += 1;
+    } while (rax_1 < arg1);
+    return (uint64_t)rbx;
+}
+
+// sum_odd(int32_t const*, int32_t) @ 0x400580
+{
+    if (arg2 <= 0)
+        return 0;
+
+    int64_t i = 0;
+    uint64_t result = 0;
+
+    do
+    {
+        int32_t rsi = arg1[i];
+
+        if ((uint8_t)rsi & 1)
+        {
+            if (rsi < 0)
+                break;
+
+            result = (uint64_t)((uint32_t)result + rsi);
+        }
+
+        i += 1;
+    } while ((uint64_t)arg2 != i);
+
+    return result;
+}
+
+// do_while(int32_t) @ 0x4005b0
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    uint64_t result = (uint64_t)arg1;
+
+    do
+        result = (uint64_t)(next_value() + ((((uint32_t)result >> 0x1f) + (uint32_t)result) >> 1));
+     while ((int32_t)result > 0x64);
+
+    return result;
+}
+

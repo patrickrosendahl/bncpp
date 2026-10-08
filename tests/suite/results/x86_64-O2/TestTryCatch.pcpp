@@ -1,0 +1,72 @@
+// may_throw(int32_t) @ 0x400640
+{
+    if (arg1 >= 3)
+    {
+        struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
+        std::runtime_error::runtime_error(thrown_exception, "too big");
+        ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+            std::runtime_error::~runtime_error);
+        /* no return */
+    }
+
+    if (arg1 >= 0)
+        return (uint64_t)(arg1 * 2);
+
+    int32_t* thrown_exception_1 = ___cxa_allocate_exception(4);
+    *(uint32_t*)thrown_exception_1 = arg1;
+    ___cxa_throw(thrown_exception_1, typeinfo_for_int32_t, nullptr);
+    /* no return */
+}
+
+// log_line(char const*) @ 0x4006c0
+{
+    /* tailcall */
+    return _puts(arg1);
+}
+
+// next_value() @ 0x4006d0
+{
+    uint64_t result = (uint64_t)(next_value()::n + 1);
+    next_value()::n = (uint32_t)result;
+    return result;
+}
+
+// Guard::Guard(struct Guard* this, char const*) @ 0x4006f0
+{
+    *(uint64_t*)this = arg2;
+    /* tailcall */
+    return _printf("enter %s\n");
+}
+
+// Guard::Guard(struct Guard* this, char const*) @ 0x400710
+{
+    *(uint64_t*)this = arg2;
+    /* tailcall */
+    return _printf("enter %s\n");
+}
+
+// Guard::~Guard(struct Guard* this) @ 0x400730
+{
+    /* tailcall */
+    return _printf("leave %s\n", *(uint64_t*)this);
+}
+
+// Guard::~Guard(struct Guard* this) @ 0x400750
+{
+    /* tailcall */
+    return _printf("leave %s\n", *(uint64_t*)this);
+}
+
+// catch_by_type(int32_t) @ 0x400770
+{
+    return may_throw(arg1);
+}
+
+// sub_40077b @ 0x40077b
+{
+    void* rax = ___cxa_begin_catch(arg1);
+    _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+    ___cxa_end_catch();
+    return 0xffffffff;
+}
+

@@ -1,0 +1,33 @@
+// day_kind(int32_t) @ 0x4005a0
+{
+    if (!arg1)
+        return "weekend";
+
+    if (arg1 - 1 <= 4)
+        return "weekday";
+
+    if (arg1 != 6)
+        return &data_4006e4;
+
+    return "weekend";
+}
+
+// sparse(int32_t) @ 0x400618
+{
+    int32_t var_14;
+
+    if (arg1 == 1)
+        var_14 = 0xa;
+    else if (arg1 == 0x64)
+        var_14 = 0x14;
+    else if (arg1 == 0x3e8)
+    {
+        log_line("big");
+        var_14 = 0x1e;
+    }
+    else
+        var_14 = 0;
+
+    return (uint64_t)var_14;
+}
+

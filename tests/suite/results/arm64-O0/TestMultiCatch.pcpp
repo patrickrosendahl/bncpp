@@ -1,0 +1,134 @@
+// catch_two_types(int32_t) @ 0x4005f8
+{
+    int64_t fp;
+    int64_t var_10 = fp;
+    int32_t var_14 = may_throw(arg1);
+    /* tailcall */
+    return sub_400704(&var_10, var_10);
+}
+
+// sub_400624 @ 0x400624
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    int32_t x8_1 = *(uint32_t*)((char*)arg3 - 0x14);
+    uint64_t arg_0;
+
+    if (x8_1 == 2)
+    {
+        arg_0 =
+            (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10))
+                + 0x10))();
+        _printf("runtime_error: %s\n");
+        *(uint32_t*)((char*)arg3 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400704(arg3);
+    }
+
+    if (x8_1 != 1)
+        /* tailcall */
+        return sub_400714(arg3);
+
+    arg_0 = (uint64_t)*(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+    _printf("int: %d\n");
+    *(uint32_t*)((char*)arg3 - 4) = 0xfffffffe;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400704(arg3);
+}
+
+// sub_4006d8 @ 0x4006d8
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400714(arg3);
+}
+
+// sub_4006ec @ 0x4006ec
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400714(arg3);
+}
+
+// sub_400704 @ 0x400704
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_400714 @ 0x400714
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400720
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// catch_base_and_derived(int32_t) @ 0x400730
+{
+    int64_t fp;
+    int64_t var_10 = fp;
+    int32_t var_14 = may_throw(arg1);
+    /* tailcall */
+    return sub_400828(&var_10, var_10);
+}
+
+// sub_40075c @ 0x40075c
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    int32_t x8_1 = *(uint32_t*)((char*)arg3 - 0x14);
+
+    if (x8_1 == 2)
+    {
+        log_line((
+            *(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10)) + 0x10))
+                ());
+        *(uint32_t*)((char*)arg3 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400828(arg3);
+    }
+
+    if (x8_1 != 1)
+        /* tailcall */
+        return sub_400838(arg3);
+
+    log_line((
+        *(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10)) + 0x10))());
+    *(uint32_t*)((char*)arg3 - 4) = 0xfffffffe;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400828(arg3);
+}
+
+// sub_4007f8 @ 0x4007f8
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400838(arg3);
+}
+
+// sub_400828 @ 0x400828
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_400838 @ 0x400838
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+

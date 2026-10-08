@@ -1,0 +1,72 @@
+// catch_two_types(int32_t) @ 0x4005f0
+{
+    return may_throw(arg1);
+}
+
+// sub_4005fb @ 0x4005fb
+{
+    if (arg3 != 2)
+    {
+        _printf("int: %d\n", (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4));
+        ___cxa_end_catch();
+        return 0xfffffffe;
+    }
+
+    void* rax = ___cxa_begin_catch(arg4);
+    _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+    ___cxa_end_catch();
+    return 0xffffffff;
+}
+
+// ___clang_call_terminate @ 0x400650
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// catch_base_and_derived(int32_t) @ 0x400660
+{
+    may_throw(arg1);
+    int64_t entry_rbx;
+    int64_t entry_rbp;
+    /* tailcall */
+    return sub_40066b(entry_rbx, entry_rbp);
+}
+
+// sub_40066b @ 0x40066b
+{
+    return;
+}
+
+// sub_400672 @ 0x400672
+{
+    if (arg3 != 2)
+    {
+        if (arg3 != 1)
+        {
+            __Unwind_Resume(arg4);
+            /* no return */
+        }
+
+        void* rax_2 = ___cxa_begin_catch(arg4);
+        log_line((*(uint64_t*)(*(uint64_t*)rax_2 + 0x10))(rax_2));
+    }
+    else
+    {
+        void* rax = ___cxa_begin_catch(arg4);
+        log_line((*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+    }
+
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40066b();
+}
+
+// sub_4006d0 @ 0x4006d0
+{
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
