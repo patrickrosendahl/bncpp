@@ -53,4 +53,12 @@ it); `minitick-api`, `miniwiki-api`, `binaryninja-mcp` are relative links into t
   to RESOLVED with a verification comment (no reviewer).
 - Never lose code: a rendering failure prints the original HLIL as a comment (`emit_error`).
 - External documentation (ABI specs, LSDA format, MSVC EH) is linked or attached on wiki `references.md`.
-- Ask before creating a git remote (ticket bncpp-18) or restarting Binary Ninja.
+- Ask before restarting Binary Ninja.
+
+## Git / remote
+
+- Remote `origin` (Gitea on the LAN): `ssh://git@mackup.local:222/patrick/binary-cpp.git`
+  (web: <http://mackup.local:3000/patrick/binary-cpp>), default branch `main`, public like binary-jvm.
+- Gitea API token: `~/.config/gitea-token` (`Authorization: token …`, `http://mackup.local:3000/api/v1`);
+  push-to-create is disabled on the server, so new repos go through `POST /api/v1/user/repos`.
+- Gitea sometimes sleeps; if a push hangs, the host (`mackup.local`) or the service may be down -- retry shortly.
