@@ -6,8 +6,8 @@ description: Project skill for binary-cpp, a Binary Ninja plugin for readable C+
 # binary-cpp project workflow
 
 Documentation: miniwiki project `bncpp` (skill `miniwiki-api`); backlog: minitick project `bncpp` (skill
-`minitick-api`); environment, commands and rules: `CLAUDE.md`. Generic Binary Ninja mechanics (MCP tools, `bnrun`,
-usage lock, Personal-license workarounds): skill `binaryninja-mcp`.
+`minitick-api`); environment, commands and rules: `CLAUDE.md`. Generic Binary Ninja mechanics (`bnrun`
+script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bridge`.
 
 ## Workflow per ticket
 1. `minitick show bncpp-N --expand comment`; set it IN PROGRESS.

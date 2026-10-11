@@ -31,7 +31,7 @@ Details and the suite layout (Fernflower style): wiki `testing.md`.
 ## Environment (this machine)
 
 - **Binary Ninja 6.1**, **Personal license = no headless API**: all testing happens in the running GUI through
-  the MCP tools / the `bnrun` bridge (skill `binaryninja-mcp`). Always pass `--timeout N`; serialized lane for
+  the `bnrun` bridge (skill `binaryninja-bridge`). Always pass `--timeout N`; serialized lane for
   dev loads, `--parallel` for scripts on their own views. Restart BN only with the user's OK (`bnrestart`) --
   the installed plugin only reloads on restart, so iterate with dev loads.
 - Grep the installed API source before using a new call:
@@ -43,7 +43,7 @@ Details and the suite layout (Fernflower style): wiki `testing.md`.
 
 `skills/` is tracked; `.claude/` is git-ignored and Claude Code finds the skills through a local symlink -- after
 a fresh clone run `mkdir -p .claude && ln -s ../skills .claude/skills`. `skills/cpp` is the project skill (load
-it); `minitick-api`, `miniwiki-api`, `binaryninja-mcp` are relative links into the sibling repos.
+it); `minitick-api`, `miniwiki-api`, `binaryninja-bridge` are relative links into the sibling repos.
 
 ## How to work
 
