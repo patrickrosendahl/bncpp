@@ -20,6 +20,7 @@ specifics. Language-neutral code goes into `shared/` (rules + shared-file table:
 
 ```bash
 python3 tests/suite/suite.py build                     # tests/suite/src/TestX.cpp -> bin/<arch>-O<n>/TestX.dylib
+python3 tests/suite/suite.py lsda                      # offline (no BN): decoded exception tables -> TestX.lsda
 B=/Users/patrick/dev/bn-script-bridge/bnrun
 $B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp devN" (BN can't unregister)
 $B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc} (~6.5 min)
@@ -43,7 +44,8 @@ Details and the suite layout (Fernflower style): wiki `testing.md`.
 
 `skills/` is tracked; `.claude/` is git-ignored and Claude Code finds the skills through a local symlink -- after
 a fresh clone run `mkdir -p .claude && ln -s ../skills .claude/skills`. `skills/cpp` is the project skill (load
-it); `minitick-api`, `miniwiki-api`, `binaryninja-bridge` are relative links into the sibling repos.
+it); `minitick-api`, `miniwiki-api`, `binaryninja-bridge` and `jvm` (the sister project's skill, for reference) are
+relative links into the sibling repos.
 
 ## How to work
 

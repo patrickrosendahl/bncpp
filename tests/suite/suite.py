@@ -8,10 +8,12 @@ change improves the output, review the diff and accept it as the new reference.
   python3 tests/suite/suite.py build                     # clang++ every registered test for every variant
   bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp}
+  python3 tests/suite/suite.py lsda                      # offline: .scratch/suite/out/<variant>/TestX.lsda
   python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
   python3 tests/suite/suite.py accept TestX ...          # output -> reference (after reviewing the diff)
 
-.pc is Pseudo C of the same functions (BN's own output, for comparison; not checked).
+Checked outputs: .pcpp (the view, from bn_dump.py) and .lsda (the decoded exception tables, cpp/lsda.py --
+no Binary Ninja needed). .pc is Pseudo C of the same functions (BN's own output, for comparison; not checked).
 """
 import difflib, filecmp, os, shutil, subprocess, sys
 
@@ -60,11 +62,35 @@ def build():
     print("built %d tests x %d variants into %s" % (len(TESTS), len(VARIANTS), BIN))
 
 
+CHECKED = ("pcpp", "lsda")  # output kinds compared against a reference
+
+
 def pairs(names):
     for arch, opt in VARIANTS:
         v = variant_name(arch, opt)
         for t in names:
-            yield v, t, os.path.join(OUT, v, t + ".pcpp"), os.path.join(RESULTS, v, t + ".pcpp")
+            for ext in CHECKED:
+                f = "%s.%s" % (t, ext)
+                yield v, f, os.path.join(OUT, v, f), os.path.join(RESULTS, v, f)
+
+
+def lsda():
+    """decode every test dylib's exception tables (offline) into .scratch/suite/out/<variant>/TestX.lsda"""
+    sys.path.insert(0, REPO)
+    from cpp import lsda as L, macho
+    n = 0
+    for arch, opt in VARIANTS:
+        v = variant_name(arch, opt)
+        os.makedirs(os.path.join(OUT, v), exist_ok=True)
+        for t in TESTS:
+            m = macho.MachO(os.path.join(BIN, v, t + ".dylib"))
+            lines = []
+            for start, table in sorted(L.parse_all(m).items()):
+                lines += L.format_lsda(table, m.symbol_at(start)[1]) + [""]
+                n += 1
+            with open(os.path.join(OUT, v, t + ".lsda"), "w") as f:
+                f.write("\n".join(lines) if lines else "no LSDA\n")
+    print("decoded %d LSDAs into %s" % (n, OUT))
 
 
 def compare(names, show_diff):
@@ -80,12 +106,12 @@ def compare(names, show_diff):
             state = "differs"
         counts[state] += 1
         if state != "ok":
-            print("%-8s %-24s %s" % (v, t, state))
+            print("%-10s %-26s %s" % (v, t, state))
             if state == "differs" and show_diff:
                 sys.stdout.writelines(difflib.unified_diff(open(ref).readlines(), open(out).readlines(),
                                                            "reference", "output"))
     print(", ".join("%d %s" % (n, k) for k, n in counts.items()))
-    return 0 if counts["ok"] == len(VARIANTS) * len(names) else 1
+    return 0 if counts["ok"] == len(VARIANTS) * len(names) * len(CHECKED) else 1
 
 
 def accept(names):
@@ -104,6 +130,8 @@ def main(argv):
         sys.exit("not registered: %s" % ", ".join(unknown))
     if cmd == "build":
         build()
+    elif cmd == "lsda":
+        lsda()
     elif cmd == "compare":
         return compare(names or TESTS, "--diff" in args)
     elif cmd == "accept":
