@@ -1,5 +1,5 @@
 ---
-name: cpp
+name: bncpp
 description: Project skill for binary-cpp, a Binary Ninja plugin for readable C++ ("Pseudo Cpp" language view; try/catch rebuilt from Itanium / MSVC exception tables, readability passes on HLIL), seeded from the binary-jvm project. Use when working in /Users/patrick/dev/binary-cpp -- designing or writing the plugin, building or dumping the C++ test suite, inspecting HLIL in the running Binary Ninja, or re-using code and test tooling from binary-jvm.
 ---
 

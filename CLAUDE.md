@@ -52,7 +52,7 @@ Details and the suite layout (Fernflower style): wiki `testing.md`.
 ## Skills
 
 `skills/` is tracked; `.claude/` is git-ignored and Claude Code finds the skills through a local symlink -- after
-a fresh clone run `mkdir -p .claude && ln -s ../skills .claude/skills`. `skills/cpp` is the project skill (load
+a fresh clone run `mkdir -p .claude && ln -s ../skills .claude/skills`. `skills/bncpp` is the project skill (load
 it); `minitick-api`, `miniwiki-api`, `binaryninja-bridge` and `jvm` (the sister project's skill, for reference) are
 relative links into the sibling repos.
 
