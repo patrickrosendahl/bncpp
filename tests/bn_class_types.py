@@ -69,6 +69,7 @@ def _call_targets(addr):
 
 _classes, _functions = _types_mod.plan(_rtti.scan(_bnimage.BNImage(bv)), _demangle, _call_targets)
 _counts = {}
+_review = []  # what the run would do (or did), for the review file
 
 
 def _count(key, n=1):
@@ -85,7 +86,10 @@ _new_types = []
 for _c in _classes:
     if bv.get_type_by_name(QualifiedName([_c.name])) is not None:
         _count("class type kept (exists)")
+        _review.append("keep  type %s (exists)" % _c.name)
         continue
+    _review.append("apply type %s { %s::VTable* vptr; }   vtable %#x: %s" % (
+        _c.name, _c.name, _c.vtable_addr, ", ".join(m for m, _s in _c.members)))
     _mine.add(_c.name)
     _s = StructureBuilder.create()
     _s.add_member_at_offset("vptr", Type.pointer(_arch, _ref(_c.vtable_name)), 0)
@@ -102,14 +106,18 @@ for _f_addr, (_label, _role) in sorted(_functions.items()):
         continue
     if _protected(_f):
         _count("function type kept (user)")
+        _review.append("keep  %#x %s   [now: %s]" % (_f_addr, _f.name, _f.type))
         continue
     if _label not in _mine:
         _count("function skipped (class type not ours)")
+        _review.append("skip  %#x %s   [class type %s exists]" % (_f_addr, _f.name, _label))
         continue
     _old = _f.type
     _params = [FunctionParameter(Type.pointer(_arch, _ref(_label)), "this")] + list(_old.parameters[1:])
     _ret = Type.void() if _role in ("dtor", "deleting") else _old.return_value
     _count("function typed")
+    _review.append("apply %#x %s: this = %s*%s   [now: %s]" % (
+        _f_addr, _f.name, _label, ", returns void" if _role in ("dtor", "deleting") else "", _old))
     if _apply:
         _f.type = Type.function(_ret, _params, calling_convention=_f.calling_convention,
                                 variable_arguments=_old.has_variable_arguments)
@@ -142,6 +150,13 @@ for _c in _classes:
         bv.define_user_data_var(_c.vtable_addr, _ref(_c.vtable_name))
 if _apply:
     bv.update_analysis_and_wait()
+_name = os.path.basename(bv.file.original_filename)
+_name = _name[:-5] if _name.endswith(".bndb") else _name
+_rv = os.path.join(REPO, ".scratch/classes/%s.types.review" % _name)
+os.makedirs(os.path.dirname(_rv), exist_ok=True)
+with open(_rv, "w") as _fh:
+    _fh.write("\n".join(_review) + "\n")
+print("review -> %s" % _rv)
 print("%s: %d classes, %d functions planned; %s (%.1f s)" % (
     "applied" if _apply else "dry run", len(_classes), len(_functions),
     ", ".join("%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))
