@@ -24,6 +24,7 @@ _mod = importlib.util.module_from_spec(_spec)
 sys.modules[_name] = _mod
 _spec.loader.exec_module(_mod)  # registers the language
 _dev["pkg"] = _mod
+_dev["pkgname"] = _name  # import submodules as _name + ".cpp.lsda" etc.
 _dev["pseudo_cpp"] = sys.modules[_name + ".cpp.pseudo_cpp"]
 _dev["LANGUAGE_NAME"] = sys.modules[_name + ".constants"].LANGUAGE_NAME
 print("registered", _dev["LANGUAGE_NAME"], "from", _dst)

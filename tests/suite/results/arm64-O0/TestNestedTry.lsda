@@ -1,13 +1,13 @@
-__Z10nested_tryi  lsda base+0x8a8  lpstart +0x0  8 call sites
-  +0x14  .. +0x1c  lp +0x2c  catch(__ZTIi), catch(__ZTISt13runtime_error)
+nested_try(int32_t)  lsda base+0x8a8  lpstart +0x0  8 call sites
+  +0x14  .. +0x1c  lp +0x2c  catch(typeinfo_for_int32_t), catch(typeinfo_for_std::runtime_error)
   +0x1c  .. +0x60  unwind
-  +0x60  .. +0x88  lp +0x9c  catch(__ZTISt13runtime_error), cleanup, cleanup
+  +0x60  .. +0x88  lp +0x9c  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
   +0x88  .. +0xdc  unwind
   +0xdc  .. +0xf0  lp +0x104 cleanup
   +0xf0  .. +0x110 unwind
   +0x110 .. +0x114 lp +0x134 catch(...)
   +0x114 .. +0x138 unwind
 
-__Z11try_in_loopi  lsda base+0x8f0  lpstart +0x0  2 call sites
-  +0x34  .. +0x3c  lp +0x54  catch(__ZTISt13runtime_error)
+try_in_loop(int32_t)  lsda base+0x8f0  lpstart +0x0  2 call sites
+  +0x34  .. +0x3c  lp +0x54  catch(typeinfo_for_std::runtime_error)
   +0x3c  .. +0xc0  unwind

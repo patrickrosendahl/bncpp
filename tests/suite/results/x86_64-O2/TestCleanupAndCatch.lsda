@@ -1,7 +1,7 @@
-__Z17cleanup_and_catchi  lsda base+0x730  lpstart +0x0  6 call sites
+cleanup_and_catch(int32_t)  lsda base+0x730  lpstart +0x0  6 call sites
   +0x0   .. +0x1d  unwind
-  +0x1d  .. +0x2d  lp +0x64  catch(__ZTISt13runtime_error), cleanup, cleanup
-  +0x2d  .. +0x34  lp +0x53  catch(__ZTISt13runtime_error), cleanup, cleanup
+  +0x1d  .. +0x2d  lp +0x64  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x2d  .. +0x34  lp +0x53  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
   +0x34  .. +0x97  unwind
   +0x97  .. +0x9c  lp +0x9e  cleanup
   +0x9c  .. +0xb2  unwind

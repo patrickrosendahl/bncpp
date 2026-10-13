@@ -7,15 +7,19 @@ change improves the output, review the diff and accept it as the new reference.
 
   python3 tests/suite/suite.py build                     # clang++ every registered test for every variant
   bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
-  bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp}
-  python3 tests/suite/suite.py lsda                      # offline: .scratch/suite/out/<variant>/TestX.lsda
+  bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
   python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
   python3 tests/suite/suite.py accept TestX ...          # output -> reference (after reviewing the diff)
+  python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
+  python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
 
-Checked outputs: .pcpp (the view, from bn_dump.py) and .lsda (the decoded exception tables, cpp/lsda.py --
-no Binary Ninja needed). .pc is Pseudo C of the same functions (BN's own output, for comparison; not checked).
+Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view) and .lsda (the decoded
+exception tables, cpp/lsda.py on cpp/bnimage.py). .pc is Pseudo C of the same functions (BN's own output, for
+comparison; not checked). ref-lsda decodes the same tables from the files themselves (cpp/macho.py, reference
+only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
+and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
 """
-import difflib, filecmp, os, shutil, subprocess, sys
+import difflib, filecmp, os, re, shutil, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -23,6 +27,7 @@ SRC = os.path.join(HERE, "src")
 BIN = os.path.join(HERE, "bin")
 RESULTS = os.path.join(HERE, "results")
 OUT = os.path.join(REPO, ".scratch", "suite", "out")
+REF = os.path.join(REPO, ".scratch", "suite", "ref")  # offline reference decodes (ref-lsda)
 
 VARIANTS = [("x86_64", 0), ("x86_64", 2), ("arm64", 0), ("arm64", 2)]
 
@@ -74,23 +79,62 @@ def pairs(names):
                 yield v, f, os.path.join(OUT, v, f), os.path.join(RESULTS, v, f)
 
 
-def lsda():
-    """decode every test dylib's exception tables (offline) into .scratch/suite/out/<variant>/TestX.lsda"""
+def ref_lsda():
+    """decode every test dylib's exception tables from the file (offline, reference only) into
+    .scratch/suite/ref/<variant>/TestX.lsda -- the same format as bn_dump.py's .lsda"""
     sys.path.insert(0, REPO)
     from cpp import lsda as L, macho
     n = 0
     for arch, opt in VARIANTS:
         v = variant_name(arch, opt)
-        os.makedirs(os.path.join(OUT, v), exist_ok=True)
+        os.makedirs(os.path.join(REF, v), exist_ok=True)
         for t in TESTS:
             m = macho.MachO(os.path.join(BIN, v, t + ".dylib"))
             lines = []
             for start, table in sorted(L.parse_all(m).items()):
-                lines += L.format_lsda(table, m.symbol_name(start), m.text_base) + [""]
+                lines += L.format_lsda(table, m.symbol_name(start), m.segment_start(start)) + [""]
                 n += 1
-            with open(os.path.join(OUT, v, t + ".lsda"), "w") as f:
+            with open(os.path.join(REF, v, t + ".lsda"), "w") as f:
                 f.write("\n".join(lines) if lines else "no LSDA\n")
-    print("decoded %d LSDAs into %s" % (n, OUT))
+    print("decoded %d LSDAs into %s" % (n, REF))
+
+
+_HEADER = re.compile(r"^\S.*?(  lsda base\+)")  # function name up to the LSDA address
+_CLAUSE = re.compile(r"\b(catch|throw)\((?!\.\.\.\))[^()]*(?:\([^()]*\)[^()]*)*\)")
+
+
+def mask_names(line):
+    """an .lsda line with the names that BN and the file spell differently replaced by placeholders:
+    the function name of a header line, the type of each catch(...) / throw(...) (catch (...) stays)"""
+    return _CLAUSE.sub(lambda m: m.group(1) + "(<type>)", _HEADER.sub(r"<function>\1", line))
+
+
+def crosscheck(names, show_diff):
+    """BN's .lsda (bn_dump.py) against the offline reference (ref-lsda): 'structure' = differs with the
+    names masked (a real disagreement), 'names' = only the spelling of names differs (expected)"""
+    counts = {"same": 0, "names": 0, "structure": 0, "missing": 0}
+    for arch, opt in VARIANTS:
+        v = variant_name(arch, opt)
+        for t in names:
+            bn, ref = os.path.join(OUT, v, t + ".lsda"), os.path.join(REF, v, t + ".lsda")
+            if not (os.path.exists(bn) and os.path.exists(ref)):
+                state = "missing"
+            else:
+                a, b = open(ref).read().splitlines(), open(bn).read().splitlines()
+                if a == b:
+                    state = "same"
+                elif list(map(mask_names, a)) == list(map(mask_names, b)):
+                    state = "names"
+                else:
+                    state = "structure"
+                    if show_diff:
+                        sys.stdout.writelines(l + "\n" for l in difflib.unified_diff(
+                            list(map(mask_names, a)), list(map(mask_names, b)), "offline", "bn", lineterm=""))
+            counts[state] += 1
+            if state in ("structure", "missing"):
+                print("%-10s %-26s %s" % (v, t, state))
+    print(", ".join("%d %s" % (n, k) for k, n in counts.items()))
+    return 0 if counts["structure"] == counts["missing"] == 0 else 1
 
 
 def compare(names, show_diff):
@@ -130,8 +174,10 @@ def main(argv):
         sys.exit("not registered: %s" % ", ".join(unknown))
     if cmd == "build":
         build()
-    elif cmd == "lsda":
-        lsda()
+    elif cmd == "ref-lsda":
+        ref_lsda()
+    elif cmd == "crosscheck":
+        return crosscheck(names or TESTS, "--diff" in args)
     elif cmd == "compare":
         return compare(names or TESTS, "--diff" in args)
     elif cmd == "accept":

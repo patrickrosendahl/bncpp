@@ -20,12 +20,14 @@ specifics. Language-neutral code goes into `shared/` (rules + shared-file table:
 
 ```bash
 python3 tests/suite/suite.py build                     # tests/suite/src/TestX.cpp -> bin/<arch>-O<n>/TestX.dylib
-python3 tests/suite/suite.py lsda                      # offline (no BN): decoded exception tables -> TestX.lsda
 B=/Users/patrick/dev/bn-script-bridge/bnrun
 $B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp devN" (BN can't unregister)
-$B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc} (~6.5 min)
+$B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc,lsda}
+                                                       #   only some: --env DUMP_KINDS=lsda (comma list)
 python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)
 python3 tests/suite/suite.py accept TestX…             # reviewed output -> reference
+python3 tests/suite/suite.py ref-lsda                  # offline reference decode -> .scratch/suite/ref/
+python3 tests/suite/suite.py crosscheck [--diff]       # BN .lsda vs offline, names masked (exit 1: structure)
 ```
 Details and the suite layout (Fernflower style): wiki `testing.md`.
 
@@ -56,7 +58,7 @@ relative links into the sibling repos.
 - Never lose code: a rendering failure prints the original HLIL as a comment (`emit_error`).
 - **Binary Ninja is the source of truth** for everything format-specific (sections, symbols, imports, its
   native RTTI results): decoders read through `cpp/bnimage.py`. Own file parsers (`cpp/macho.py`,
-  `tests/ref_*.py`, for now also `suite.py lsda`) are reference only -- cross-checks and bug-report evidence.
+  `tests/ref_*.py`, `suite.py ref-lsda`) are reference only -- cross-checks and bug-report evidence.
 - `sample/synthv/` (git-ignored): scratch copy of the Synthesizer V slices + synVbasic's `.bndb` (2026-10-13).
   Break it freely; findings go to the synVbasic session as messages. Commercial binary -- never commit.
 - External documentation (ABI specs, LSDA format, MSVC EH) is linked or attached on wiki `references.md`.

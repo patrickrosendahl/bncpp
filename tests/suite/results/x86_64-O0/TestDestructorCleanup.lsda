@@ -1,9 +1,9 @@
-__Z12cleanup_onlyi  lsda base+0x754  lpstart +0x0  3 call sites
+cleanup_only(int32_t)  lsda base+0x754  lpstart +0x0  3 call sites
   +0x0   .. +0x1e  unwind
   +0x1e  .. +0x23  lp +0x3a  cleanup
   +0x23  .. +0x58  unwind
 
-__Z10two_guardsi  lsda base+0x764  lpstart +0x0  4 call sites
+two_guards(int32_t)  lsda base+0x764  lpstart +0x0  4 call sites
   +0x0   .. +0x1e  unwind
   +0x1e  .. +0x3e  lp +0x76  cleanup
   +0x46  .. +0x4b  lp +0x84  cleanup

@@ -1,13 +1,13 @@
-__Z9may_throwi  lsda base+0x968  lpstart +0x0  3 call sites
+may_throw(int32_t)  lsda base+0x968  lpstart +0x0  3 call sites
   +0x0   .. +0x25  unwind
   +0x25  .. +0x31  lp +0x4a  cleanup
   +0x31  .. +0x9d  unwind
 
-__ZN5GuardD2Ev  lsda base+0x978  lpstart +0x0  1 call sites
+Guard::~Guard(struct Guard* this)  lsda base+0x978  lpstart +0x0  1 call sites
   +0x13  .. +0x21  lp +0x29  catch(...)
 
-__Z13catch_by_typei  lsda base+0x988  lpstart +0x0  6 call sites
-  +0xe   .. +0x13  lp +0x20  catch(__ZTISt13runtime_error)
+catch_by_type(int32_t)  lsda base+0x988  lpstart +0x0  6 call sites
+  +0xe   .. +0x13  lp +0x20  catch(typeinfo_for_std::runtime_error)
   +0x13  .. +0x55  unwind
   +0x55  .. +0x63  lp +0x73  cleanup
   +0x63  .. +0x7f  unwind
