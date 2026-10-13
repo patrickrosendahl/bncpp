@@ -25,8 +25,10 @@ for name, (off, size) in zip(("bind", "weak", "lazy"), ((d[2], d[3]), (d[4], d[5
     for slot, (sym, addend) in m._binds.items():
         streams[slot].append((name, sym, addend))
 
+bias = bv.start - m.text_base  # BN loads a dylib at vmaddr 0 to 0x400000
 counts, examples = collections.Counter(), collections.defaultdict(list)
 for slot, entries in sorted(streams.items()):
+    slot += bias
     bn = [r.symbol.raw_name for r in bv.relocations_at(slot) if r.symbol is not None]
     names = [e[1] for e in entries]
     state = "has" if any(n in bn for n in names) else ("other" if bn else "none")
