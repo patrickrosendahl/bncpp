@@ -67,7 +67,20 @@ def _call_targets(addr):
     return out
 
 
-_classes, _functions = _types_mod.plan(_rtti.scan(_bnimage.BNImage(bv)), _demangle, _call_targets)
+def _symbol_at(addr):
+    s = bv.get_symbol_at(addr)
+    return (s.full_name, not s.auto) if s is not None else None
+
+
+def _user_name(addr):
+    f = bv.get_function_at(addr)
+    return f.name if f is not None and not f.symbol.auto else None
+
+
+_scan = _rtti.scan(_bnimage.BNImage(bv))
+_names_mod = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
+_classes, _functions = _types_mod.plan(_scan, _demangle, _call_targets,
+                                       _names_mod.label_overrides(_scan, _symbol_at), _user_name)
 _counts = {}
 _review = []  # what the run would do (or did), for the review file
 

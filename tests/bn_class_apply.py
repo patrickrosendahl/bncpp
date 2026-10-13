@@ -43,8 +43,14 @@ def _call_targets(addr):
     return out
 
 
+def _symbol_at(addr):
+    s = bv.get_symbol_at(addr)
+    return (s.full_name, not s.auto) if s is not None else None
+
+
 _types = _rtti.scan(_bnimage.BNImage(bv))
-_dirs = _names.directives(_types, _demangle, _call_targets)
+_overrides = _names.label_overrides(_types, _symbol_at)  # classes someone named through their vtable symbol
+_dirs = _names.directives(_types, _demangle, _call_targets, _overrides)
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _out = os.path.join(REPO, ".scratch/classes/%s.directives" % _name)

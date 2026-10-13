@@ -1,8 +1,10 @@
 """Names for what cpp/rtti.py recovered: class labels, vtable / typeinfo data symbols and virtual function names,
 as annotate directives (the bnrun bridge's annotate lane: R:ADDR:NAME function, D:ADDR:NAME data, C:ADDR:TEXT).
 
-  label       the demangled real name (the type name string, else a __ZTI / __ZTS bind), else cls_<hash prefix>
-              (8 hex digits, longer where two classes would collide) -- a pure function of the class's identity
+  label       a name someone gave the class (a 'vtable_<X>' user symbol on its primary vtable, label_overrides),
+              else the demangled real name (the type name string, else a __ZTI / __ZTS bind), else
+              cls_<hash prefix> (8 hex digits, longer where two classes would collide) -- a pure function of the
+              class's identity
   functions   a slot function is named after the most-base class that has it in a primary vtable, at its index
               there: Owner::vfuncN; Owner::~Owner and Owner::~Owner [deleting] for slots 0 / 1 when the code shows
               a destructor pair (slot 1 calls slot 0 and operator delete, or deletes once more than slot 0).
@@ -16,10 +18,26 @@ address per call site] | None (None: the function is unknown, no destructor evid
 OPERATOR_DELETE = ("__ZdlPv", "__ZdlPvm", "__ZdlPvSt11align_val_t", "__ZdlPvmSt11align_val_t")
 
 
-def labels(types, demangle=None):
-    """{typeinfo address: label}"""
+def label_overrides(types, symbol_at):
+    """{typeinfo: label} from names someone gave a class's primary vtable: a user data symbol 'vtable_<X>' at
+    the vtable's start (not this module's 'vtable_for_...') labels the class X. symbol_at(addr) -> (name,
+    user-defined?) | None"""
+    out = {}
+    for addr, t in types.items():
+        prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
+        s = symbol_at(prim[0].addr - 16) if prim else None
+        if s is not None and s[1] and s[0].startswith("vtable_") and not s[0].startswith("vtable_for_"):
+            out[addr] = s[0][len("vtable_"):]
+    return out
+
+
+def labels(types, demangle=None, overrides=None):
+    """{typeinfo address: label}; overrides (label_overrides) win"""
     out, hashed = {}, {}
     for addr, t in types.items():
+        if overrides and addr in overrides:
+            out[addr] = overrides[addr]
+            continue
         real = None
         if t.name_kind == "mangled":
             real = _type_name(t.name, demangle)
@@ -104,9 +122,9 @@ def owners(types, call_targets=None):
     return out, users
 
 
-def directives(types, demangle=None, call_targets=None):
+def directives(types, demangle=None, call_targets=None, overrides=None):
     """[(kind, addr, text)] -- R / D / C directives for the annotate lane, sorted by address"""
-    lab = labels(types, demangle)
+    lab = labels(types, demangle, overrides)
     out = []
     # data symbols
     for addr, t in types.items():
