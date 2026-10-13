@@ -86,7 +86,7 @@ def lsda():
             m = macho.MachO(os.path.join(BIN, v, t + ".dylib"))
             lines = []
             for start, table in sorted(L.parse_all(m).items()):
-                lines += L.format_lsda(table, m.symbol_at(start)[1]) + [""]
+                lines += L.format_lsda(table, m.symbol_name(start), m.text_base) + [""]
                 n += 1
             with open(os.path.join(OUT, v, t + ".lsda"), "w") as f:
                 f.write("\n".join(lines) if lines else "no LSDA\n")

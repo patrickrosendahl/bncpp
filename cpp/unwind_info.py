@@ -10,7 +10,7 @@ index (2 bits) and the has-LSDA flag; the LSDA index arrays are the address sour
 not handled yet -- the suite has none.)
 
 Format: mach-o/compact_unwind_encoding.h (LLVM libunwind; linked on wiki references.md).
-Pure Python (struct only), offline-testable -- no Binary Ninja import.
+Pure Python: reads through an image (cpp/bnimage.py; cpp/macho.py offline) -- no Binary Ninja import.
 """
 import struct
 
@@ -38,13 +38,13 @@ class FunctionUnwind:
             self.addr, self.encoding, "%#x" % self.lsda if self.lsda is not None else None)
 
 
-def functions(macho):
+def functions(img):
     """every entry of the compact unwind table, in address order ([] without __unwind_info)"""
-    sec = macho.section("__TEXT", "__unwind_info")
+    sec = img.section_range("__unwind_info")
     if sec is None:
         return []
-    data = macho.section_data(sec)
-    base = macho.text_base
+    data = img.read(sec[0], sec[1] - sec[0])
+    base = img.segment_start(sec[0])  # offsets are relative to the image base (__TEXT, the Mach-O header)
     version, common_off, common_count, pers_off, pers_count, index_off, index_count = \
         struct.unpack_from("<7I", data, 0)
     if version != 1:
@@ -94,9 +94,9 @@ def functions(macho):
     return result
 
 
-def lsda_of(macho, addr):
+def lsda_of(img, addr):
     """the LSDA address of the function starting at addr, or None"""
-    for f in functions(macho):
+    for f in functions(img):
         if f.addr == addr:
             return f.lsda
     return None

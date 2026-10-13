@@ -1,4 +1,4 @@
-__Z9catch_alli  lsda 0x7dc  lpstart +0x0  6 call sites
+__Z9catch_alli  lsda base+0x7dc  lpstart +0x0  6 call sites
   +0x14  .. +0x1c  lp +0x2c  catch(...)
   +0x1c  .. +0x44  unwind
   +0x44  .. +0x50  lp +0x64  cleanup
@@ -6,6 +6,6 @@ __Z9catch_alli  lsda 0x7dc  lpstart +0x0  6 call sites
   +0x70  .. +0x74  lp +0x94  catch(...)
   +0x74  .. +0x98  unwind
 
-__Z19catch_type_then_alli  lsda 0x800  lpstart +0x0  2 call sites
+__Z19catch_type_then_alli  lsda base+0x800  lpstart +0x0  2 call sites
   +0x14  .. +0x1c  lp +0x2c  catch(__ZTIi), catch(...)
   +0x1c  .. +0x94  unwind

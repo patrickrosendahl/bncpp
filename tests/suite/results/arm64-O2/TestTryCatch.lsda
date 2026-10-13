@@ -1,8 +1,8 @@
-__Z9may_throwi  lsda 0x914  lpstart +0x0  3 call sites
+__Z9may_throwi  lsda base+0x914  lpstart +0x0  3 call sites
   +0x0   .. +0x34  unwind
   +0x34  .. +0x40  lp +0x78  cleanup
   +0x40  .. +0x8c  unwind
 
-__Z13catch_by_typei  lsda 0x924  lpstart +0x0  2 call sites
+__Z13catch_by_typei  lsda base+0x924  lpstart +0x0  2 call sites
   +0xc   .. +0x10  lp +0x1c  catch(__ZTISt13runtime_error)
   +0x10  .. +0x48  unwind

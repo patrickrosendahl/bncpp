@@ -1,4 +1,4 @@
-__Z16string_temporaryi  lsda 0x754  lpstart +0x0  3 call sites
+__Z16string_temporaryi  lsda base+0x754  lpstart +0x0  3 call sites
   +0x34  .. +0x44  lp +0xb4  cleanup
   +0x5c  .. +0x64  lp +0x84  cleanup
   +0x64  .. +0xd0  unwind

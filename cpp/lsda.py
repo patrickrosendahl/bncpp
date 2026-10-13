@@ -17,8 +17,9 @@ loops -- linked on wiki references.md):
   types       entry i at TType - i * size(ttype_enc), read with ttype_enc; DW_EH_PE_indirect =
               the value is the address of a pointer slot (on Mach-O: __got) holding the typeinfo
 
-Pure Python, offline-testable -- no Binary Ninja import. The Mach-O glue (find a function's LSDA,
-name typeinfo slots) is `parse_function`; `decode` works on bare bytes.
+Pure Python -- no Binary Ninja import. `decode` works on bare bytes; `parse_function` / `parse_all`
+find the LSDAs and name typeinfo slots through an image (cpp/bnimage.py in BN; cpp/macho.py offline,
+as a reference only).
 """
 import struct
 
@@ -221,38 +222,34 @@ def decode(data, addr, func_start, deref=None):
     return LSDA(addr, func_start, lp_start, ttype_enc, ttype_end, call_sites, types, size)
 
 
-def parse_function(macho, func_start):
-    """the decoded LSDA of the function at func_start in a Mach-O (cpp.macho.MachO), or None"""
+def _decode_at(img, lsda, func_start):
+    _start, end = img.section_range_at(lsda)
+    return decode(img.read(lsda, end - lsda), lsda, func_start, img.pointer_target)
+
+
+def parse_function(img, func_start):
+    """the decoded LSDA of the function at func_start, or None"""
     from . import unwind_info
-    lsda = unwind_info.lsda_of(macho, func_start)
-    if lsda is None:
-        return None
-    sec = macho.section_at(lsda)
-    data = macho.read(lsda, sec.addr + sec.size - lsda)
-    return decode(data, lsda, func_start, macho.pointer_target)
+    lsda = unwind_info.lsda_of(img, func_start)
+    return _decode_at(img, lsda, func_start) if lsda is not None else None
 
 
-def parse_all(macho):
+def parse_all(img):
     """{function start: LSDA} for every function with an LSDA"""
     from . import unwind_info
-    out = {}
-    for f in unwind_info.functions(macho):
-        if f.lsda is not None:
-            sec = macho.section_at(f.lsda)
-            data = macho.read(f.lsda, sec.addr + sec.size - f.lsda)
-            out[f.addr] = decode(data, f.lsda, f.addr, macho.pointer_target)
-    return out
+    return {f.addr: _decode_at(img, f.lsda, f.addr) for f in unwind_info.functions(img) if f.lsda is not None}
 
 
-def format_lsda(l, name=None):
-    """the LSDA as text, offsets relative to the function start (the suite's .lsda reference)"""
+def format_lsda(l, name=None, base=0):
+    """the LSDA as text (the suite's .lsda reference): code offsets relative to the function start,
+    the LSDA's own address relative to the image base (BN rebases a dylib, the file does not)"""
     f = l.func_start
 
     def rel(a):
         return "+%#x" % (a - f)
 
-    out = ["%s  lsda %#x  lpstart %s  %d call sites" % (
-        name or "%#x" % f, l.addr, rel(l.lp_start), len(l.call_sites))]
+    out = ["%s  lsda base+%#x  lpstart %s  %d call sites" % (
+        name or "%#x" % f, l.addr - base, rel(l.lp_start), len(l.call_sites))]
     for cs in l.call_sites:
         if cs.landing_pad is None:
             what = "unwind"

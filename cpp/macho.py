@@ -1,7 +1,9 @@
-"""Minimal Mach-O reader for the offline EH parsers: sections, symbols, __got slot -> symbol.
+"""Minimal Mach-O reader -- REFERENCE ONLY: Binary Ninja is the source of truth (cpp/bnimage.py).
 
-Only what the LSDA work needs: a thin 64-bit little-endian image (x86_64 / arm64; a universal
-binary is reduced to one slice with `arch`). Pure Python (struct only), no Binary Ninja import.
+Implements the decoders' image interface (see cpp/bnimage.py) from the file itself, for offline
+cross-checks of what the plugin gets from BN and as evidence for bug reports. A thin 64-bit
+little-endian image (x86_64 / arm64; a universal binary is reduced to one slice with `arch`).
+Pure Python (struct only), no Binary Ninja import.
 """
 import struct
 
@@ -10,6 +12,8 @@ FAT_MAGIC = 0xCAFEBABE
 LC_SEGMENT_64 = 0x19
 LC_SYMTAB = 0x2
 LC_DYSYMTAB = 0xB
+LC_DYLD_INFO = 0x22
+LC_DYLD_INFO_ONLY = 0x80000022
 INDIRECT_SYMBOL_LOCAL = 0x80000000
 INDIRECT_SYMBOL_ABS = 0x40000000
 CPU_TYPES = {"x86_64": 0x01000007, "arm64": 0x0100000C}
@@ -34,9 +38,12 @@ class MachO:
         self.image = self._slice(image, arch)
         self.sections = []
         self.segments = {}  # segname -> (vmaddr, vmsize, fileoff, filesize)
+        self._segment_order = []  # vmaddr per LC_SEGMENT_64, in load-command order
         self.symbols = {}   # address -> name (first defined symbol at each address)
         self._symtab = None
         self._dysymtab = None
+        self._dyld_info = None
+        self._binds = None
         self._load_commands()
 
     @staticmethod
@@ -65,6 +72,7 @@ class MachO:
                 vmaddr, vmsize, fileoff, filesize = struct.unpack_from("<QQQQ", self.image, off + 24)
                 (nsects,) = struct.unpack_from("<I", self.image, off + 64)
                 self.segments[segname] = (vmaddr, vmsize, fileoff, filesize)
+                self._segment_order.append(vmaddr)
                 s = off + 72  # sizeof(segment_command_64)
                 for _ in range(nsects):
                     name = _cstr(self.image[s:s + 16])
@@ -79,6 +87,9 @@ class MachO:
                 # ilocalsym..nundefsym (6), tocoff..nextrefsyms (4), indirectsymoff, nindirectsyms, ...
                 fields = struct.unpack_from("<18I", self.image, off + 8)
                 self._dysymtab = {"indirectsymoff": fields[12], "nindirectsyms": fields[13]}
+            elif cmd in (LC_DYLD_INFO, LC_DYLD_INFO_ONLY):
+                # rebase, bind, weak_bind, lazy_bind, export: (off, size) each
+                self._dyld_info = struct.unpack_from("<10I", self.image, off + 8)
             off += cmdsize
         self._names = self._read_symtab()
 
@@ -128,6 +139,27 @@ class MachO:
     def text_base(self):
         return self.segments["__TEXT"][0]
 
+    # -- the image interface (cpp/bnimage.py) ---------------------------------------
+
+    def section_range(self, name):
+        for sec in self.sections:
+            if sec.name == name:
+                return sec.addr, sec.addr + sec.size
+        return None
+
+    def section_range_at(self, addr):
+        sec = self.section_at(addr)
+        return (sec.addr, sec.addr + sec.size) if sec is not None else None
+
+    def segment_start(self, addr):
+        for vmaddr, vmsize, _fo, _fs in self.segments.values():
+            if vmaddr <= addr < vmaddr + vmsize:
+                return vmaddr
+        raise ValueError("address %#x is in no segment" % addr)
+
+    def symbol_name(self, addr):
+        return self.symbols.get(addr)
+
     def symbol_at(self, addr):
         """(start, name) of the nearest defined symbol at or below addr"""
         best = None
@@ -149,6 +181,91 @@ class MachO:
         (raw,) = struct.unpack_from("<Q", self.read(addr, 8))
         target = self._untag(raw)
         return self.symbols.get(target, target)
+
+    @property
+    def binds(self):
+        """{slot address: (symbol, addend)} from the classic dyld bind opcodes (bind + weak bind + lazy
+        bind); empty for chained-fixup images. With classic dyld info a bound slot holds no usable
+        value in the file, so this is the only way to name it."""
+        if self._binds is None:
+            self._binds = {}
+            if self._dyld_info:
+                d = self._dyld_info
+                for off, size in ((d[2], d[3]), (d[4], d[5]), (d[6], d[7])):
+                    if size:
+                        self._run_binds(self.image[off:off + size])
+        return self._binds
+
+    def _run_binds(self, ops):
+        """interpret one bind opcode stream (mach-o/loader.h BIND_OPCODE_*)"""
+        segs = [s for s in self._segment_order]
+        sym, addend, seg, offset, p = None, 0, 0, 0, 0
+
+        def uleb():
+            nonlocal p
+            v = shift = 0
+            while True:
+                b = ops[p]
+                p += 1
+                v |= (b & 0x7F) << shift
+                shift += 7
+                if not b & 0x80:
+                    return v
+
+        def sleb():
+            nonlocal p
+            v = shift = 0
+            while True:
+                b = ops[p]
+                p += 1
+                v |= (b & 0x7F) << shift
+                shift += 7
+                if not b & 0x80:
+                    return v - (1 << shift) if b & 0x40 else v
+
+        def bind():
+            self._binds[segs[seg] + offset] = (sym, addend)
+
+        while p < len(ops):
+            b = ops[p]
+            p += 1
+            op, imm = b & 0xF0, b & 0x0F
+            if op == 0x00:  # DONE (lazy streams separate entries with DONE: keep going)
+                continue
+            elif op in (0x10, 0x30):  # SET_DYLIB_ORDINAL_IMM / _SPECIAL_IMM
+                pass
+            elif op == 0x20:  # SET_DYLIB_ORDINAL_ULEB
+                uleb()
+            elif op == 0x40:  # SET_SYMBOL_TRAILING_FLAGS_IMM
+                end = ops.index(b"\0", p)
+                sym = ops[p:end].decode("utf8", "replace")
+                p = end + 1
+            elif op == 0x50:  # SET_TYPE_IMM
+                pass
+            elif op == 0x60:  # SET_ADDEND_SLEB
+                addend = sleb()
+            elif op == 0x70:  # SET_SEGMENT_AND_OFFSET_ULEB
+                seg, offset = imm, uleb()
+            elif op == 0x80:  # ADD_ADDR_ULEB
+                offset = (offset + uleb()) & 0xFFFFFFFFFFFFFFFF
+            elif op == 0x90:  # DO_BIND
+                bind()
+                offset += 8
+            elif op == 0xA0:  # DO_BIND_ADD_ADDR_ULEB
+                bind()
+                offset += 8 + uleb()
+            elif op == 0xB0:  # DO_BIND_ADD_ADDR_IMM_SCALED
+                bind()
+                offset += 8 + imm * 8
+            elif op == 0xC0:  # DO_BIND_ULEB_TIMES_SKIPPING_ULEB
+                count, skip = uleb(), uleb()
+                for _ in range(count):
+                    bind()
+                    offset += 8 + skip
+            elif op == 0xD0:  # THREADED (chained binds of an older format): not supported
+                raise NotImplementedError("BIND_OPCODE_THREADED")
+            else:
+                raise ValueError("unknown bind opcode %#x" % b)
 
     @staticmethod
     def _untag(raw):

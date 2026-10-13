@@ -1,11 +1,11 @@
-__Z7rethrowi  lsda 0xb04  lpstart +0x0  5 call sites
+__Z7rethrowi  lsda base+0xb04  lpstart +0x0  5 call sites
   +0xe   .. +0x13  lp +0x1a  catch(__ZTISt9exception)
   +0x13  .. +0x4f  unwind
   +0x4f  .. +0x64  lp +0x66  cleanup
   +0x72  .. +0x77  lp +0x8d  catch(...)
   +0x77  .. +0x97  unwind
 
-__Z11throw_otheri  lsda 0xb2c  lpstart +0x0  6 call sites
+__Z11throw_otheri  lsda base+0xb2c  lpstart +0x0  6 call sites
   +0xe   .. +0x13  lp +0x1d  catch(__ZTIi)
   +0x13  .. +0x5c  unwind
   +0x5c  .. +0x65  lp +0xa9  cleanup
@@ -13,6 +13,6 @@ __Z11throw_otheri  lsda 0xb2c  lpstart +0x0  6 call sites
   +0x7d  .. +0xa7  lp +0xc5  cleanup
   +0xa7  .. +0x10f unwind
 
-__ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEC2B8ne200100EOS5_  lsda 0xb54  lpstart +0x0  2 call sites
+__ZNSt3__112basic_stringIcNS_11char_traitsIcEENS_9allocatorIcEEEC2B8ne200100EOS5_  lsda base+0xb54  lpstart +0x0  2 call sites
   +0x20  .. +0x29  lp +0xad  catch(...)
   +0x29  .. +0xb5  unwind

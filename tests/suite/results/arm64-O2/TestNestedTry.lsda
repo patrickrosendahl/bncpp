@@ -1,9 +1,9 @@
-__Z10nested_tryi  lsda 0x7ac  lpstart +0x0  4 call sites
+__Z10nested_tryi  lsda base+0x7ac  lpstart +0x0  4 call sites
   +0x10  .. +0x14  lp +0x24  catch(__ZTIi), catch(__ZTISt13runtime_error)
   +0x14  .. +0x50  unwind
   +0x50  .. +0x58  lp +0x68  catch(__ZTISt13runtime_error), cleanup, cleanup
   +0x58  .. +0xb0  unwind
 
-__Z11try_in_loopi  lsda 0x7d4  lpstart +0x0  2 call sites
+__Z11try_in_loopi  lsda base+0x7d4  lpstart +0x0  2 call sites
   +0x24  .. +0x2c  lp +0x40  catch(__ZTISt13runtime_error), cleanup, cleanup
   +0x2c  .. +0x74  unwind

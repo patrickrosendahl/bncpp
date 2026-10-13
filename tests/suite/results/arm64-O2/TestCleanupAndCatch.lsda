@@ -1,4 +1,4 @@
-__Z17cleanup_and_catchi  lsda 0x78c  lpstart +0x0  6 call sites
+__Z17cleanup_and_catchi  lsda base+0x78c  lpstart +0x0  6 call sites
   +0x0   .. +0x24  unwind
   +0x24  .. +0x34  lp +0x78  catch(__ZTISt13runtime_error), cleanup, cleanup
   +0x34  .. +0x3c  lp +0x64  catch(__ZTISt13runtime_error), cleanup, cleanup

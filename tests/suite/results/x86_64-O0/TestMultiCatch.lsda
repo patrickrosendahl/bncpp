@@ -1,4 +1,4 @@
-__Z15catch_two_typesi  lsda 0x880  lpstart +0x0  8 call sites
+__Z15catch_two_typesi  lsda base+0x880  lpstart +0x0  8 call sites
   +0xe   .. +0x13  lp +0x23  catch(__ZTISt13runtime_error), catch(__ZTIi)
   +0x13  .. +0x5b  unwind
   +0x5b  .. +0x69  lp +0xc7  cleanup
@@ -8,7 +8,7 @@ __Z15catch_two_typesi  lsda 0x880  lpstart +0x0  8 call sites
   +0xd3  .. +0xd8  lp +0xee  catch(...)
   +0xd8  .. +0xf6  unwind
 
-__Z22catch_base_and_derivedi  lsda 0x8c0  lpstart +0x0  8 call sites
+__Z22catch_base_and_derivedi  lsda base+0x8c0  lpstart +0x0  8 call sites
   +0xe   .. +0x13  lp +0x23  catch(__ZTISt16invalid_argument), catch(__ZTISt9exception)
   +0x13  .. +0x5b  unwind
   +0x5b  .. +0x60  lp +0xc3  cleanup
