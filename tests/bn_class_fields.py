@@ -4,12 +4,14 @@
 #   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_fields.py       # apply (in RAM), then save PATH
 #   options: --env BASELINE=F (as bn_class_types.py), --env NAMES=F (field names: lines 'label offset name [type]'),
 #            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only)
+# Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
+# the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
 # bncpp-22: constructors / destructors get 'X* this', then the class structs get their size, base subobjects and
 # fields (cpp/rtti_fields.py). A dry run plans with the accesses BN sees now (constructors still untyped, so
 # fewer fields); APPLY types the constructors first, re-analyses, then reads the accesses. Never over a user type,
 # a user-named member or a struct that is not ours (anything but vptr / field_* / NAMES members).
 # Review: .scratch/classes/<binary>.fields.review
-import importlib, os, re, time
+import importlib, json, os, re, time
 import binaryninja as _bn
 from binaryninja import (BaseStructure, FunctionParameter, MediumLevelILOperation as Op, NamedTypeReferenceClass,
                          QualifiedName, StructureBuilder, Type)
@@ -22,6 +24,7 @@ _rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
 _names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
 _fields = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_fields")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
+_bncache = importlib.import_module(_dev["pkgname"] + ".shared.bncache")
 _env = globals().get("env") or {}
 _apply = (_env.get("APPLY") or os.environ.get("APPLY")) == "1"
 _limit = int(_env.get("LIMIT") or 0) or None
@@ -30,7 +33,6 @@ if _apply and _limit:
 _t0 = time.time()
 _baseline = None
 if _env.get("BASELINE"):
-    import json
     with open(_env["BASELINE"]) as _fh:
         _baseline = json.load(_fh)
 _overrides = {}
@@ -40,6 +42,9 @@ if _env.get("NAMES"):
             _p = _line.split("#")[0].split(None, 3)
             if len(_p) >= 3:
                 _overrides[(_p[0], int(_p[1], 0))] = (_p[2], _p[3].strip() if len(_p) > 3 else None)
+_CTORS_VERSION = 1
+_name = os.path.basename(bv.file.original_filename)
+_name = _name[:-5] if _name.endswith(".bndb") else _name
 _OPERATOR_NEW = ("__Znwm", "__Znam", "__ZnwmRKSt9nothrow_t", "__ZnamRKSt9nothrow_t")
 _counts, _review = {}, []
 
@@ -137,28 +142,39 @@ def _new_uses(m, var, size, sites, seen):
 
 # 1. constructors / destructors (vptr stores on this) and sizes (operator new sites), per function: BN keeps the IL
 # of only analysis.limits.cacheSize (256) functions, so jumping between functions rebuilds it again and again
-_stores, _sites, _by_func = {}, [], {}
-for _a in list(_points) + list(_new_addrs):
-    for _r in bv.get_code_refs(_a):
-        _by_func.setdefault(_r.function.start, (_r.function, set()))[1].add(_r.address)
-_lap("1a code refs")
-for _f, _addrs in list(_by_func.values())[:_limit]:
-    _m = _f.mlil  # once per function: built anew on each call once evicted
-    if _m is None:
-        continue
-    _p0 = _f.parameter_vars[0] if len(_f.parameter_vars) else None
-    for _addr in sorted(_addrs):
-        for _mi in _mlil_at(_m, _addr):
-            _st = _store_site(_mi)
-            if _st is not None and _p0 is not None and _is_this(_m, _p0, _st[0], set()):
-                _c, _ott = _points[_st[2]]
-                _stores.setdefault(_f.start, []).append((_st[1], _c, _ott))
-            elif _mi.operation == Op.MLIL_CALL and _mi.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT) \
-                    and _mi.dest.constant in _new_addrs and _mi.output and _mi.params \
-                    and _mi.params[0].operation == Op.MLIL_CONST:
-                _new_uses(_m, _mi.output[0], _mi.params[0].constant, _sites, set())
-_lap("1b il")
-_count("functions scanned", len(_by_func))
+_cache_file = _bncache.Cache(bv)
+_cache = _cache_file.get("ctors", _CTORS_VERSION) if _limit is None else None
+if _cache is not None:
+    _stores = {int(k, 0): [tuple(x) for x in v] for k, v in _cache["stores"].items()}
+    _sites = [tuple(x) for x in _cache["sites"]]
+    _count("step 1 from cache")
+    _lap("1 cache")
+else:
+    _stores, _sites, _by_func = {}, [], {}
+    for _a in list(_points) + list(_new_addrs):
+        for _r in bv.get_code_refs(_a):
+            _by_func.setdefault(_r.function.start, (_r.function, set()))[1].add(_r.address)
+    _lap("1a code refs")
+    for _f, _addrs in list(_by_func.values())[:_limit]:
+        _m = _f.mlil  # once per function: built anew on each call once evicted
+        if _m is None:
+            continue
+        _p0 = _f.parameter_vars[0] if len(_f.parameter_vars) else None
+        for _addr in sorted(_addrs):
+            for _mi in _mlil_at(_m, _addr):
+                _st = _store_site(_mi)
+                if _st is not None and _p0 is not None and _is_this(_m, _p0, _st[0], set()):
+                    _c, _ott = _points[_st[2]]
+                    _stores.setdefault(_f.start, []).append((_st[1], _c, _ott))
+                elif _mi.operation == Op.MLIL_CALL and _mi.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT) \
+                        and _mi.dest.constant in _new_addrs and _mi.output and _mi.params \
+                        and _mi.params[0].operation == Op.MLIL_CONST:
+                    _new_uses(_m, _mi.output[0], _mi.params[0].constant, _sites, set())
+    _lap("1b il")
+    _count("functions scanned", len(_by_func))
+    if _limit is None:
+        _cache_file.put("ctors", _CTORS_VERSION, {"sites": _sites,
+                                                  "stores": {"%#x" % k: v for k, v in sorted(_stores.items())}})
 _ctors = _fields.ctor_classes(_types, _stores)
 _sizes = _fields.class_sizes(_sites, _ctors)
 _virtual = set(s for t in _types.values() for vt in t.vtables for s in vt.slots if isinstance(s, int))
@@ -238,8 +254,6 @@ if _apply and _defs:
     bv.update_analysis_and_wait()
 
 _lap("4 structs")
-_name = os.path.basename(bv.file.original_filename)
-_name = _name[:-5] if _name.endswith(".bndb") else _name
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w") as _fh:
