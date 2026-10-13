@@ -6,7 +6,8 @@
   vtable      [offset_to_top (0 primary, < 0 secondary)][typeinfo] -> address point: virtual function slots
 
 The vptr of a typeinfo is a bind to the C++ runtime. With classic dyld info the file holds only the bind's
-addend (0x10) there, and Binary Ninja 6.1 keeps no relocation for binds with an addend (bncpp-21) -- so where
+addend (0x10) there, and Binary Ninja 6.1 drops a bind whose symbol is missing from the nlist (it resolves binds
+through the symbol table, not the bind info; an obfuscator hashed those names in SynthV -- bncpp-25) -- so where
 the image has no bound symbol for the vptr, the kind is recognised from the layout: vptr word 0x10, a name
 pointer to a string, used (pointed at from data, or from code where the image knows code references), si if
 the next word points at another typeinfo, vmi if it is a small flags/count pair followed by that many bases;

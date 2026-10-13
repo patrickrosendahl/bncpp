@@ -17,7 +17,7 @@ _IMPORTS = (SymbolType.ImportAddressSymbol, SymbolType.ImportedDataSymbol, Symbo
 
 
 class BNImage:
-    lost_binds = True  # BN 6.1 keeps no relocation for Mach-O binds with an addend, and loses some others (bncpp-25)
+    lost_binds = True  # BN 6.1 resolves Mach-O binds through the nlist names: renamed / missing ones are dropped (bncpp-25)
 
     def __init__(self, bv):
         self.bv = bv
@@ -72,8 +72,8 @@ class BNImage:
         return out
 
     def bound_symbols(self):
-        """{slot: raw symbol name} of the relocations BN keeps with a symbol (binds; BN 6.1 drops binds that
-        carry an addend -- see cpp/rtti.py)"""
+        """{slot: raw symbol name} of the relocations BN keeps with a symbol (binds; BN 6.1 drops binds whose
+        symbol is missing from the nlist, e.g. hashed by an obfuscator -- see cpp/rtti.py, bncpp-25)"""
         if self._bound is None:
             self._bound = {}
             for start, _end in self.bv.relocation_ranges:

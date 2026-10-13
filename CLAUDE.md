@@ -28,6 +28,12 @@ python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/r
 python3 tests/suite/suite.py accept TestX…             # reviewed output -> reference
 python3 tests/suite/suite.py ref-lsda                  # offline reference decode -> .scratch/suite/ref/
 python3 tests/suite/suite.py crosscheck [--diff]       # BN .lsda vs offline, names masked (exit 1: structure)
+# classes (wiki classes.md): scan, names, types -- dry runs write .scratch/classes/<bin>.{names,types}.review
+$B --bndb BIN --timeout 300 tests/bn_class_scan.py     # -> .scratch/classes/<bin>.bn.classes
+python3 -I tests/ref_class_scan.py BIN --compare .scratch/classes/<bin>.bn.classes   # vs the file (exit 1: structure)
+$B --bndb DB --timeout 600 [--env APPLY=1] tests/bn_class_apply.py          # names (R:/D:/C: directives)
+$B --bndb DB --timeout 1800 --env BASELINE=F [--env APPLY=1] tests/bn_class_types.py   # structs + 'X* this'
+$B --bndb DB --timeout 900 tests/bn_vcall_count.py     # HLIL indirect / named vptr calls (a sample)
 ```
 Details and the suite layout (Fernflower style): wiki `testing.md`.
 
@@ -59,8 +65,12 @@ relative links into the sibling repos.
 - **Binary Ninja is the source of truth** for everything format-specific (sections, symbols, imports, its
   native RTTI results): decoders read through `cpp/bnimage.py`. Own file parsers (`cpp/macho.py`,
   `tests/ref_*.py`, `suite.py ref-lsda`) are reference only -- cross-checks and bug-report evidence.
-- `sample/synthv/` (git-ignored): scratch copy of the Synthesizer V slices + synVbasic's `.bndb` (2026-10-13).
-  Break it freely; findings go to the synVbasic session as messages. Commercial binary -- never commit.
+- `sample/synthv/` (git-ignored): scratch copy of the Synthesizer V slices + synVbasic's `.bndb` (state in its
+  `PROVENANCE.txt`). Break it freely; findings go to the synVbasic session (`synthv`) as messages. Commercial
+  binary -- never commit.
+- **The BN app is shared** (synthv, binary-jvm): warn before heavy runs; one handle per `.bndb` -- another
+  session's database changes only through its own lane (dry run + review files first, then they run it);
+  `--bndb-save` / `--bndb-close` only with a PATH.
 - External documentation (ABI specs, LSDA format, MSVC EH) is linked or attached on wiki `references.md`.
 - Ask before restarting Binary Ninja.
 
