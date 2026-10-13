@@ -76,18 +76,10 @@ def _is_dtor_pair(call_targets, d1, d0):
     return deletes0 >= 1 and (d1 in c0 or deletes0 == deletes1 + 1)
 
 
-def directives(types, demangle=None, call_targets=None):
-    """[(kind, addr, text)] -- R / D / C directives for the annotate lane, sorted by address"""
-    lab = labels(types, demangle)
-    out = []
-    # data symbols
-    for addr, t in types.items():
-        out.append(("D", addr, "typeinfo_for_" + lab[addr]))
-        for vt in t.vtables:
-            out.append(("D", vt.addr - 16, "vtable_for_" + lab[addr] + (
-                "" if vt.offset_to_top == 0 else "_at_%d" % -vt.offset_to_top)))
-    # who has each function: [(class, index)] over primary vtables
-    users = {}
+def owners(types, call_targets=None):
+    """{function address: (owner typeinfo, index, role)} for the functions in primary vtables, role "dtor" /
+    "deleting" / "vfunc"; a function in the vtables of unrelated classes maps to None"""
+    users = {}  # function -> [(class, index)] over primary vtables
     for addr, t in types.items():
         for vt in t.vtables:
             if vt.offset_to_top != 0:
@@ -100,23 +92,50 @@ def directives(types, demangle=None, call_targets=None):
         prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
         if prim and len(prim[0].slots) >= 2 and _is_dtor_pair(call_targets, prim[0].slots[0], prim[0].slots[1]):
             dtor_pairs.add(addr)
-    for f, us in sorted(users.items()):
+    out = {}
+    for f, us in users.items():
         classes = set(c for c, _i in us)
-        owner = None
-        for c, i in us:  # the class all others derive from (or are)
+        out[f] = None
+        for c, i in sorted(us):  # the class all others derive from (or are)
             if all(o == c or c in _ancestors(types, o) for o in classes):
-                owner = (c, i)
+                role = ("dtor", "deleting")[i] if c in dtor_pairs and i in (0, 1) else "vfunc"
+                out[f] = (c, i, role)
                 break
-        if owner is None:
+    return out, users
+
+
+def directives(types, demangle=None, call_targets=None):
+    """[(kind, addr, text)] -- R / D / C directives for the annotate lane, sorted by address"""
+    lab = labels(types, demangle)
+    out = []
+    # data symbols
+    for addr, t in types.items():
+        out.append(("D", addr, "typeinfo_for_" + lab[addr]))
+        for vt in t.vtables:
+            out.append(("D", vt.addr - 16, "vtable_for_" + lab[addr] + (
+                "" if vt.offset_to_top == 0 else "_at_%d" % -vt.offset_to_top)))
+    own, users = owners(types, call_targets)
+    for f, o in sorted(own.items()):
+        if o is None:
+            us = sorted(users[f])
             out.append(("C", f, "virtual in unrelated classes: " + ", ".join(
-                "%s[%d]" % (lab[c], i) for c, i in sorted(us)[:6]) + (" ..." if len(us) > 6 else "")))
+                "%s[%d]" % (lab[c], i) for c, i in us[:6]) + (" ..." if len(us) > 6 else "")))
             continue
-        c, i = owner
-        name = lab[c]
-        short = name.rsplit("::", 1)[-1].split("<", 1)[0]
-        if c in dtor_pairs and i in (0, 1):
-            out.append(("R", f, "%s::~%s%s" % (name, short, "" if i == 0 else " [deleting]")))
-        else:
-            out.append(("R", f, "%s::vfunc%d" % (name, i)))
+        c, i, role = o
+        out.append(("R", f, function_name(lab[c], i, role)))
     out.sort(key=lambda d: (d[1], d[0]))
     return out
+
+
+def function_name(label, index, role):
+    short = label.rsplit("::", 1)[-1].split("<", 1)[0]
+    if role == "dtor":
+        return "%s::~%s" % (label, short)
+    if role == "deleting":
+        return "%s::~%s [deleting]" % (label, short)
+    return "%s::vfunc%d" % (label, index)
+
+
+def member_name(index, role):
+    """the vtable struct member of a slot (an identifier)"""
+    return {"dtor": "dtor", "deleting": "deleting_dtor"}.get(role, "vfunc%d" % index)

@@ -1,0 +1,53 @@
+"""Types for what cpp/rtti.py recovered (bncpp-27): a struct per class, its vtable as a struct, and 'this' on the
+functions of the primary vtables.
+
+  class X      struct X { X::VTable* vptr; }  -- members past the vptr are bncpp-22's
+  X::VTable    one function pointer per slot of X's primary vtable (laid out from the address point), named by
+               the slot's role in its owner (cpp/rtti_names.owners): dtor, deleting_dtor, vfuncN -- an inherited
+               slot keeps its base's member name; pure / imported slots are pureN / importN
+  functions    each primary-vtable function with an owner gets 'Owner* this' as its first parameter;
+               destructors return void (Itanium on x86_64 / arm64). Functions in the vtables of unrelated classes
+               (no owner) and secondary vtables (an adjusted 'this') are left alone.
+
+Pure Python, no Binary Ninja import: the plan is data; tests/bn_class_types.py builds the BN types from it.
+"""
+from . import rtti_names
+
+
+class ClassPlan:
+    __slots__ = ("typeinfo", "name", "vtable_name", "vtable_addr", "members")
+
+    def __init__(self, typeinfo, name, vtable_addr, members):
+        self.typeinfo = typeinfo
+        self.name = name                    # the class label (struct name)
+        self.vtable_name = name + "::VTable"
+        self.vtable_addr = vtable_addr      # address point of the primary vtable
+        self.members = members              # [(member name, slot)], slot = function address | "pure" | import
+
+
+def plan(types, demangle=None, call_targets=None):
+    """([ClassPlan] for every class with a primary vtable, {function: (class label, role)})"""
+    lab = rtti_names.labels(types, demangle)
+    own, _users = rtti_names.owners(types, call_targets)
+    classes = []
+    for addr in sorted(types):
+        t = types[addr]
+        prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
+        if not prim:
+            continue
+        members, seen = [], set()
+        for i, s in enumerate(prim[0].slots):
+            if isinstance(s, int):
+                o = own.get(s)
+                name = rtti_names.member_name(o[1], o[2]) if o is not None else "vfunc%d" % i
+            elif s == "pure":
+                name = "pure%d" % i
+            else:
+                name = "import%d" % i
+            if name in seen:
+                name = "%s_%d" % (name, i)
+            seen.add(name)
+            members.append((name, s))
+        classes.append(ClassPlan(addr, lab[addr], prim[0].addr, members))
+    functions = {f: (lab[o[0]], o[2]) for f, o in own.items() if o is not None}
+    return classes, functions
