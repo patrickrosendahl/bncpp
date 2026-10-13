@@ -160,6 +160,15 @@ class MachO:
     def symbol_name(self, addr):
         return self.symbols.get(addr)
 
+    def data_sections(self):
+        """[(name, start, end)] of the file-backed sections of the writable data segments"""
+        return [(s.name, s.addr, s.addr + s.size) for s in self.sections
+                if s.segname.startswith("__DATA") and s.offset and s.size]
+
+    def bound_symbols(self):
+        """{slot address: symbol name} of every classic dyld bind (bind, weak, lazy; addends ignored)"""
+        return {slot: sym for slot, (sym, _addend) in self.binds.items()}
+
     def symbol_at(self, addr):
         """(start, name) of the nearest defined symbol at or below addr"""
         best = None
@@ -224,7 +233,7 @@ class MachO:
                     return v - (1 << shift) if b & 0x40 else v
 
         def bind():
-            self._binds[segs[seg] + offset] = (sym, addend)
+            self._binds[(segs[seg] + offset) & 0xFFFFFFFFFFFFFFFF] = (sym, addend)
 
         while p < len(ops):
             b = ops[p]

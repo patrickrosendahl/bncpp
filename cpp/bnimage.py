@@ -7,17 +7,22 @@ offline reference (cross-checks, bug reports), never as the product.
   read(addr, n) -> bytes            section_range(name) -> (start, end) | None
   section_range_at(addr) -> (start, end) | None        segment_start(addr) -> int
   pointer_target(slot) -> name | address               symbol_name(addr) -> name | None
+  data_sections() -> [(name, start, end)]              bound_symbols() -> {slot: raw symbol name}
+  has_code_refs(addr) -> bool (optional: images that know code references)
 """
-from binaryninja import SymbolType
+from binaryninja import SectionSemantics, SymbolType
 
 _IMPORTS = (SymbolType.ImportAddressSymbol, SymbolType.ImportedDataSymbol, SymbolType.ImportedFunctionSymbol,
             SymbolType.ExternalSymbol)
 
 
 class BNImage:
+    lost_binds = True  # BN 6.1 keeps no relocation for Mach-O binds with an addend, and loses some others (bncpp-25)
+
     def __init__(self, bv):
         self.bv = bv
         self._sections = {}  # start -> (end, bytes): each section is read from BN once, then sliced here
+        self._bound = None
 
     def read(self, addr, n):
         secs = self.bv.get_sections_at(addr)
@@ -55,3 +60,28 @@ class BNImage:
             return f.symbol.full_name
         s = self.bv.get_symbol_at(addr)
         return s.full_name if s is not None else None
+
+    def data_sections(self):
+        """[(name, start, end)] of the sections in writable segments (not BN's synthetic .extern etc.)"""
+        out = []
+        for s in sorted(self.bv.sections.values(), key=lambda s: s.start):
+            seg = self.bv.get_segment_at(s.start)
+            if seg is not None and seg.writable and seg.data_length and \
+                    s.semantics != SectionSemantics.ExternalSectionSemantics:
+                out.append((s.name, s.start, s.end))
+        return out
+
+    def bound_symbols(self):
+        """{slot: raw symbol name} of the relocations BN keeps with a symbol (binds; BN 6.1 drops binds that
+        carry an addend -- see cpp/rtti.py)"""
+        if self._bound is None:
+            self._bound = {}
+            for start, _end in self.bv.relocation_ranges:
+                for r in self.bv.relocations_at(start):
+                    sym = r.symbol
+                    if sym is not None:
+                        self._bound[start] = sym.raw_name
+        return self._bound
+
+    def has_code_refs(self, addr):
+        return any(True for _ in self.bv.get_code_refs(addr))
