@@ -35,4 +35,6 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
 - `f.has_user_type` can be True for every function of a `.bndb` (synVbasic's), though nobody set types: protect
   only types that differ from BN's fresh inference (`bn_class_types.py` `BASELINE` / `DUMP_TYPES`).
 - A named type reference (a data var's type) has no `.members`: resolve it (`bv.get_type_by_name`).
+- `C:` comments inside a function are function-level (`f.get_comment_at(addr)`), as in the bridge's annotate.py;
+  `bv.get_comment_at` / `bv.address_comments` / `f.comment` don't see them -- verify with the right one.
 - In shell heredocs that carry Markdown, quote the delimiter (`<<'EOF'`) -- or the backticks run as commands.
