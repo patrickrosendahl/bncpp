@@ -54,6 +54,11 @@ relative links into the sibling repos.
 - Measure first; one commit per ticket, with the before/after numbers in a ticket comment; finished tickets go
   to RESOLVED with a verification comment (no reviewer).
 - Never lose code: a rendering failure prints the original HLIL as a comment (`emit_error`).
+- **Binary Ninja is the source of truth** for everything format-specific (sections, symbols, imports, its
+  native RTTI results): decoders read through `cpp/bnimage.py`. Own file parsers (`cpp/macho.py`,
+  `tests/ref_*.py`, for now also `suite.py lsda`) are reference only -- cross-checks and bug-report evidence.
+- `sample/synthv/` (git-ignored): scratch copy of the Synthesizer V slices + synVbasic's `.bndb` (2026-10-13).
+  Break it freely; findings go to the synVbasic session as messages. Commercial binary -- never commit.
 - External documentation (ABI specs, LSDA format, MSVC EH) is linked or attached on wiki `references.md`.
 - Ask before restarting Binary Ninja.
 
