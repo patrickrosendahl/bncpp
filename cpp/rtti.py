@@ -50,8 +50,11 @@ class TypeInfo:
         n = self.name
         if not n:
             return "none"
-        bare = n.replace("_", "")
-        return "hash" if len(bare) >= 16 and set(bare) <= _HEX else "mangled"
+        if not set(n.replace("_", "")) <= _HEX:
+            return "mangled"
+        # all hex: a hash, unless it is exactly a length-prefixed source name ("3abc" = class abc)
+        digits = len(n) - len(n.lstrip("0123456789"))
+        return "mangled" if digits and n[0] != "0" and int(n[:digits]) == len(n) - digits else "hash"
 
     def __repr__(self):
         return "TypeInfo(%#x %s %r, %d vtables)" % (self.addr, self.kind, self.name, len(self.vtables))
