@@ -20,37 +20,10 @@ _env = globals().get("env") or {}
 _apply = (_env.get("APPLY") or os.environ.get("APPLY")) == "1"
 
 _t0 = time.time()
-
-
-def _demangle(mangled):
-    try:
-        _ty, parts = _bn.demangle_gnu3(bv.arch, mangled)
-    except Exception:
-        return None
-    return str(_bn.types.QualifiedName(parts)) if parts else None
-
-
-def _call_targets(addr):
-    """per call site: a local function's address, or an import's raw name"""
-    f = bv.get_function_at(addr)
-    if f is None:
-        return None
-    out = []
-    for site in f.call_sites:
-        for t in bv.get_callees(site.address, f, site.arch):
-            s = bv.get_symbol_at(t)
-            out.append(s.raw_name if s is not None and s.type in _bnimage._IMPORTS else t)
-    return out
-
-
-def _symbol_at(addr):
-    s = bv.get_symbol_at(addr)
-    return (s.full_name, not s.auto) if s is not None else None
-
-
-_types = _rtti.scan(_bnimage.BNImage(bv))
-_overrides = _names.label_overrides(_types, _symbol_at)  # classes someone named through their vtable symbol
-_dirs = _names.directives(_types, _demangle, _call_targets, _overrides)
+_img = _bnimage.BNImage(bv)
+_types = _rtti.scan(_img)
+_overrides = _names.label_overrides(_types, _img.symbol_at)  # classes someone named through their vtable symbol
+_dirs = _names.directives(_types, _img.demangle, _img.call_targets, _overrides)
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _out = os.path.join(REPO, ".scratch/classes/%s.directives" % _name)

@@ -5,7 +5,7 @@ dylib (bin/<variant>/TestX.dylib, committed). The Pseudo Cpp output of each is c
 reference (results/<variant>/TestX.pcpp, the counterpart of Fernflower's testData/results/TestX.dec). When a
 change improves the output, review the diff and accept it as the new reference.
 
-  python3 tests/suite/suite.py build                     # clang++ every registered test for every variant
+  python3 tests/suite/suite.py build [TestX ...]         # clang++ every (or the named) test for every variant
   bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
   python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
@@ -13,8 +13,9 @@ change improves the output, review the diff and accept it as the new reference.
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
 
-Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view) and .lsda (the decoded
-exception tables, cpp/lsda.py on cpp/bnimage.py). .pc is Pseudo C of the same functions (BN's own output, for
+Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view), .lsda (the decoded
+exception tables, cpp/lsda.py on cpp/bnimage.py) and .classes (the class scan, cpp/rtti.py, with the names
+cpp/rtti_names.py gives). .pc is Pseudo C of the same functions (BN's own output, for
 comparison; not checked). ref-lsda decodes the same tables from the files themselves (cpp/macho.py, reference
 only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
 and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
@@ -48,26 +49,49 @@ TESTS = [
     "TestIncrement",
     "TestLoopConditions",
     "TestSwitch",
+    # classes: RTTI and vtables (.classes; cpp/rtti.py), one source in four builds
+    "TestVirtual",               # classic dyld info
+    "TestVirtualChained",        # chained fixups
+    "TestVirtualHashed",         # classic, undefined nlist names hashed like SynthV's (BN drops binds, bncpp-25)
+    "TestVirtualChainedHashed",  # chained, nlist hashed
 ]
+
+# tests built differently from src/TestX.cpp with -undefined dynamic_lookup: name -> (source, link flags, hash
+# the undefined nlist names?). Hashing keeps the dyld info intact (the dylib stays valid), like an obfuscator.
+BUILDS = {
+    "TestVirtual": ("TestVirtual", ["-Wl,-no_fixup_chains"], False),
+    "TestVirtualChained": ("TestVirtual", ["-Wl,-fixup_chains"], False),
+    "TestVirtualHashed": ("TestVirtual", ["-Wl,-no_fixup_chains"], True),
+    "TestVirtualChainedHashed": ("TestVirtual", ["-Wl,-fixup_chains"], True),
+}
+RENAME_NLIST = os.path.join(REPO, "tests", "repro_nlist_binds", "rename_nlist.py")
 
 
 def variant_name(arch, opt):
     return "%s-O%d" % (arch, opt)
 
 
-def build():
+def build(names):
     for arch, opt in VARIANTS:
         out = os.path.join(BIN, variant_name(arch, opt))
         os.makedirs(out, exist_ok=True)
-        for t in TESTS:
+        for t in names:
             # helpers from TestTryCatch stay undefined in the other dylibs (imports, like calls to other classes)
-            subprocess.run(["clang++", "-arch", arch, "-std=c++17", "-O%d" % opt, "-fexceptions", "-dynamiclib",
-                            "-undefined", "dynamic_lookup", "-install_name", "@rpath/%s.dylib" % t,
-                            "-o", os.path.join(out, t + ".dylib"), os.path.join(SRC, t + ".cpp")], check=True)
-    print("built %d tests x %d variants into %s" % (len(TESTS), len(VARIANTS), BIN))
+            src, flags, hashed = BUILDS.get(t, (t, ["-undefined", "dynamic_lookup"], False))
+            dylib = os.path.join(out, t + ".dylib")
+            subprocess.run(["clang++", "-arch", arch, "-std=c++17", "-O%d" % opt, "-fexceptions", "-dynamiclib"]
+                           + flags + ["-install_name", "@rpath/%s.dylib" % t, "-o", dylib,
+                                      os.path.join(SRC, src + ".cpp")], check=True)
+            if hashed:
+                undefined = subprocess.run(["nm", "-u", dylib], capture_output=True, text=True,
+                                           check=True).stdout.split()
+                subprocess.run([sys.executable, "-I", RENAME_NLIST, dylib, dylib] + undefined, check=True,
+                               stdout=subprocess.DEVNULL)
+                subprocess.run(["codesign", "-f", "-s", "-", dylib], check=True, stderr=subprocess.DEVNULL)
+    print("built %d tests x %d variants into %s" % (len(names), len(VARIANTS), BIN))
 
 
-CHECKED = ("pcpp", "lsda")  # output kinds compared against a reference
+CHECKED = ("pcpp", "lsda", "classes")  # output kinds compared against a reference
 
 
 def pairs(names):
@@ -173,7 +197,7 @@ def main(argv):
     if unknown:
         sys.exit("not registered: %s" % ", ".join(unknown))
     if cmd == "build":
-        build()
+        build(names or TESTS)
     elif cmd == "ref-lsda":
         ref_lsda()
     elif cmd == "crosscheck":

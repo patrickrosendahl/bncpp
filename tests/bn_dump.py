@@ -1,12 +1,15 @@
 # Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
 #   bnrun --parallel --timeout 600 tests/bn_dump.py
 #   bnrun --parallel --timeout 300 --env DUMP_KINDS=lsda tests/bn_dump.py   # only some kinds (comma list)
+#   bnrun --parallel --timeout 300 --env DUMP_TESTS=TestVirtual tests/bn_dump.py   # only test names starting so
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view and writes into
 # .scratch/suite/out/<variant>/TestX.*:
 #   .pcpp  each function in __text / .text in the latest dev-loaded Pseudo Cpp (checked by tests/suite/suite.py)
 #   .pc    the same functions in Pseudo C (for comparison)
 #   .lsda  the decoded exception tables, read through BN (cpp/bnimage.py; checked, and cross-checked against
 #          the offline reference of `suite.py ref-lsda`)
+#   .classes  the class scan (cpp/rtti.py through cpp/bnimage.py) with BN's names of the slot functions, then
+#          the names cpp/rtti_names.py gives (checked)
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import glob, importlib, os
 import binaryninja as _bn
@@ -19,11 +22,16 @@ _pc = _dev["pseudo_cpp"]
 _lang = _dev["LANGUAGE_NAME"]
 _lsda = importlib.import_module(_dev["pkgname"] + ".cpp.lsda")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
-_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda"
+_rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
+_rtti_names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
+_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda,classes"
 _kinds = [k.strip() for k in _kinds_arg.split(",") if k.strip()]
-if set(_kinds) - {"pc", "pcpp", "lsda"}:
+if set(_kinds) - {"pc", "pcpp", "lsda", "classes"}:
     raise ValueError("DUMP_KINDS: unknown kind in %r" % _kinds_arg)
 _bins = globals().get("DUMP_BINARIES") or sorted(glob.glob(os.path.join(REPO, "tests/suite/bin/*/*.dylib")))
+_only = (globals().get("env") or {}).get("DUMP_TESTS") or os.environ.get("DUMP_TESTS")
+if _only:
+    _bins = [b for b in _bins if any(os.path.basename(b).startswith(p) for p in _only.split(","))]
 _out = os.path.join(REPO, ".scratch/suite/out")
 
 
@@ -40,6 +48,18 @@ def _dump_lsda(bv):
     for start, table in sorted(_lsda.parse_all(img).items()):
         lines += _lsda.format_lsda(table, img.symbol_name(start), img.segment_start(start)) + [""]
     return lines[:-1] if lines else ["no LSDA"]  # tables separated by an empty line
+
+
+def _dump_classes(bv):
+    img = _bnimage.BNImage(bv)
+    types = _rtti.scan(img)
+    if not types:
+        return ["no typeinfo"]
+    lines = _rtti.format_scan(types, img.symbol_name) + ["", "names (cpp/rtti_names.py; now: BN's name)"]
+    for kind, addr, text in _rtti_names.directives(types, img.demangle, img.call_targets):
+        now = img.symbol_name(addr) if kind != "C" else None
+        lines.append("%s %#x %s%s" % (kind, addr, text, "   [now: %s]" % now if now and now != text else ""))
+    return lines
 
 
 _ok = 0
@@ -62,6 +82,8 @@ for _path in _bins:
                     _texts[_key].append("")
         if "lsda" in _kinds:
             _texts["lsda"] = _dump_lsda(_bv)
+        if "classes" in _kinds:
+            _texts["classes"] = _dump_classes(_bv)
         _dir = os.path.join(_out, _variant)
         os.makedirs(_dir, exist_ok=True)
         _base = os.path.splitext(os.path.basename(_path))[0]

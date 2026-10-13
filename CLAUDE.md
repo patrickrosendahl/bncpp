@@ -23,7 +23,8 @@ python3 tests/suite/suite.py build                     # tests/suite/src/TestX.c
 B=/Users/patrick/dev/bn-script-bridge/bnrun
 $B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp devN" (BN can't unregister)
 $B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc,lsda}
-                                                       #   only some: --env DUMP_KINDS=lsda (comma list)
+                                                       #   only some: --env DUMP_KINDS=lsda (comma list),
+                                                       #   --env DUMP_TESTS=TestVirtual (name prefixes)
 python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)
 python3 tests/suite/suite.py accept TestX…             # reviewed output -> reference
 python3 tests/suite/suite.py ref-lsda                  # offline reference decode -> .scratch/suite/ref/

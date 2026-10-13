@@ -7,9 +7,18 @@ as annotate directives (the bnrun bridge's annotate lane: R:ADDR:NAME function, 
               class's identity
   functions   a slot function is named after the most-base class that has it in a primary vtable, at its index
               there: Owner::vfuncN; Owner::~Owner and Owner::~Owner [deleting] for slots 0 / 1 when the code shows
-              a destructor pair (slot 1 calls slot 0 and operator delete, or deletes once more than slot 0).
+              a destructor pair (slot 1 calls slot 0 and operator delete, or deletes once more than slot 0) in
+              the class or in one along its primary-base chain (a primary base's slots are a prefix of the
+              derived class's: an abstract class's deleting destructor is a trap, its derived ones show the pair).
               A function in the vtables of unrelated classes (identical code folding) only gets a comment.
-  data        vtable_for_<label> at the vtable's start (offset_to_top), typeinfo_for_<label> at the typeinfo
+  thunks      a function only in secondary vtables (none in a primary one) adjusts 'this' for a base subobject:
+              slot i of Class's vtable for Base at +16 is Class::~Class [thunk] / [deleting] [thunk] where Base's
+              slots 0 / 1 are destructors, else its target's name + ' [thunk]' where the code only forwards to one
+              function of this image, else Class::vfuncI_at_16 [thunk] (optimised thunks inline the body). A
+              comment names the subobject (Class's Base at +16) and the forwarding target.
+  data        vtable_for_<label> at the vtable's offset_to_top word (the start, unless the class has virtual
+              bases: their offsets come before it), typeinfo_for_<label> at the typeinfo; a construction vtable
+              is construction_vtable_for_<base>_in_<label>
 
 Pure Python, no Binary Ninja import. Hooks: demangle(mangled) -> str | None; call_targets(addr) -> [name or
 address per call site] | None (None: the function is unknown, no destructor evidence).
@@ -24,7 +33,7 @@ def label_overrides(types, symbol_at):
     user-defined?) | None"""
     out = {}
     for addr, t in types.items():
-        prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
+        prim = [vt for vt in t.vtables if vt.primary]
         s = symbol_at(prim[0].addr - 16) if prim else None
         if s is not None and s[1] and s[0].startswith("vtable_") and not s[0].startswith("vtable_for_"):
             out[addr] = s[0][len("vtable_"):]
@@ -94,22 +103,48 @@ def _is_dtor_pair(call_targets, d1, d0):
     return deletes0 >= 1 and (d1 in c0 or deletes0 == deletes1 + 1)
 
 
+def _primary_base(t):
+    """the base sharing the class's primary vtable: the si base, or a vmi non-virtual base at offset 0"""
+    if t.kind == "si" and t.bases and isinstance(t.bases[0][0], int):
+        return t.bases[0][0]
+    for b, of in t.bases:
+        if t.kind == "vmi" and isinstance(b, int) and of is not None and not of & 1 and of >> 8 == 0:
+            return b
+    return None
+
+
+def dtor_classes(types, call_targets=None):
+    """the classes whose primary vtable starts with a destructor pair: shown by its code (_is_dtor_pair) in the
+    class or in one along its primary-base chain, up or down"""
+    def prim(t):
+        p = [vt for vt in t.vtables if vt.primary]
+        return p[0] if p and len(p[0].slots) >= 2 else None
+
+    shown = set(a for a, t in types.items() if prim(t) and _is_dtor_pair(call_targets, *prim(t).slots[:2]))
+    root = {}  # class -> the top of its primary-base chain
+
+    def top(a):
+        if a not in root:
+            b = _primary_base(types[a])
+            root[a] = top(b) if b in types and b != a else a
+        return root[a]
+
+    groups = set(top(a) for a in shown)
+    return set(a for a, t in types.items() if prim(t) and top(a) in groups)
+
+
 def owners(types, call_targets=None):
     """{function address: (owner typeinfo, index, role)} for the functions in primary vtables, role "dtor" /
     "deleting" / "vfunc"; a function in the vtables of unrelated classes maps to None"""
     users = {}  # function -> [(class, index)] over primary vtables
     for addr, t in types.items():
         for vt in t.vtables:
-            if vt.offset_to_top != 0:
+            if not vt.primary:
                 continue
             for i, s in enumerate(vt.slots):
                 if isinstance(s, int):
                     users.setdefault(s, []).append((addr, i))
-    dtor_pairs = set()
-    for addr, t in types.items():
-        prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
-        if prim and len(prim[0].slots) >= 2 and _is_dtor_pair(call_targets, prim[0].slots[0], prim[0].slots[1]):
-            dtor_pairs.add(addr)
+    dtor_pairs = dtor_classes(types, call_targets)
     out = {}
     for f, us in users.items():
         classes = set(c for c, _i in us)
@@ -122,6 +157,31 @@ def owners(types, call_targets=None):
     return out, users
 
 
+def thunks(types, own, call_targets):
+    """{function: (class typeinfo, subobject offset, slot index, forwarding target or None)} for the functions in
+    secondary vtables that are in no primary one: this-adjusting thunks (the first vtable that has it)"""
+    out = {}
+    for addr in sorted(types):
+        for vt in types[addr].vtables:
+            if not vt.secondary:
+                continue
+            for i, s in enumerate(vt.slots):
+                if not isinstance(s, int) or s in own or s in out:
+                    continue
+                calls = (call_targets(s) if call_targets is not None else None) or []
+                local = [c for c in calls if isinstance(c, int)]
+                out[s] = (addr, -vt.offset_to_top, i, local[0] if len(local) == 1 == len(calls) else None)
+    return out
+
+
+def _subobject(types, addr, offset):
+    """the non-virtual base of the class at addr that sits at offset (vmi offset_flags), else None"""
+    for b, of in types[addr].bases:
+        if isinstance(b, int) and of is not None and not of & 1 and of >> 8 == offset and b in types:
+            return b
+    return None
+
+
 def directives(types, demangle=None, call_targets=None, overrides=None):
     """[(kind, addr, text)] -- R / D / C directives for the annotate lane, sorted by address"""
     lab = labels(types, demangle, overrides)
@@ -130,8 +190,9 @@ def directives(types, demangle=None, call_targets=None, overrides=None):
     for addr, t in types.items():
         out.append(("D", addr, "typeinfo_for_" + lab[addr]))
         for vt in t.vtables:
-            out.append(("D", vt.addr - 16, "vtable_for_" + lab[addr] + (
-                "" if vt.offset_to_top == 0 else "_at_%d" % -vt.offset_to_top)))
+            name = "vtable_for_" + lab[addr] if vt.construction_for is None else \
+                "construction_vtable_for_%s_in_%s" % (lab[addr], lab.get(vt.construction_for, "?"))
+            out.append(("D", vt.addr - 16, name + ("" if vt.offset_to_top == 0 else "_at_%d" % -vt.offset_to_top)))
     own, users = owners(types, call_targets)
     for f, o in sorted(own.items()):
         if o is None:
@@ -141,6 +202,19 @@ def directives(types, demangle=None, call_targets=None, overrides=None):
             continue
         c, i, role = o
         out.append(("R", f, function_name(lab[c], i, role)))
+    dtors = dtor_classes(types, call_targets)
+    for f, (c, offset, i, target) in sorted(thunks(types, own, call_targets).items()):
+        base = _subobject(types, c, offset)
+        where = "%s's %s at +%d" % (lab[c], lab[base], offset) if base else "%s's subobject at +%d" % (lab[c], offset)
+        o = own.get(target)
+        if base in dtors and i in (0, 1):
+            name = function_name(lab[c], i, ("dtor", "deleting")[i])
+        elif o is not None:
+            name = function_name(lab[o[0]], o[1], o[2])
+        else:
+            name = "%s::vfunc%d_at_%d" % (lab[c], i, offset)
+        out.append(("R", f, name + " [thunk]"))
+        out.append(("C", f, "thunk for %s%s" % (where, " -> %#x" % target if target is not None else "")))
     out.sort(key=lambda d: (d[1], d[0]))
     return out
 

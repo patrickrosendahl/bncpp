@@ -1,0 +1,552 @@
+// make_shape(int32_t) @ 0x400648
+{
+    if (!arg1)
+    {
+        struct Box<double>* x0 = _02ce09(0x10);
+        Circle::Circle(x0);
+        return x0;
+    }
+
+    if (arg1 == 1)
+    {
+        struct Box<double>* x0_2 = _02ce09(0x18);
+        NamedCircle::NamedCircle(x0_2);
+        return x0_2;
+    }
+
+    if (arg1 == 2)
+    {
+        struct Box<double>* x0_4 = _02ce09(0x10);
+        Box<int32_t>::Box(x0_4);
+        return x0_4;
+    }
+
+    struct Box<double>* x0_6 = _02ce09(0x10);
+    Box<double>::Box(x0_6);
+    return x0_6;
+}
+
+// Circle::Circle(struct Circle* this) @ 0x400708
+{
+    struct Circle* this_1 = this;
+    Circle::Circle(this);
+}
+
+// NamedCircle::NamedCircle(struct NamedCircle* this) @ 0x400734
+{
+    struct NamedCircle* this_1 = this;
+    NamedCircle::NamedCircle(this);
+}
+
+// Box<int32_t>::Box(struct Box<int32_t>* this) @ 0x400760
+{
+    struct Box<int32_t>* this_1 = this;
+    Box<int32_t>::Box(this);
+}
+
+// Box<double>::Box(struct Box<double>* this) @ 0x40078c
+{
+    struct Box<double>* this_1 = this;
+    Box<double>::Box(this);
+}
+
+// make_node(int32_t) @ 0x4007b8
+{
+    if (!arg1)
+    {
+        struct Left* x0 = _02ce09(8);
+        Left::Left(x0);
+
+        if (!x0)
+            return nullptr;
+
+        return (char*)x0 + *(uint64_t*)(*(uint64_t*)x0 - 0x28);
+    }
+
+    if (arg1 != 1)
+    {
+        struct Diamond* x0_4 = _02ce09(0x10);
+        Diamond::Diamond(x0_4);
+
+        if (!x0_4)
+            return nullptr;
+
+        return (char*)x0_4 + *(uint64_t*)(*(uint64_t*)x0_4 - 0x28);
+    }
+
+    struct Right* x0_2 = _02ce09(8);
+    Right::Right(x0_2);
+
+    if (!x0_2)
+        return nullptr;
+
+    return (char*)x0_2 + *(uint64_t*)(*(uint64_t*)x0_2 - 0x28);
+}
+
+// Left::Left(struct Left* this) @ 0x4008cc
+{
+    Node::Node(this);
+    *(uint64_t*)this = &data_404228;
+    *(uint64_t*)this = &data_404228;
+}
+
+// Right::Right(struct Right* this) @ 0x400910
+{
+    Node::Node(this);
+    *(uint64_t*)this = &data_4042d8;
+    *(uint64_t*)this = &data_4042d8;
+}
+
+// Diamond::Diamond(struct Diamond* this) @ 0x400954
+{
+    Node::Node(this);
+    Left::Left(this);
+    Right::Right((char*)this + 8);
+    *(uint64_t*)this = &data_404350;
+    *(uint64_t*)this = &data_404350;
+    *(uint64_t*)((char*)this + 8) = &data_404390;
+}
+
+// shape_name(Shape*) @ 0x4009cc
+{
+    int64_t* var_38;
+
+    if (!arg1)
+        var_38 = nullptr;
+    else
+        var_38 = ac15664b2f005e0(arg1, &typeinfo_for_Shape, &typeinfo_for_Named, -2);
+
+    if (var_38)
+        return (*(uint64_t*)(*(uint64_t*)var_38 + 0x10))();
+
+    if (!arg1)
+        d5c15b7de4adc43cf();
+
+    return std::type_info::name[abi:nqe210106](*(uint64_t*)(*(uint64_t*)arg1 - 8));
+}
+
+// std::type_info::name[abi:nqe210106](struct std::type_info* this) const @ 0x400a84
+{
+    return *(uint64_t*)((char*)this + 8) & 0x7fffffffffffffff;
+}
+
+// total_area(Shape**, int32_t) @ 0x400aa8
+{
+    Shape** var_18 = arg1;
+    double var_28 = 0.0;
+
+    for (int32_t i = 0; i < arg2; i += 1)
+    {
+        double v0_2;
+        arg1 = (*(uint64_t*)(*(uint64_t*)var_18[(int64_t)i] + 0x10))();
+        var_28 = var_28 + v0_2;
+    }
+
+    int128_t v0_3;
+    (uint64_t)v0_3 = var_28;
+}
+
+// Circle::Circle(struct Circle* this) @ 0x400b2c
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_404048;
+    *(uint64_t*)((char*)this + 8) = (double)1.0;
+}
+
+// Shape::Shape(struct Shape* this) @ 0x400b70
+{
+    *(uint64_t*)this = &data_404090;
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x400b94
+{
+    struct Circle* this_1 = this;
+    Circle::~Circle(this);
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x400bc0
+{
+    Circle::~Circle(this);
+    _320d00d(this);
+}
+
+// Circle::area(struct Circle* this) const @ 0x400bf0
+{
+    *(uint64_t*)((char*)this + 8);
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Circle::kind(struct Circle* this) const @ 0x400c28
+{
+    struct Circle* this_1 = this;
+    return "circle";
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400c40
+{
+    struct Shape* this_1 = this;
+    trap(1);
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400c54
+{
+    struct Shape* this_1 = this;
+    trap(1);
+}
+
+// Shape::area(struct Shape* this) const @ 0x400c60
+{
+    struct Shape* this_1 = this;
+    int128_t v0;
+    (uint64_t)v0 = 0;
+    *(uint64_t*)((char*)&v0 + 8) = 0;
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x400c74
+{
+    struct Circle* this_1 = this;
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400ca0
+{
+    return;
+}
+
+// NamedCircle::NamedCircle(struct NamedCircle* this) @ 0x400cb4
+{
+    Circle::Circle(this);
+    Named::Named((char*)this + 0x10);
+    *(uint64_t*)this = &data_4040c0;
+    *(uint64_t*)((char*)this + 0x10) = &data_4040f8;
+}
+
+// Named::Named(struct Named* this) @ 0x400d04
+{
+    *(uint64_t*)this = &data_404158;
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x400d28
+{
+    struct NamedCircle* this_1 = this;
+    NamedCircle::~NamedCircle(this);
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x400d54
+{
+    NamedCircle::~NamedCircle(this);
+    _320d00d(this);
+}
+
+// NamedCircle::name(struct NamedCircle* this) const @ 0x400d84
+{
+    struct NamedCircle* this_1 = this;
+    return "named circle";
+}
+
+// non-virtual_thunk_to_NamedCircle::~NamedCircle() @ 0x400d9c
+{
+    int64_t var_8 = arg1;
+    /* tailcall */
+    return NamedCircle::~NamedCircle(arg1 - 0x10);
+}
+
+// non-virtual_thunk_to_NamedCircle::~NamedCircle() @ 0x400db8
+{
+    /* tailcall */
+    return NamedCircle::~NamedCircle(arg1 - 0x10);
+}
+
+// non-virtual_thunk_to_NamedCircle::name() const @ 0x400dd0
+{
+    /* tailcall */
+    return NamedCircle::name(arg1 - 0x10);
+}
+
+// Named::~Named(struct Named* this) @ 0x400de8
+{
+    struct Named* this_1 = this;
+}
+
+// Named::~Named(struct Named* this) @ 0x400e14
+{
+    Named::~Named(this);
+    _320d00d(this);
+}
+
+// Named::name(struct Named* this) const @ 0x400e44
+{
+    struct Named* this_1 = this;
+    return "named";
+}
+
+// Named::~Named(struct Named* this) @ 0x400e5c
+{
+    return;
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x400e70
+{
+    Circle::~Circle(this);
+}
+
+// Box<int32_t>::Box(struct Box<int32_t>* this) @ 0x400ea8
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_404180;
+    *(uint32_t*)((char*)this + 8) = 0;
+}
+
+// Box<int32_t>::~Box(struct Box<int32_t>* this) @ 0x400ee8
+{
+    struct Box<int32_t>* this_1 = this;
+    Box<int32_t>::~Box(this);
+}
+
+// Box<int32_t>::~Box(struct Box<int32_t>* this) @ 0x400f14
+{
+    Box<int32_t>::~Box(this);
+    _320d00d(this);
+}
+
+// Box<int32_t>::area(struct Box<int32_t>* this) const @ 0x400f44
+{
+    int64_t v1;
+    (uint32_t)v1 = *(uint32_t*)((char*)this + 8);
+    int64_t v0 = (int64_t)(int32_t)v1;
+    *(uint64_t*)((char*)&v0 + 8) = (int64_t)*(int32_t*)((char*)&v0 + 4);
+    int128_t v0_1;
+    (uint64_t)v0_1 = (double)v0;
+}
+
+// Box<int32_t>::kind(struct Box<int32_t>* this) const @ 0x400f68
+{
+    struct Box<int32_t>* this_1 = this;
+    return &data_401606;
+}
+
+// Box<int32_t>::~Box(struct Box<int32_t>* this) @ 0x400f80
+{
+    struct Box<int32_t>* this_1 = this;
+}
+
+// Box<double>::Box(struct Box<double>* this) @ 0x400fac
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_4041c8;
+    *(uint64_t*)((char*)this + 8) = 0;
+}
+
+// Box<double>::~Box(struct Box<double>* this) @ 0x400ff0
+{
+    struct Box<double>* this_1 = this;
+    Box<double>::~Box(this);
+}
+
+// Box<double>::~Box(struct Box<double>* this) @ 0x40101c
+{
+    Box<double>::~Box(this);
+    _320d00d(this);
+}
+
+// Box<double>::area(struct Box<double>* this) const @ 0x40104c
+{
+    int128_t v0;
+    (uint64_t)v0 = *(uint64_t*)((char*)this + 8);
+}
+
+// Box<double>::kind(struct Box<double>* this) const @ 0x401064
+{
+    struct Box<double>* this_1 = this;
+    return &data_401606;
+}
+
+// Box<double>::~Box(struct Box<double>* this) @ 0x40107c
+{
+    struct Box<double>* this_1 = this;
+}
+
+// Node::Node(struct Node* this) @ 0x4010a8
+{
+    *(uint64_t*)this = &data_404298;
+}
+
+// Left::~Left(struct Left* this) @ 0x4010cc
+{
+    return;
+}
+
+// Left::~Left(struct Left* this) @ 0x401108
+{
+    Left::~Left(this);
+    _320d00d(this);
+}
+
+// Left::id(struct Left* this) const @ 0x401138
+{
+    struct Left* this_1 = this;
+    return 1;
+}
+
+// Node::~Node(struct Node* this) @ 0x40114c
+{
+    struct Node* this_1 = this;
+}
+
+// Node::~Node(struct Node* this) @ 0x401178
+{
+    Node::~Node(this);
+    _320d00d(this);
+}
+
+// Node::id(struct Node* this) const @ 0x4011a8
+{
+    struct Node* this_1 = this;
+    return 0;
+}
+
+// Node::~Node(struct Node* this) @ 0x4011bc
+{
+    return;
+}
+
+// Left::~Left(struct Left* this) @ 0x4011d0
+{
+    int64_t x1;
+    int64_t var_10 = x1;
+}
+
+// virtual_thunk_to_Left::~Left() @ 0x4011e8
+{
+    int64_t* var_8 = arg1;
+    /* tailcall */
+    return Left::~Left((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Left::~Left() @ 0x401210
+{
+    /* tailcall */
+    return Left::~Left((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Left::id() const @ 0x401230
+{
+    /* tailcall */
+    return Left::id((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x20));
+}
+
+// Right::~Right(struct Right* this) @ 0x401250
+{
+    return;
+}
+
+// Right::~Right(struct Right* this) @ 0x40128c
+{
+    Right::~Right(this);
+    _320d00d(this);
+}
+
+// Right::id(struct Right* this) const @ 0x4012bc
+{
+    struct Right* this_1 = this;
+    return 2;
+}
+
+// Right::~Right(struct Right* this) @ 0x4012d0
+{
+    int64_t x1;
+    int64_t var_10 = x1;
+}
+
+// virtual_thunk_to_Right::~Right() @ 0x4012e8
+{
+    int64_t* var_8 = arg1;
+    /* tailcall */
+    return Right::~Right((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Right::~Right() @ 0x401310
+{
+    /* tailcall */
+    return Right::~Right((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Right::id() const @ 0x401330
+{
+    /* tailcall */
+    return Right::id((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x20));
+}
+
+// Left::Left(struct Left* this) @ 0x401350
+{
+    int64_t* entry_x1;
+    *(uint64_t*)this = *(uint64_t*)entry_x1;
+    *(uint64_t*)((char*)this + *(uint64_t*)(*(uint64_t*)this - 0x28)) = entry_x1[1];
+}
+
+// Right::Right(struct Right* this) @ 0x401384
+{
+    int64_t* entry_x1;
+    *(uint64_t*)this = *(uint64_t*)entry_x1;
+    *(uint64_t*)((char*)this + *(uint64_t*)(*(uint64_t*)this - 0x28)) = entry_x1[1];
+}
+
+// Diamond::~Diamond(struct Diamond* this) @ 0x4013b8
+{
+    Diamond::~Diamond(this);
+}
+
+// Diamond::~Diamond(struct Diamond* this) @ 0x4013f4
+{
+    Diamond::~Diamond(this);
+    _320d00d(this);
+}
+
+// Diamond::id(struct Diamond* this) const @ 0x401424
+{
+    struct Diamond* this_1 = this;
+    return 3;
+}
+
+// non-virtual_thunk_to_Diamond::~Diamond() @ 0x401438
+{
+    int64_t var_8 = arg1;
+    /* tailcall */
+    return Diamond::~Diamond(arg1 - 8);
+}
+
+// non-virtual_thunk_to_Diamond::~Diamond() @ 0x401454
+{
+    /* tailcall */
+    return Diamond::~Diamond(arg1 - 8);
+}
+
+// non-virtual_thunk_to_Diamond::id() const @ 0x40146c
+{
+    /* tailcall */
+    return Diamond::id(arg1 - 8);
+}
+
+// Diamond::~Diamond(struct Diamond* this) @ 0x401484
+{
+    return;
+}
+
+// virtual_thunk_to_Diamond::~Diamond() @ 0x4014d4
+{
+    int64_t* var_8 = arg1;
+    /* tailcall */
+    return Diamond::~Diamond((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Diamond::~Diamond() @ 0x4014fc
+{
+    /* tailcall */
+    return Diamond::~Diamond((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x18));
+}
+
+// virtual_thunk_to_Diamond::id() const @ 0x40151c
+{
+    /* tailcall */
+    return Diamond::id((char*)arg1 + *(uint64_t*)(*(uint64_t*)arg1 - 0x20));
+}
+

@@ -1,5 +1,6 @@
 """REFERENCE ONLY (Binary Ninja is the source of truth): the class scan (cpp/rtti.py) on the file itself.
 
+Classic dyld info only: cpp/macho.py does not decode chained fixups (rebases stay raw chained words there).
 cpp/macho.py supplies every classic dyld bind, so typeinfo kinds come from the vptr binds ('bind'), where BN
 falls back to the layout (tests/bn_class_scan.py) -- comparing the two outputs checks that fallback. The numbers
 on bncpp-21 / bncpp-25 come from this.

@@ -1,0 +1,180 @@
+// make_shape(int32_t) @ 0x4004f0
+{
+    if (arg1 == 2)
+    {
+        struct Shape::Box<int32_t>::VTable** x0_2 = operator new(0x10);
+        *(uint64_t*)x0_2 = &_vtable_for_Box<int32_t>{for `Shape'};
+        x0_2[1] = 0;
+        return x0_2;
+    }
+
+    if (arg1 == 1)
+    {
+        struct Shape::NamedCircle::VTable** x0_1 = operator new(0x18);
+        *(uint64_t*)x0_1 = &_vtable_for_NamedCircle{for `Shape'};
+        x0_1[1] = 0x3ff0000000000000;
+        x0_1[2] = &_vtable_for_NamedCircle{for `Named'};
+        return x0_1;
+    }
+
+    if (arg1)
+    {
+        struct Shape::Box<double>::VTable** x0_3 = operator new(0x10);
+        *(uint64_t*)x0_3 = &_vtable_for_Box<double>{for `Shape'};
+        x0_3[1] = 0;
+        return x0_3;
+    }
+
+    struct Shape::Circle::VTable** x0 = operator new(0x10);
+    *(uint64_t*)x0 = &_vtable_for_Circle{for `Shape'};
+    x0[1] = 0x3ff0000000000000;
+    return x0;
+}
+
+// make_node(int32_t) @ 0x4005a0
+{
+    void* __offset(vtable_for_Left, 0x28)* x0;
+    struct vtable_for_Left* const x8;
+
+    if (arg1 == 1)
+    {
+        x0 = operator new(8);
+        x8 = &_vtable_for_Right;
+    }
+    else
+    {
+        if (arg1)
+        {
+            struct Left::Diamond::VTable** x0_1 = operator new(0x10);
+            *(uint64_t*)x0_1 = &_vtable_for_Diamond{for `Left'};
+            x0_1[1] = &_vtable_for_Diamond{for `Right'};
+            return x0_1;
+        }
+
+        x0 = operator new(8);
+        x8 = &_vtable_for_Left;
+    }
+
+    *(uint64_t*)x0 = (char*)x8 + 0x28;
+    return x0;
+}
+
+// shape_name(Shape*) @ 0x40060c
+{
+    if (!arg1)
+    {
+        ___cxa_bad_typeid();
+        /* no return */
+    }
+
+    int64_t* x0 = ___dynamic_cast(arg1, &_typeinfo_for_Shape, &_typeinfo_for_Named, -2);
+
+    if (!x0)
+        return *(uint64_t*)(*(uint64_t*)(*(uint64_t*)arg1 - 8) + 8) & 0x7fffffffffffffff;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)x0 + 0x10) */
+}
+
+// total_area(Shape**, int32_t) @ 0x400670
+{
+    int128_t v8;
+
+    if (arg2 < 1)
+    {
+        (uint64_t)v8 = 0;
+        *(uint64_t*)((char*)&v8 + 8) = 0;
+        return;
+    }
+
+    Shape** x19_1 = arg1;
+    uint64_t i_1 = (uint64_t)arg2;
+    (uint64_t)v8 = 0;
+    *(uint64_t*)((char*)&v8 + 8) = 0;
+    uint64_t i;
+
+    do
+    {
+        Shape* x0 = *(uint64_t*)x19_1;
+        x19_1 = &x19_1[1];
+        int64_t v0_1;
+        arg1 = (*(uint64_t*)(*(uint64_t*)x0 + 0x10))();
+        (uint64_t)v8 = (uint64_t)v8 + v0_1;
+        i = i_1;
+        i_1 -= 1;
+    } while (i != 1);
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x4006cc
+{
+    return;
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x4006d0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Circle::area(struct Circle* this) const @ 0x4006d4
+{
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Circle::kind(struct Circle* this) const @ 0x4006f8
+{
+    return "circle";
+}
+
+// NamedCircle::name(struct NamedCircle* this) const @ 0x400704
+{
+    return "named circle";
+}
+
+// non-virtual_thunk_to_NamedCircle::~NamedCircle() @ 0x400710
+{
+    /* tailcall */
+    return operator delete(arg1 - 0x10);
+}
+
+// Box<int32_t>::area(struct Box<int32_t>* this) const @ 0x400718
+{
+    int64_t v0;
+    (uint32_t)v0 = *(uint32_t*)((char*)this + 8);
+    v0 = (int64_t)(int32_t)v0;
+    *(uint64_t*)((char*)&v0 + 8) = (int64_t)*(int32_t*)((char*)&v0 + 4);
+    int128_t v0_1;
+    (uint64_t)v0_1 = (double)v0;
+}
+
+// Box<double>::kind(struct Box<double>* this) const @ 0x400728
+{
+    return &data_4007f0;
+}
+
+// Box<double>::area(struct Box<double>* this) const @ 0x400734
+{
+    int128_t v0;
+    (uint64_t)v0 = *(uint64_t*)((char*)this + 8);
+}
+
+// Left::id(struct Left* this) const @ 0x40073c
+{
+    return 1;
+}
+
+// Right::id(struct Right* this) const @ 0x400744
+{
+    return 2;
+}
+
+// Diamond::id(struct Diamond* this) const @ 0x40074c
+{
+    return 3;
+}
+
+// non-virtual_thunk_to_Diamond::~Diamond() @ 0x400754
+{
+    /* tailcall */
+    return operator delete(arg1 - 8);
+}
+

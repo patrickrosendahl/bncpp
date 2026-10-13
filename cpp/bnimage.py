@@ -9,8 +9,10 @@ offline reference (cross-checks, bug reports), never as the product.
   pointer_target(slot) -> name | address               symbol_name(addr) -> name | None
   data_sections() -> [(name, start, end)]              bound_symbols() -> {slot: raw symbol name}
   has_code_refs(addr) -> bool (optional: images that know code references)
+
+Hooks of the class modules (cpp/rtti_names.py, cpp/rtti_types.py): demangle, call_targets, symbol_at.
 """
-from binaryninja import SectionSemantics, SymbolType
+from binaryninja import QualifiedName, SectionSemantics, SymbolType, demangle_gnu3
 
 _IMPORTS = (SymbolType.ImportAddressSymbol, SymbolType.ImportedDataSymbol, SymbolType.ImportedFunctionSymbol,
             SymbolType.ExternalSymbol)
@@ -85,3 +87,31 @@ class BNImage:
 
     def has_code_refs(self, addr):
         return any(True for _ in self.bv.get_code_refs(addr))
+
+    # hooks of cpp/rtti_names.py / cpp/rtti_types.py
+
+    def demangle(self, mangled):
+        """'__ZTS4Node' -> 'typeinfo name for Node' (BN's spelling), None if BN can't demangle it"""
+        try:
+            _ty, parts = demangle_gnu3(self.bv.arch, mangled)
+        except Exception:
+            return None
+        return str(QualifiedName(parts)) if parts else None
+
+    def call_targets(self, addr):
+        """per call site of the function at addr (tail calls included): a local function's address, or an
+        import's raw name; None if there is no function there"""
+        f = self.bv.get_function_at(addr)
+        if f is None:
+            return None
+        out = []
+        for site in f.call_sites:
+            for t in self.bv.get_callees(site.address, f, site.arch):
+                s = self.bv.get_symbol_at(t)
+                out.append(s.raw_name if s is not None and s.type in _IMPORTS else t)
+        return out
+
+    def symbol_at(self, addr):
+        """(full name, user-defined?) of the symbol at addr, or None"""
+        s = self.bv.get_symbol_at(addr)
+        return (s.full_name, not s.auto) if s is not None else None

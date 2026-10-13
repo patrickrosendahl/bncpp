@@ -4,15 +4,20 @@
               si: + [base typeinfo]   vmi: + [u32 flags][u32 count] + count x [base typeinfo][offset_flags]
               offset_flags: bit 0 virtual, bit 1 public, >> 8 = offset of the base (vbase: vtable offset)
   vtable      [offset_to_top (0 primary, < 0 secondary)][typeinfo] -> address point: virtual function slots
+  VTT         [address points]: a class with virtual bases lists its vtables, then the construction vtables of
+              its bases ("Left-in-Diamond": Left's typeinfo, Left's slots, Diamond's base offsets)
 
 The vptr of a typeinfo is a bind to the C++ runtime. With classic dyld info the file holds only the bind's
 addend (0x10) there, and Binary Ninja 6.1 drops a bind whose symbol is missing from the nlist (it resolves binds
 through the symbol table, not the bind info; an obfuscator hashed those names in SynthV -- bncpp-25) -- so where
-the image has no bound symbol for the vptr, the kind is recognised from the layout: vptr word 0x10, a name
+the image has no bound symbol for the vptr, the kind is recognised from the layout: vptr word 0x10 (with chained
+fixups: the raw DYLD_CHAINED_PTR_64 bind word with addend 0x10), a name
 pointer to a string, used (pointed at from data, or from code where the image knows code references), si if
 the next word points at another typeinfo, vmi if it is a small flags/count pair followed by that many bases;
 a small flags word followed by a typeinfo pointer is a __pointer_type_info and skipped. An enum typeinfo looks
 like a class typeinfo ([vptr][name]) and is not told apart.
+
+Apple arm64 sets bit 63 of the name pointer (a type name that is not unique: compared as a string); it is masked.
 
 Name sources: the type name string (mangled without the _ZTS prefix, or an obfuscated hex hash), and binds that
 keep the real mangled name even where the string was hashed: (weak) binds of references to the typeinfo
@@ -31,6 +36,7 @@ _OTHER_TYPEINFO = ("__ZTVN10__cxxabiv116__enum_type_infoE", "__ZTVN10__cxxabiv11
                    "__ZTVN10__cxxabiv129__pointer_to_member_type_infoE",
                    "__ZTVN10__cxxabiv123__fundamental_type_infoE")
 VPTR_ADDEND = 0x10
+NAME_NOT_UNIQUE = 1 << 63  # Apple arm64: on the typeinfo's name pointer
 _HEX = set("0123456789abcdef")
 
 
@@ -62,12 +68,21 @@ class TypeInfo:
 
 
 class VTable:
-    __slots__ = ("addr", "offset_to_top", "slots")
+    __slots__ = ("addr", "offset_to_top", "slots", "construction_for")
 
     def __init__(self, addr, offset_to_top, slots):
         self.addr = addr                    # address point (first virtual function slot)
         self.offset_to_top = offset_to_top  # 0: primary; < 0: secondary (a base subobject at -offset)
         self.slots = slots                  # [code address | "pure" | imported symbol name]
+        self.construction_for = None        # a construction vtable: the typeinfo of the class whose VTT uses it
+
+    @property
+    def primary(self):
+        return self.offset_to_top == 0 and self.construction_for is None
+
+    @property
+    def secondary(self):
+        return self.offset_to_top != 0 and self.construction_for is None
 
 
 class _Words:
@@ -88,6 +103,23 @@ class _Words:
         for start, end, data in self.secs:
             for i in range(0, len(data) - 7, 8):
                 yield start + i, struct.unpack_from("<Q", data, i)[0]
+
+
+def _chained_bind_addend(w):
+    """the addend if w is a raw DYLD_CHAINED_PTR_64(_OFFSET) bind word (bit 63 bind, ordinal in bits 0-23, addend
+    in 24-31, bits 32-50 zero, next in 51-62): what a chained-fixup image shows where the bind was lost; else None"""
+    if w is None or not w >> 63 or (w >> 32) & 0x7FFFF:
+        return None
+    return (w >> 24) & 0xFF
+
+
+def _lost_bind(w, addend):
+    """w reads like a bind the image lost: the bare addend (classic dyld info), or a raw chained bind word"""
+    return w == addend or _chained_bind_addend(w) == addend
+
+
+def _name_pointer(v):
+    return v & ~NAME_NOT_UNIQUE if v is not None else None
 
 
 def _cstring(img, addr, limit=512):
@@ -123,10 +155,10 @@ def scan(img):
     for addr, v in words.items():
         sym = binds.get(addr)
         if sym in KINDS:
-            np = words.q(addr + 8)
+            np = _name_pointer(words.q(addr + 8))
             cands[addr] = (KINDS[sym], _cstring(img, np) if np else None, "bind")
-        elif sym is None and v == VPTR_ADDEND:
-            np = words.q(addr + 8)
+        elif sym is None and _lost_bind(v, VPTR_ADDEND):
+            np = _name_pointer(words.q(addr + 8))
             nsym = binds.get(addr + 8)
             name = _cstring(img, np) if np is not None and not in_data(np) else None
             if name or (nsym is not None and nsym.startswith("__ZTS")):
@@ -178,7 +210,7 @@ def scan(img):
             b = base_at(addr + 16)
             if kind == "si" or b is not None:
                 kind, bases = "si", [(b if b is not None else w2, None)]
-            elif w2 == 0 and not starts_object(addr + 16) and starts_object(addr + 24):
+            elif _lost_bind(w2, 0) and not starts_object(addr + 16) and starts_object(addr + 24):
                 kind, bases = "si", [("?", None)]  # an imported base whose bind the image lost (BN 6.1)
         t = types[addr] = TypeInfo(addr, kind or "class", name, frm)
         t.bases = bases
@@ -221,7 +253,9 @@ def scan(img):
                     slots.append(sym)  # an imported virtual (inherited from a library class)
             elif is_code(w):
                 slots.append(w)
-            elif w == 0 and lossy:
+            elif lossy and _chained_bind_addend(w) == 0:
+                slots.append("import ?")  # a raw chained bind word: unlike a classic lost bind (0), not padding
+            elif lossy and w == 0:
                 # imported virtuals whose binds the image lost (BN 6.1): a run of zero words, taken as slots if
                 # the vtable goes on after it. At the end of a vtable a lost import and alignment padding before
                 # the next object look alike, so a trailing run ends the vtable (it may miss imported slots).
@@ -239,9 +273,47 @@ def scan(img):
         slots = _cut_member_pointers(slots)
         if slots:
             types[v].vtables.append(VTable(addr + 8, ott, slots))
+    _mark_construction_vtables(types, words)
     for t in types.values():
-        t.vtables.sort(key=lambda vt: (vt.offset_to_top != 0, -vt.offset_to_top, vt.addr))
+        t.vtables.sort(key=lambda vt: (vt.construction_for is not None, vt.offset_to_top != 0, -vt.offset_to_top,
+                                       vt.addr))
     return types
+
+
+def _mark_construction_vtables(types, words):
+    """VTTs: runs of words that point at vtable address points, the first at a vtable of a class D with virtual
+    bases; an entry at a vtable of one of D's bases marks that vtable as a construction vtable for D (it carries
+    the base's typeinfo and slots, so it would otherwise pass for a second primary vtable of the base)"""
+    points = {vt.addr: a for a, t in types.items() for vt in t.vtables}
+    vts = {vt.addr: vt for t in types.values() for vt in t.vtables}
+
+    def ancestors(a):
+        seen, todo = set(), [a]
+        while todo:
+            t = types.get(todo.pop())
+            for b, _of in (t.bases if t is not None else ()):
+                if isinstance(b, int) and b not in seen:
+                    seen.add(b)
+                    todo.append(b)
+        return seen
+
+    def has_virtual_base(a):
+        return any(isinstance(of, int) and of & 1 for c in {a} | ancestors(a) if c in types
+                   for _b, of in types[c].bases)
+
+    run, prev = [], None
+    for addr, v in list(words.items()) + [(None, None)]:
+        if v in points and prev is not None and addr == prev + 8:
+            run.append(v)
+        else:
+            if len(run) >= 2 and has_virtual_base(points[run[0]]):
+                d = points[run[0]]
+                bases = ancestors(d)
+                for p in run[1:]:
+                    if points[p] != d and points[p] in bases:
+                        vts[p].construction_for = d
+            run = [v] if v in points else []
+        prev = addr
 
 
 def _cut_member_pointers(slots, pairs=4):
@@ -278,7 +350,9 @@ def format_scan(types, function_name=None):
                 base = "%#x %s" % (b or 0, bt.name if bt is not None and bt.name else "?")
             out.append("  base %s%s" % (base, "  offset_flags %#x" % of if of is not None else ""))
         for vt in t.vtables:
-            out.append("  vtable %#x  offset_to_top %d  %d slots" % (vt.addr, vt.offset_to_top, len(vt.slots)))
+            out.append("  vtable %#x  offset_to_top %d  %d slots%s" % (
+                vt.addr, vt.offset_to_top, len(vt.slots),
+                "  construction for %#x" % vt.construction_for if vt.construction_for is not None else ""))
             for i, s in enumerate(vt.slots):
                 out.append("    [%d] %s" % (i, slot(s)))
     return out

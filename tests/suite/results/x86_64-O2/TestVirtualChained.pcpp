@@ -1,0 +1,191 @@
+// make_shape(int32_t) @ 0x400500
+{
+    if (arg1 == 2)
+    {
+        struct Shape::Box<int32_t>::VTable** rax_2 = operator new(0x10);
+        *(uint64_t*)rax_2 = &_vtable_for_Box<int32_t>{for `Shape'};
+        rax_2[1] = 0;
+        return rax_2;
+    }
+
+    if (arg1 == 1)
+    {
+        struct Shape::NamedCircle::VTable** rax_1 = operator new(0x18);
+        rax_1[1] = 0x3ff0000000000000;
+        *(uint64_t*)rax_1 = &_vtable_for_NamedCircle{for `Shape'};
+        rax_1[2] = &_vtable_for_NamedCircle{for `Named'};
+        return rax_1;
+    }
+
+    if (arg1)
+    {
+        struct Shape::Box<double>::VTable** rax_3 = operator new(0x10);
+        *(uint64_t*)rax_3 = &_vtable_for_Box<double>{for `Shape'};
+        rax_3[1] = 0;
+        return rax_3;
+    }
+
+    struct Shape::Circle::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Circle{for `Shape'};
+    rax[1] = 0x3ff0000000000000;
+    return rax;
+}
+
+// make_node(int32_t) @ 0x4005b0
+{
+    void* __offset(vtable_for_Left, 0x28)* rax;
+    struct vtable_for_Left* const rcx;
+
+    if (arg1 == 1)
+    {
+        rax = operator new(8);
+        rcx = &_vtable_for_Right;
+    }
+    else
+    {
+        if (arg1)
+        {
+            struct Left::Diamond::VTable** rax_1 = operator new(0x10);
+            *(uint64_t*)rax_1 = &_vtable_for_Diamond{for `Left'};
+            rax_1[1] = &_vtable_for_Diamond{for `Right'};
+            return rax_1;
+        }
+
+        rax = operator new(8);
+        rcx = &_vtable_for_Left;
+    }
+
+    *(uint64_t*)rax = (char*)rcx + 0x28;
+    return rax;
+}
+
+// shape_name(Shape*) @ 0x400610
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+
+    if (!arg1)
+    {
+        ___cxa_bad_typeid();
+        /* no return */
+    }
+
+    int64_t* rax_1 = ___dynamic_cast(arg1, typeinfo_for_Shape, typeinfo_for_Named, -2);
+
+    if (!rax_1)
+        return *(uint64_t*)(*(uint64_t*)(*(uint64_t*)arg1 - 8) + 8);
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)rax_1 + 0x10) */
+}
+
+// total_area(Shape**, int32_t) @ 0x400670
+{
+    if (arg2 <= 0)
+    {
+        int512_t zmm0_2;
+        (uint128_t)zmm0_2 = {0};
+        return;
+    }
+
+    int64_t rax;
+    int64_t var_28 = rax;
+    uint64_t entry_zmm0[0x2];
+    double zmm0 = _mm_xor_pd(entry_zmm0, entry_zmm0);
+    int64_t i = 0;
+
+    do
+    {
+        int64_t* rdi = arg1[i];
+        int64_t rax_2;
+        double zmm0_1;
+        rax_2 = (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
+        zmm0 = zmm0 + zmm0_1;
+        i += 1;
+    } while ((uint64_t)arg2 != i);
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x4006d0
+{
+    return;
+}
+
+// NamedCircle::~NamedCircle(struct NamedCircle* this) @ 0x4006e0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Circle::area(struct Circle* this) const @ 0x4006f0
+{
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Circle::kind(struct Circle* this) const @ 0x400710
+{
+    return "circle";
+}
+
+// NamedCircle::name(struct NamedCircle* this) const @ 0x400720
+{
+    return "named circle";
+}
+
+// non-virtual_thunk_to_NamedCircle::~NamedCircle() @ 0x400730
+{
+    /* tailcall */
+    return operator delete((char*)arg1 - 0x10);
+}
+
+// non-virtual_thunk_to_NamedCircle::name() const @ 0x400740
+{
+    return "named circle";
+}
+
+// Box<int32_t>::area(struct Box<int32_t>* this) const @ 0x400750
+{
+    int512_t zmm0;
+    (uint64_t)zmm0 = (double)*(uint32_t*)((char*)this + 8);
+}
+
+// Box<int32_t>::kind(struct Box<int32_t>* this) const @ 0x400760
+{
+    return &data_400864;
+}
+
+// Box<double>::area(struct Box<double>* this) const @ 0x400770
+{
+    int512_t zmm0;
+    (uint128_t)zmm0 = (uint128_t)*(uint64_t*)((char*)this + 8);
+}
+
+// Box<double>::kind(struct Box<double>* this) const @ 0x400780
+{
+    return &data_400864;
+}
+
+// Left::id(struct Left* this) const @ 0x400790
+{
+    return 1;
+}
+
+// Right::id(struct Right* this) const @ 0x4007a0
+{
+    return 2;
+}
+
+// Diamond::id(struct Diamond* this) const @ 0x4007b0
+{
+    return 3;
+}
+
+// non-virtual_thunk_to_Diamond::~Diamond() @ 0x4007c0
+{
+    /* tailcall */
+    return operator delete((char*)arg1 - 8);
+}
+
+// non-virtual_thunk_to_Diamond::id() const @ 0x4007d0
+{
+    return 3;
+}
+

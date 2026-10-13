@@ -36,7 +36,7 @@ def plan(types, demangle=None, call_targets=None, overrides=None, user_name=None
     classes = []
     for addr in sorted(types):
         t = types[addr]
-        prim = [vt for vt in t.vtables if vt.offset_to_top == 0]
+        prim = [vt for vt in t.vtables if vt.primary]
         if not prim:
             continue
         members, seen = [], set()

@@ -1,0 +1,152 @@
+typeinfo 0x404020  class mangled 5Shape
+  vtable 0x404098  offset_to_top 0  4 slots
+    [0] 0x400af0 Shape::~Shape(struct Shape* this)
+    [1] 0x400b04 Shape::~Shape(struct Shape* this)
+    [2] 0x400b10 Shape::area(struct Shape* this) const
+    [3] import ?
+typeinfo 0x404030  class mangled 5Named
+  vtable 0x404160  offset_to_top 0  3 slots
+    [0] 0x400c98 Named::~Named(struct Named* this)
+    [1] 0x400cc4 Named::~Named(struct Named* this)
+    [2] 0x400cf4 Named::name(struct Named* this) const
+typeinfo 0x404070  si    mangled 6Circle
+  base 0x404020 5Shape
+  vtable 0x404050  offset_to_top 0  4 slots
+    [0] 0x400a44 Circle::~Circle(struct Circle* this)
+    [1] 0x400a70 Circle::~Circle(struct Circle* this)
+    [2] 0x400aa0 Circle::area(struct Circle* this) const
+    [3] 0x400ad8 Circle::kind(struct Circle* this) const
+typeinfo 0x404118  vmi   mangled 11NamedCircle
+  base 0x404070 6Circle  offset_flags 0x2
+  base 0x404030 5Named  offset_flags 0x1002
+  vtable 0x4040c8  offset_to_top 0  5 slots
+    [0] 0x400bd8 NamedCircle::~NamedCircle(struct NamedCircle* this)
+    [1] 0x400c04 NamedCircle::~NamedCircle(struct NamedCircle* this)
+    [2] 0x400aa0 Circle::area(struct Circle* this) const
+    [3] 0x400ad8 Circle::kind(struct Circle* this) const
+    [4] 0x400c34 NamedCircle::name(struct NamedCircle* this) const
+  vtable 0x404100  offset_to_top -16  3 slots
+    [0] 0x400c4c non-virtual_thunk_to_NamedCircle::~NamedCircle()
+    [1] 0x400c68 non-virtual_thunk_to_NamedCircle::~NamedCircle()
+    [2] 0x400c80 non-virtual_thunk_to_NamedCircle::name() const
+typeinfo 0x4041a8  si    mangled 3BoxIiE
+  base 0x404020 5Shape
+  vtable 0x404188  offset_to_top 0  4 slots
+    [0] 0x400d98 Box<int32_t>::~Box(struct Box<int32_t>* this)
+    [1] 0x400dc4 Box<int32_t>::~Box(struct Box<int32_t>* this)
+    [2] 0x400df4 Box<int32_t>::area(struct Box<int32_t>* this) const
+    [3] 0x400e18 Box<int32_t>::kind(struct Box<int32_t>* this) const
+typeinfo 0x4041f0  si    mangled 3BoxIdE
+  base 0x404020 5Shape
+  vtable 0x4041d0  offset_to_top 0  4 slots
+    [0] 0x400ea0 Box<double>::~Box(struct Box<double>* this)
+    [1] 0x400ecc Box<double>::~Box(struct Box<double>* this)
+    [2] 0x400efc Box<double>::area(struct Box<double>* this) const
+    [3] 0x400f14 Box<double>::kind(struct Box<double>* this) const
+typeinfo 0x404258  vmi   mangled 4Left
+  base 0x404280 4Node  offset_flags 0xffffffffffffd803
+  vtable 0x404230  offset_to_top 0  3 slots
+    [0] 0x400f7c Left::~Left(struct Left* this)
+    [1] 0x400fb8 Left::~Left(struct Left* this)
+    [2] 0x400fe8 Left::id(struct Left* this) const
+  vtable 0x404410  offset_to_top 0  3 slots  construction for 0x4044a0
+    [0] 0x400f7c Left::~Left(struct Left* this)
+    [1] 0x400fb8 Left::~Left(struct Left* this)
+    [2] 0x400fe8 Left::id(struct Left* this) const
+typeinfo 0x404280  class mangled 4Node
+  vtable 0x4042a0  offset_to_top 0  3 slots
+    [0] 0x400ffc Node::~Node(struct Node* this)
+    [1] 0x401028 Node::~Node(struct Node* this)
+    [2] 0x401058 Node::id(struct Node* this) const
+typeinfo 0x404308  vmi   mangled 5Right
+  base 0x404280 4Node  offset_flags 0xffffffffffffd803
+  vtable 0x4042e0  offset_to_top 0  3 slots
+    [0] 0x401100 Right::~Right(struct Right* this)
+    [1] 0x40113c Right::~Right(struct Right* this)
+    [2] 0x40116c Right::id(struct Right* this) const
+  vtable 0x404450  offset_to_top 0  3 slots  construction for 0x4044a0
+    [0] 0x401100 Right::~Right(struct Right* this)
+    [1] 0x40113c Right::~Right(struct Right* this)
+    [2] 0x40116c Right::id(struct Right* this) const
+typeinfo 0x4044a0  vmi   mangled 7Diamond
+  base 0x404258 4Left  offset_flags 0x2
+  base 0x404308 5Right  offset_flags 0x802
+  vtable 0x404358  offset_to_top 0  3 slots
+    [0] 0x401268 Diamond::~Diamond(struct Diamond* this)
+    [1] 0x4012a4 Diamond::~Diamond(struct Diamond* this)
+    [2] 0x4012d4 Diamond::id(struct Diamond* this) const
+  vtable 0x404398  offset_to_top -8  3 slots
+    [0] 0x4012e8 non-virtual_thunk_to_Diamond::~Diamond()
+    [1] 0x401304 non-virtual_thunk_to_Diamond::~Diamond()
+    [2] 0x40131c non-virtual_thunk_to_Diamond::id() const
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400a44 Circle::vfunc0   [now: Circle::~Circle(struct Circle* this)]
+R 0x400a70 Circle::vfunc1   [now: Circle::~Circle(struct Circle* this)]
+R 0x400aa0 Circle::vfunc2   [now: Circle::area(struct Circle* this) const]
+R 0x400ad8 Circle::vfunc3   [now: Circle::kind(struct Circle* this) const]
+R 0x400af0 Shape::vfunc0   [now: Shape::~Shape(struct Shape* this)]
+R 0x400b04 Shape::vfunc1   [now: Shape::~Shape(struct Shape* this)]
+R 0x400b10 Shape::vfunc2   [now: Shape::area(struct Shape* this) const]
+R 0x400bd8 NamedCircle::vfunc0   [now: NamedCircle::~NamedCircle(struct NamedCircle* this)]
+R 0x400c04 NamedCircle::vfunc1   [now: NamedCircle::~NamedCircle(struct NamedCircle* this)]
+R 0x400c34 NamedCircle::vfunc4   [now: NamedCircle::name(struct NamedCircle* this) const]
+C 0x400c4c thunk for NamedCircle's Named at +16 -> 0x400bd8
+R 0x400c4c NamedCircle::vfunc0 [thunk]   [now: non-virtual_thunk_to_NamedCircle::~NamedCircle()]
+C 0x400c68 thunk for NamedCircle's Named at +16 -> 0x400c04
+R 0x400c68 NamedCircle::vfunc1 [thunk]   [now: non-virtual_thunk_to_NamedCircle::~NamedCircle()]
+C 0x400c80 thunk for NamedCircle's Named at +16 -> 0x400c34
+R 0x400c80 NamedCircle::vfunc4 [thunk]   [now: non-virtual_thunk_to_NamedCircle::name() const]
+R 0x400c98 Named::vfunc0   [now: Named::~Named(struct Named* this)]
+R 0x400cc4 Named::vfunc1   [now: Named::~Named(struct Named* this)]
+R 0x400cf4 Named::vfunc2   [now: Named::name(struct Named* this) const]
+R 0x400d98 Box<int32_t>::vfunc0   [now: Box<int32_t>::~Box(struct Box<int32_t>* this)]
+R 0x400dc4 Box<int32_t>::vfunc1   [now: Box<int32_t>::~Box(struct Box<int32_t>* this)]
+R 0x400df4 Box<int32_t>::vfunc2   [now: Box<int32_t>::area(struct Box<int32_t>* this) const]
+R 0x400e18 Box<int32_t>::vfunc3   [now: Box<int32_t>::kind(struct Box<int32_t>* this) const]
+R 0x400ea0 Box<double>::vfunc0   [now: Box<double>::~Box(struct Box<double>* this)]
+R 0x400ecc Box<double>::vfunc1   [now: Box<double>::~Box(struct Box<double>* this)]
+R 0x400efc Box<double>::vfunc2   [now: Box<double>::area(struct Box<double>* this) const]
+R 0x400f14 Box<double>::vfunc3   [now: Box<double>::kind(struct Box<double>* this) const]
+R 0x400f7c Left::vfunc0   [now: Left::~Left(struct Left* this)]
+R 0x400fb8 Left::vfunc1   [now: Left::~Left(struct Left* this)]
+R 0x400fe8 Left::vfunc2   [now: Left::id(struct Left* this) const]
+R 0x400ffc Node::vfunc0   [now: Node::~Node(struct Node* this)]
+R 0x401028 Node::vfunc1   [now: Node::~Node(struct Node* this)]
+R 0x401058 Node::vfunc2   [now: Node::id(struct Node* this) const]
+R 0x401100 Right::vfunc0   [now: Right::~Right(struct Right* this)]
+R 0x40113c Right::vfunc1   [now: Right::~Right(struct Right* this)]
+R 0x40116c Right::vfunc2   [now: Right::id(struct Right* this) const]
+R 0x401268 Diamond::vfunc0   [now: Diamond::~Diamond(struct Diamond* this)]
+R 0x4012a4 Diamond::vfunc1   [now: Diamond::~Diamond(struct Diamond* this)]
+R 0x4012d4 Diamond::vfunc2   [now: Diamond::id(struct Diamond* this) const]
+C 0x4012e8 thunk for Diamond's Right at +8 -> 0x401268
+R 0x4012e8 Diamond::vfunc0 [thunk]   [now: non-virtual_thunk_to_Diamond::~Diamond()]
+C 0x401304 thunk for Diamond's Right at +8 -> 0x4012a4
+R 0x401304 Diamond::vfunc1 [thunk]   [now: non-virtual_thunk_to_Diamond::~Diamond()]
+C 0x40131c thunk for Diamond's Right at +8 -> 0x4012d4
+R 0x40131c Diamond::vfunc2 [thunk]   [now: non-virtual_thunk_to_Diamond::id() const]
+D 0x404020 typeinfo_for_Shape
+D 0x404030 typeinfo_for_Named
+D 0x404040 vtable_for_Circle   [now: _vtable_for_Circle]
+D 0x404070 typeinfo_for_Circle
+D 0x404088 vtable_for_Shape   [now: _vtable_for_Shape]
+D 0x4040b8 vtable_for_NamedCircle   [now: _vtable_for_NamedCircle]
+D 0x4040f0 vtable_for_NamedCircle_at_16
+D 0x404118 typeinfo_for_NamedCircle
+D 0x404150 vtable_for_Named   [now: _vtable_for_Named]
+D 0x404178 vtable_for_Box<int32_t>   [now: _vtable_for_Box<int32_t>]
+D 0x4041a8 typeinfo_for_Box<int32_t>
+D 0x4041c0 vtable_for_Box<double>   [now: _vtable_for_Box<double>]
+D 0x4041f0 typeinfo_for_Box<double>
+D 0x404220 vtable_for_Left
+D 0x404258 typeinfo_for_Left
+D 0x404280 typeinfo_for_Node
+D 0x404290 vtable_for_Node   [now: _vtable_for_Node]
+D 0x4042d0 vtable_for_Right
+D 0x404308 typeinfo_for_Right
+D 0x404348 vtable_for_Diamond
+D 0x404388 vtable_for_Diamond_at_8
+D 0x404400 construction_vtable_for_Left_in_Diamond
+D 0x404440 construction_vtable_for_Right_in_Diamond
+D 0x4044a0 typeinfo_for_Diamond

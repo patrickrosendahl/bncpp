@@ -47,40 +47,16 @@ def _protected(f):
     return base is None or base != str(f.type)
 
 
-def _demangle(mangled):
-    try:
-        _ty, parts = _bn.demangle_gnu3(bv.arch, mangled)
-    except Exception:
-        return None
-    return str(QualifiedName(parts)) if parts else None
-
-
-def _call_targets(addr):
-    f = bv.get_function_at(addr)
-    if f is None:
-        return None
-    out = []
-    for site in f.call_sites:
-        for t in bv.get_callees(site.address, f, site.arch):
-            s = bv.get_symbol_at(t)
-            out.append(s.raw_name if s is not None and s.type in _bnimage._IMPORTS else t)
-    return out
-
-
-def _symbol_at(addr):
-    s = bv.get_symbol_at(addr)
-    return (s.full_name, not s.auto) if s is not None else None
-
-
 def _user_name(addr):
     f = bv.get_function_at(addr)
     return f.name if f is not None and not f.symbol.auto else None
 
 
-_scan = _rtti.scan(_bnimage.BNImage(bv))
+_img = _bnimage.BNImage(bv)
+_scan = _rtti.scan(_img)
 _names_mod = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
-_classes, _functions = _types_mod.plan(_scan, _demangle, _call_targets,
-                                       _names_mod.label_overrides(_scan, _symbol_at), _user_name)
+_classes, _functions = _types_mod.plan(_scan, _img.demangle, _img.call_targets,
+                                       _names_mod.label_overrides(_scan, _img.symbol_at), _user_name)
 _counts = {}
 _review = []  # what the run would do (or did), for the review file
 
