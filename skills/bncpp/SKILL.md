@@ -37,4 +37,9 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
 - A named type reference (a data var's type) has no `.members`: resolve it (`bv.get_type_by_name`).
 - `C:` comments inside a function are function-level (`f.get_comment_at(addr)`), as in the bridge's annotate.py;
   `bv.get_comment_at` / `bv.address_comments` / `f.comment` don't see them -- verify with the right one.
+- Once a variable has a struct type, BN lifts stores through it as `MLIL_STORE_STRUCT` (`this->vptr = …`), not
+  `MLIL_STORE`: match both, or a pass breaks on already-typed views (O0 suite, SynthV's virtual dtors).
+- BN reports a class's field accesses for every class of its chain (`get_code_refs_for_type_field` on a base
+  lists the derived and sibling classes' too): cap a base by its derived classes' sizes; field passes run to a
+  fixpoint (a second APPLY must change nothing).
 - In shell heredocs that carry Markdown, quote the delimiter (`<<'EOF'`) -- or the backticks run as commands.
