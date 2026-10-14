@@ -35,7 +35,7 @@ struct Engine  (0x10 bytes, from new)
      0x8 field_8                  int64_t  [access]
 struct Slot  (0x10 bytes, from new)
      0x0 vptr                     struct Slot::VTable*  [vptr]
-     0x8 field_8                  struct Child::VTable**  [access]
+     0x8 field_8                  void*  [access]
   pointer 0x8 contradiction: -  (Child vptr, Engine vptr)
 struct FastBlock  (0x18 bytes, from new)
      0x0 vptr                     struct FastBlock::VTable*  [vptr]

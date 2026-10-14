@@ -54,6 +54,6 @@ struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
 
-apply param 0x400970 __ZN9FastBlockC1EPv arg1: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
-apply param 0x400e70 __ZN9FastBlockC2EPv arg1: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
-apply param 0x400ebc __ZN5BlockC2EPv arg1: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400970 __ZN9FastBlockC1EPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
+apply param 0x400e70 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400ebc __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]

@@ -26,7 +26,8 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               stored into it (the caller collects it: an object from operator new or with Y's vptr stored, a typed
               parameter, a typed field, a call returning Y*); like the overrides it moves into the base that holds
               the offset; several classes: their most derived common base at offset 0, unrelated ones: a
-              contradiction (the field stays). Never over a user member or a type from the overrides.
+              contradiction (the field stays, as 'void*': BN's access type comes from one of the stores). Never
+              over a user member or a type from the overrides.
 
 Pure Python, no Binary Ninja import: member types are opaque values the caller supplies (BN Type objects).
 """
@@ -157,7 +158,8 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                any class is cut to its size from new and a base to fit into each derived class with a size and
                before the derived class's next base (width "derived" when that cuts it)
     pointers:  {(typeinfo, offset): {class typeinfo: [evidence kind]}} -- objects stored into a field of an object of
-               the class (bncpp-34); ptr_type(label) -> the type 'label*'"""
+               the class (bncpp-34); ptr_type(label) -> the type 'label*', ptr_type(None) -> 'void*' (a contradiction:
+               the access type BN picked from one of the stores is no better than the other)"""
     existing = existing or {}
     overrides = overrides or {}
     classes = [a for a, t in types.items() if any(vt.primary for vt in t.vtables) or a in accesses]
@@ -307,6 +309,8 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                 outcome = "kept (%s)" % m.source
             elif c is None:
                 outcome = "contradiction"
+                if m.source == "access" and nxt - o >= 8:
+                    taken[o] = Member(o, m.name, ptr_type(None), 8, "access")
             elif c not in out or (existing and c not in existing):
                 outcome = "no struct"  # a common base without a struct of its own
             elif nxt - o < 8:

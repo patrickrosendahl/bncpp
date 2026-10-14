@@ -548,7 +548,19 @@ def _member_class(lays, c, off, depth=0):
     return None
 
 
-def _resolve(d, lays, seen=frozenset()):
+_fclasses = {}  # function -> (return class, [parameter class]) or None; cleared per plan (APPLY changes types)
+
+
+def _func_classes(fa):
+    """the classes a function's return type and parameters point to now (a BN call per function, not per use)"""
+    if fa not in _fclasses:
+        f = bv.get_function_at(fa)
+        _fclasses[fa] = None if f is None else (_class_of(f.return_type),
+                                                [_class_of(p.type) for p in f.type.parameters])
+    return _fclasses[fa]
+
+
+def _resolve(d, lays):
     """(class, kind) a descriptor resolves to now, else None"""
     k = d[0]
     if k == "vptr":
@@ -557,27 +569,27 @@ def _resolve(d, lays, seen=frozenset()):
         c = _new_class.get(d[1])
         return (c, "new") if c is not None else None
     if k in ("param", "ret"):
-        f = bv.get_function_at(d[1])
-        if f is None:
+        fc = _func_classes(d[1])
+        if fc is None:
             return None
         if k == "ret":
-            c = _class_of(f.return_type)
+            c = fc[0]
         else:
-            ps = f.type.parameters
-            c = _class_of(ps[d[2]].type) if d[2] < len(ps) else None
+            c = fc[1][d[2]] if d[2] < len(fc[1]) else None
             if c is None:
-                return _param_class(d[1], d[2], lays, seen)
+                c = _param_plan.get((d[1], d[2]), (None,))[0]
+                return (c, "caller") if c is not None else None
         return (c, k) if c is not None else None
     if k == "load":
-        b = _resolve(d[1], lays, seen)
+        b = _resolve(d[1], lays)
         c = _member_class(lays, b[0], d[2]) if b is not None else None
         return (c, "field") if c is not None else None
     if k == "phi":
-        rs = [_resolve(x, lays, seen) for x in d[1]]
+        rs = [_resolve(x, lays) for x in d[1]]
         cs = set(r[0] for r in rs if r is not None)
         return (cs.pop(), "phi") if None not in rs and len(cs) == 1 else None
     if k == "or":
-        return next((r for r in (_resolve(x, lays, seen) for x in d[1]) if r is not None), None)
+        return next((r for r in (_resolve(x, lays) for x in d[1]) if r is not None), None)
     return None
 
 
@@ -585,31 +597,33 @@ _param_review = {}  # (function, index) -> (review line, outcome): over all roun
 _param_plan = {}  # (function, index) -> (class or None, {class: [kind]}): the last _evidence pass's
 
 
-def _param_class(fa, i, lays, seen):
-    """(class, 'caller') of an untyped parameter from the arguments at its direct call sites (bncpp-28): one class,
+def _param_classes(lays):
+    """_param_plan for the untyped parameters, from the arguments at their direct call sites (bncpp-28): one class,
     or their common base at offset 0; unrelated classes: a contradiction (None). Arguments that resolve to nothing
-    are left out, as the stores are"""
-    key = (fa, i)
-    if key in seen or key not in _param_args:
-        return None
-    if key in _param_plan:
-        c = _param_plan[key][0]
-        return (c, "caller") if c is not None else None
-    ev = {}
-    for d in _param_args[key]:
-        r = _resolve(d, lays, seen | {key}) if d is not None else None
-        if r is not None:
-            ev.setdefault(r[0], []).append(r[1])
-    c = _fields.pointer_class(_types, sorted(ev)) if ev else None
-    if not seen:  # a result inside a cycle depends on where it was entered: only the outermost one is kept
-        _param_plan[key] = (c, ev)
-    return (c, "caller") if c is not None else None
+    are left out, as the stores are. A fixpoint over all of them at once (an argument can be the caller's own
+    parameter), so the result does not depend on where a chain is entered"""
+    _param_plan.clear()
+    for _i in range(10):
+        new = {}
+        for key, args in _param_args.items():
+            ev = {}
+            for d in args:
+                r = _resolve(d, lays) if d is not None else None
+                if r is not None:
+                    ev.setdefault(r[0], []).append(r[1])
+            if ev:
+                new[key] = (_fields.pointer_class(_types, sorted(ev)), ev)
+        if new == _param_plan:
+            return
+        _param_plan.clear()
+        _param_plan.update(new)
+    _count("params from callers: no fixpoint")
 
 
 def _evidence(lays):
     """{(class, offset): {class stored: [kind]}} from the pointer stores, against the layouts"""
     ev = {}
-    _param_plan.clear()
+    _param_classes(lays)
     for _addr, off, dd, sd in _ptr_stores:
         dst = _resolve(dd, lays)
         src = _resolve(sd, lays) if dst is not None else None
@@ -643,17 +657,20 @@ def _plan():
             continue
         accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0}
     # pointer fields to a fixpoint: a field typed 'Y*' types the loads from it, whose stores are evidence in turn
+    _fclasses.clear()
+    t_ptr = time.time()
     lays, typed = None, None
     for _i in range(8):
         ev = _evidence(lays) if lays is not None else None
         lays = _fields.layouts(_types, _labels, _sizes, accesses, existing, _parsed,
                                lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")),
                                lambda n: Type.int(n, False), widths, ev,
-                               lambda label: Type.pointer(bv.arch, _ref(label)))
+                               lambda label: Type.pointer(bv.arch, Type.void() if label is None else _ref(label)))
         now = set((a, p[0], p[1]) for a, lay in lays.items() for p in lay.pointers if p[3] == "typed")
         if ev is not None and now == typed:
             break
         typed = now
+    _count("s 3 pointer fixpoint", int(time.time() - t_ptr))
     # 4. the structs; the parameters typed from their callers (bncpp-28)
     counts, review, defs, shape = {}, [], [], []
     params = []
@@ -662,15 +679,14 @@ def _plan():
         ps = f.type.parameters if f is not None else []
         if i >= len(ps) or _class_of(ps[i].type) is not None:
             continue
-        _param_class(fa, i, lays, frozenset())
         c, ev = _param_plan.get((fa, i), (None, {}))
         if not ev:
             continue
         unknown = sum(1 for d in _param_args[(fa, i)] if d is None or _resolve(d, lays) is None)
         what = "contradiction" if c is None else "no struct" if c not in lays or c not in existing \
             else "kept (user)" if _protected(f) else "typed"
-        _param_review[(fa, i)] = ("%s param %#x %s arg%d: %s  (%s; %d call sites unresolved)   [now: %s]" % (
-            "apply" if what == "typed" else "keep ", fa, f.name, i, lays[c].name if c in lays else "-",
+        _param_review[(fa, i)] = ("%s param %#x %s %s: %s  (%s; %d call sites unresolved)   [now: %s]" % (
+            "apply" if what == "typed" else "keep ", fa, f.name, ps[i].name, lays[c].name if c in lays else "-",
             ", ".join("%s %s" % (lays[k].name if k in lays else "%#x" % k, "/".join(sorted(set(v))))
                       for k, v in sorted(ev.items())), unknown, ps[i].type), what)
         if what == "typed":
