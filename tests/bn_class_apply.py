@@ -28,7 +28,7 @@ _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _out = os.path.join(REPO, ".scratch/classes/%s.directives" % _name)
 os.makedirs(os.path.dirname(_out), exist_ok=True)
-with open(_out, "w") as _fh:
+with open(_out, "w", encoding="utf-8") as _fh:
     _fh.write("".join("%s:%#x:%s\n" % d for d in _dirs))
 
 _counts = {}
@@ -82,7 +82,7 @@ for _kind, _addr, _text in _dirs:
                 _f.set_comment_at(_addr, _text)
             if not _fs:
                 bv.set_comment_at(_addr, _text)
-with open(_out[:-len(".directives")] + ".names.review", "w") as _fh:
+with open(_out[:-len(".directives")] + ".names.review", "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_review) + "\n")
 print("%d typeinfos, %d directives -> %s (+ .names.review)" % (len(_types), len(_dirs), _out))
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(

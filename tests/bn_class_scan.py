@@ -20,7 +20,7 @@ if _name.endswith(".bndb"):
 _out = sys.argv[1] if len(sys.argv) > 1 else os.path.join(REPO, ".scratch/classes/%s.bn.classes" % _name)
 _types = _rtti.scan(_bnimage.BNImage(bv))
 os.makedirs(os.path.dirname(_out), exist_ok=True)
-with open(_out, "w") as _fh:
+with open(_out, "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_rtti.format_scan(_types)) + "\n")
 _kinds = {}
 for _t in _types.values():

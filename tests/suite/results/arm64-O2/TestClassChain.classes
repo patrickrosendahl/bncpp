@@ -1,0 +1,30 @@
+typeinfo 0x404048  class mangled 6Worker
+  vtable 0x404030  offset_to_top 0  3 slots
+    [0] 0x40086c Driver::~Driver(struct Driver* this)
+    [1] 0x400870 Driver::~Driver(struct Driver* this)
+    [2] 0x400874 Worker::pump(struct Worker* this)
+typeinfo 0x404080  si    mangled 6Driver
+  base 0x404048 6Worker
+  vtable 0x404068  offset_to_top 0  3 slots
+    [0] 0x40086c Driver::~Driver(struct Driver* this)
+    [1] 0x400870 Driver::~Driver(struct Driver* this)
+    [2] 0x400888 Driver::pump(struct Driver* this)
+typeinfo 0x4040c0  si    mangled 9NoteGroup
+  base 0x404080 6Driver
+  vtable 0x4040a8  offset_to_top 0  3 slots
+    [0] 0x40086c Driver::~Driver(struct Driver* this)
+    [1] 0x400870 Driver::~Driver(struct Driver* this)
+    [2] 0x4008ac NoteGroup::pump(struct NoteGroup* this)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x40086c Worker::~Worker   [now: Driver::~Driver(struct Driver* this)]
+R 0x400870 Worker::~Worker [deleting]   [now: Driver::~Driver(struct Driver* this)]
+R 0x400874 Worker::vfunc2   [now: Worker::pump(struct Worker* this)]
+R 0x400888 Driver::vfunc2   [now: Driver::pump(struct Driver* this)]
+R 0x4008ac NoteGroup::vfunc2   [now: NoteGroup::pump(struct NoteGroup* this)]
+D 0x404020 vtable_for_Worker   [now: _vtable_for_Worker]
+D 0x404048 typeinfo_for_Worker
+D 0x404058 vtable_for_Driver   [now: _vtable_for_Driver]
+D 0x404080 typeinfo_for_Driver
+D 0x404098 vtable_for_NoteGroup   [now: _vtable_for_NoteGroup]
+D 0x4040c0 typeinfo_for_NoteGroup

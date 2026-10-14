@@ -1,0 +1,198 @@
+// enlist(Worker*) @ 0x400690
+{
+    int32_t registered_1 = registered;
+    registered = registered_1 + 1;
+    *(uint64_t*)(&registry + ((int64_t)(registered_1 & 0xf) << 3)) = arg1;
+    *(uint32_t*)((char*)arg1 + 8) += (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))(arg1);
+    return arg1;
+}
+
+// make_worker() @ 0x4006e0
+{
+    struct Worker* result = operator new(0x30);
+    Worker::Worker(result);
+    return result;
+}
+
+// sub_40070d @ 0x40070d
+{
+    void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
+    *(uint64_t*)((char*)arg5 - 8) = arg4;
+    *(uint32_t*)((char*)arg5 - 0xc) = arg3;
+    operator delete(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 8));
+    /* no return */
+}
+
+// Worker::Worker(struct Worker* this) @ 0x400730
+{
+    Worker::Worker(this);
+}
+
+// make_driver() @ 0x400750
+{
+    struct Driver* result = operator new(0x38);
+    Driver::Driver(result);
+    return result;
+}
+
+// sub_40077d @ 0x40077d
+{
+    void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
+    *(uint64_t*)((char*)arg5 - 8) = arg4;
+    *(uint32_t*)((char*)arg5 - 0xc) = arg3;
+    operator delete(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 8));
+    /* no return */
+}
+
+// Driver::Driver(struct Driver* this) @ 0x4007a0
+{
+    Driver::Driver(this);
+}
+
+// make_group() @ 0x4007c0
+{
+    struct NoteGroup* result = operator new(0x78);
+    NoteGroup::NoteGroup(result);
+    return result;
+}
+
+// sub_4007ed @ 0x4007ed
+{
+    void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
+    *(uint64_t*)((char*)arg5 - 8) = arg4;
+    *(uint32_t*)((char*)arg5 - 0xc) = arg3;
+    operator delete(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 8));
+    /* no return */
+}
+
+// NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400810
+{
+    NoteGroup::NoteGroup(this);
+}
+
+// Worker::Worker(struct Worker* this) @ 0x400830
+{
+    *(uint64_t*)this = &_vtable_for_Worker;
+    *(uint32_t*)((char*)this + 8) = 0;
+    void* __offset(Worker, 0x10) var_18 = (char*)this + 0x10;
+    bool cond:0_1;
+
+    do
+    {
+        *(uint64_t*)var_18 = 0;
+        cond:0_1 = (char*)var_18 + 8 != (char*)this + 0x30;
+        var_18 += 8;
+    } while (cond:0_1);
+    enlist(this);
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x4008a0
+{
+    return;
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x4008c0
+{
+    Worker::~Worker(this);
+    operator delete(this);
+}
+
+// Worker::pump(struct Worker* this) @ 0x4008f0
+{
+    return *(uint64_t*)((char*)this + ((int64_t)(*(uint32_t*)((char*)this + 8) & 3) << 3) + 0x10);
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400910
+{
+    struct Worker* this_1 = this;
+}
+
+// Driver::Driver(struct Driver* this) @ 0x400920
+{
+    Worker::Worker(this);
+    *(uint64_t*)this = &_vtable_for_Driver{for `Worker'};
+    *(uint64_t*)((char*)this + 0x30) = 0x3ff0000000000000;
+    enlist(this);
+}
+
+// sub_400966 @ 0x400966
+{
+    *(uint64_t*)((char*)arg5 - 0x20);
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x400990
+{
+    Driver::~Driver(this);
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x4009b0
+{
+    Driver::~Driver(this);
+    operator delete(this);
+}
+
+// Driver::pump(struct Driver* this) @ 0x4009e0
+{
+    return (int64_t)(*(uint64_t*)((char*)this + 0x30) * (double)Worker::pump(this));
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x400a20
+{
+    return;
+}
+
+// NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400a40
+{
+    Driver::Driver(this);
+    *(uint64_t*)this = &_vtable_for_NoteGroup{for `Worker'};
+    void* __offset(NoteGroup, 0x38) var_28 = (char*)this + 0x38;
+    bool cond:0_1;
+
+    do
+    {
+        *(uint64_t*)var_28 = 0;
+        cond:0_1 = (char*)var_28 + 8 != (char*)this + 0x78;
+        var_28 += 8;
+    } while (cond:0_1);
+    enlist(this);
+}
+
+// sub_400aab @ 0x400aab
+{
+    struct Driver* rdi_1 = *(uint64_t*)((char*)arg5 - 0x30);
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    Driver::~Driver(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// NoteGroup::~NoteGroup(struct NoteGroup* this) @ 0x400ad0
+{
+    NoteGroup::~NoteGroup(this);
+}
+
+// NoteGroup::~NoteGroup(struct NoteGroup* this) @ 0x400af0
+{
+    NoteGroup::~NoteGroup(this);
+    operator delete(this);
+}
+
+// NoteGroup::pump(struct NoteGroup* this) @ 0x400b20
+{
+    return *(uint64_t*)((char*)this + ((int64_t)(*(uint32_t*)((char*)this + 8) & 7) << 3) + 0x38)
+        + Driver::pump(this);
+}
+
+// NoteGroup::~NoteGroup(struct NoteGroup* this) @ 0x400b60
+{
+    Driver::~Driver(this);
+}
+

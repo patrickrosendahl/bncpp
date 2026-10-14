@@ -140,7 +140,7 @@ for _path in _bins:
         continue
     _dir = os.path.join(_out, _variant)
     os.makedirs(_dir, exist_ok=True)
-    with open(os.path.join(_dir, os.path.basename(_path)[:-6] + ".survey"), "w") as _fh:
+    with open(os.path.join(_dir, os.path.basename(_path)[:-6] + ".survey"), "w", encoding="utf-8") as _fh:
         _fh.write("\n".join(_lines) + "\n")
     for k, v in _stats.items():
         _total[k] = _total.get(k, 0) + v

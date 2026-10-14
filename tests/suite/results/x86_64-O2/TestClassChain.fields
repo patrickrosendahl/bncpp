@@ -1,0 +1,18 @@
+classes sized 3
+ctors/dtors 0
+fields 2
+fields named (override) 0
+functions scanned 4
+rounds 2
+stable 1
+structs 3
+structs with a base 2
+
+struct Worker  (0x30 bytes, from new)
+     0x0 vptr                     struct Worker::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct Driver  (0x38 bytes, from new)  base Worker @ 0x0
+     0x0 vptr                     struct Driver::VTable*  [vptr]
+    0x30 field_30                 int64_t  [access]
+struct NoteGroup  (0x78 bytes, from new)  base Driver @ 0x0
+     0x0 vptr                     struct NoteGroup::VTable*  [vptr]

@@ -1,0 +1,105 @@
+// enlist(Worker*) @ 0x400690
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int32_t registered_1 = registered;
+    registered = registered_1 + 1;
+    *(uint64_t*)(&registry + (((uint64_t)registered_1 & 0xf) << 3)) = arg1;
+    int64_t entry_rdx;
+    int64_t entry_rsi;
+    int64_t result = (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))(arg1, entry_rsi, entry_rdx, &registry);
+    *(uint32_t*)((char*)arg1 + 8) += (uint32_t)result;
+    return result;
+}
+
+// make_worker() @ 0x4006d0
+{
+    struct Worker::VTable** result = operator new(0x30);
+    *(uint64_t*)result = &_vtable_for_Worker;
+    result[1] = 0;
+    __builtin_memset(&result[2], 0, 0x20);
+    enlist(result);
+    return result;
+}
+
+// sub_400714 @ 0x400714
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_driver() @ 0x400730
+{
+    struct Worker::VTable** result = operator new(0x38);
+    *(uint64_t*)result = &_vtable_for_Worker;
+    result[1] = 0;
+    __builtin_memset(&result[2], 0, 0x20);
+    enlist(result);
+    *(uint64_t*)result = &_vtable_for_Driver{for `Worker'};
+    result[6] = 0x3ff0000000000000;
+    enlist(result);
+    return result;
+}
+
+// sub_400798 @ 0x400798
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_group() @ 0x4007b0
+{
+    struct Worker::VTable** result = operator new(0x78);
+    *(uint64_t*)result = &_vtable_for_Worker;
+    result[1] = 0;
+    __builtin_memset(&result[2], 0, 0x20);
+    enlist(result);
+    *(uint64_t*)result = &_vtable_for_Driver{for `Worker'};
+    result[6] = 0x3ff0000000000000;
+    enlist(result);
+    *(uint64_t*)result = &_vtable_for_NoteGroup{for `Worker'};
+    __builtin_memset(&result[7], 0, 0x40);
+    enlist(result);
+    return result;
+}
+
+// sub_400841 @ 0x400841
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x400860
+{
+    return;
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x400870
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Worker::pump(struct Worker* this) @ 0x400880
+{
+    return *(uint64_t*)((char*)this + (((uint64_t)*(uint32_t*)((char*)this + 8) & 3) << 3) + 0x10);
+}
+
+// Driver::pump(struct Driver* this) @ 0x4008a0
+{
+    return (int64_t)((double)
+        *(uint64_t*)((char*)this + (((uint64_t)*(uint32_t*)((char*)this + 8) & 3) << 3) + 0x10) *
+        *(uint64_t*)((char*)this + 0x30));
+}
+
+// NoteGroup::pump(struct NoteGroup* this) @ 0x4008c0
+{
+    int32_t rax = *(uint32_t*)((char*)this + 8);
+    return (int64_t)((double)*(uint64_t*)((char*)this + (((uint64_t)rax & 3) << 3) + 0x10) *
+        *(uint64_t*)((char*)this + 0x30))
+            + *(uint64_t*)((char*)this + (((uint64_t)rax & 7) << 3) + 0x38);
+}
+

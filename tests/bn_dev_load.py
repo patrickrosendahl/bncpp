@@ -17,8 +17,8 @@ shutil.rmtree(_dst, ignore_errors=True)
 shutil.copytree(REPO, _dst, ignore=lambda d, names: [f for f in names if not (f.endswith(".py") or (
     os.path.isdir(os.path.join(d, f)) and d == REPO and f in ("cpp", "shared")))])
 _c = os.path.join(_dst, "constants.py")
-_src = open(_c).read()
-open(_c, "w").write(_src.replace('LANGUAGE_NAME = "Pseudo Cpp"', 'LANGUAGE_NAME = "Pseudo Cpp dev%d"' % _n))
+_src = open(_c, encoding="utf-8").read()
+open(_c, "w", encoding="utf-8").write(_src.replace('LANGUAGE_NAME = "Pseudo Cpp"', 'LANGUAGE_NAME = "Pseudo Cpp dev%d"' % _n))
 _spec = importlib.util.spec_from_file_location(_name, os.path.join(_dst, "__init__.py"), submodule_search_locations=[_dst])
 _mod = importlib.util.module_from_spec(_spec)
 sys.modules[_name] = _mod

@@ -13,7 +13,7 @@ REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
 stride = int(sys.argv[1]) if len(sys.argv) > 1 else 10
 name = os.path.basename(bv.file.original_filename)
 name = name[:-5] if name.endswith(".bndb") else name
-funcs = [int(line.split(":")[1], 16) for line in open(os.path.join(REPO, ".scratch/classes/%s.directives" % name))
+funcs = [int(line.split(":")[1], 16) for line in open(os.path.join(REPO, ".scratch/classes/%s.directives" % name), encoding="utf-8")
          if line.startswith("R:")][::stride]
 CALLS = (Op.HLIL_CALL, Op.HLIL_TAILCALL, Op.HLIL_CALL_SSA)
 DIRECT = (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT, Op.HLIL_EXTERN_PTR, Op.HLIL_CONST)

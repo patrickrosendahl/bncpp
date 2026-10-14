@@ -9,7 +9,8 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               constructor of X (the complete-object constructor C1 tail-calling the base-object one C2) is one
               too (found from the operator new sites, by the caller: tests/bn_class_fields.py).
   sizes       operator new(N) whose result receives X's vptr at offset 0, or goes to a constructor of X as 'this':
-              X is N bytes. The most frequent N (a tie: the largest).
+              X is N bytes. The most frequent N (a tie: the largest). Inlined constructors store the vptr of
+              each class of the chain in turn: only the most derived class of one call counts.
   bases       si: the base at offset 0; vmi: each non-virtual base at offset_flags >> 8 (virtual bases sit at
               run-time offsets: left out). In BN: base structures.
   fields      the offsets the code accesses through 'X*' (BN's create_structure_from_offset_access, after the
@@ -70,15 +71,22 @@ def ctor_classes(types, stores):
     return out
 
 
-def class_sizes(sites, ctors):
+def class_sizes(sites, ctors, types):
     """{class typeinfo: size} from operator new sites: [(class typeinfo or None, constructor called or None,
-    size)] -- a site names the class by the vptr stored into the new object or by the constructor it calls"""
-    counts = {}
-    for cls, ctor, size in sites:
+    size, call address)] -- a site names the class by the vptr stored into the new object or by the constructor it
+    calls; inlined constructors store each class's vptr of the chain in turn, so per call only the most derived
+    class gets the size (none if the classes are not one hierarchy)"""
+    calls = {}
+    for cls, ctor, size, call in sites:
         c = cls if cls is not None else ctors.get(ctor)
         if c is not None and size:
-            counts.setdefault(c, {})
-            counts[c][size] = counts[c].get(size, 0) + 1
+            calls.setdefault((call, size), set()).add(c)
+    counts = {}
+    for (_call, size), cls in calls.items():
+        leaf = [c for c in cls if all(o == c or o in ancestors(types, c) for o in cls)]
+        if len(leaf) == 1:
+            counts.setdefault(leaf[0], {})
+            counts[leaf[0]][size] = counts[leaf[0]].get(size, 0) + 1
     return {c: max(n.items(), key=lambda kv: (kv[1], kv[0]))[0] for c, n in counts.items()}
 
 

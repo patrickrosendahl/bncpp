@@ -54,6 +54,7 @@ TESTS = [
     "TestVirtualChained",        # chained fixups
     "TestVirtualHashed",         # classic, undefined nlist names hashed like SynthV's (BN drops binds, bncpp-25)
     "TestVirtualChainedHashed",  # chained, nlist hashed
+    "TestClassChain",            # inlined constructor chain: one new object gets each class's vptr (.fields)
 ]
 
 # tests built differently from src/TestX.cpp with -undefined dynamic_lookup: name -> (source, link flags, hash

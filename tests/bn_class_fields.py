@@ -35,16 +35,16 @@ if _apply and _limit:
 _t0 = time.time()
 _baseline = None
 if _env.get("BASELINE"):
-    with open(_env["BASELINE"]) as _fh:
+    with open(_env["BASELINE"], encoding="utf-8") as _fh:
         _baseline = json.load(_fh)
 _overrides = {}
 if _env.get("NAMES"):
-    with open(_env["NAMES"]) as _fh:
+    with open(_env["NAMES"], encoding="utf-8") as _fh:
         for _line in _fh:
             _p = _line.split("#")[0].split(None, 3)
             if len(_p) >= 3:
                 _overrides[(_p[0], int(_p[1], 0))] = (_p[2], _p[3].strip() if len(_p) > 3 else None)
-_CTORS_VERSION = 2
+_CTORS_VERSION = 4
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _OPERATOR_NEW = ("__Znwm", "__Znam", "__ZnwmRKSt9nothrow_t", "__ZnamRKSt9nothrow_t")
@@ -123,24 +123,27 @@ def _store_site(mi):
     return (d.src, off, mi.src.constant) if d.operation == Op.MLIL_VAR else None
 
 
-def _new_uses(m, var, size, sites, seen):
-    """the object operator new returned in var: its vptr store at 0, or the constructor it goes to as 'this'"""
+def _new_uses(ssa, var, size, call, sites, seen):
+    """the object operator new returned in SSA variable var: its vptr store at 0, or the constructor it goes to as
+    'this'. SSA, so that a factory whose branches merge the results of several new calls into one variable
+    ('case 1: return new A; case 2: return new B') gives each call only its own class"""
     if var in seen:
         return
     seen.add(var)
-    for u in m.get_var_uses(var):
+    for u in ssa.get_ssa_var_uses(var):
         o = u.operation
-        if o == Op.MLIL_SET_VAR and u.src.operation == Op.MLIL_VAR and u.src.src == var:
-            _new_uses(m, u.dest, size, sites, seen)
-        elif o in (Op.MLIL_STORE, Op.MLIL_STORE_STRUCT):
-            st = _store_site(u)
-            if st is not None and st[0] == var and st[1] == 0:
+        if o == Op.MLIL_SET_VAR_SSA and u.src.operation == Op.MLIL_VAR_SSA and u.src.src == var:
+            _new_uses(ssa, u.dest, size, call, sites, seen)
+        elif o in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+            d = u.dest.left if u.dest.operation == Op.MLIL_ADD else u.dest
+            st = _store_site(u.non_ssa_form)
+            if st is not None and st[1] == 0 and d.operation == Op.MLIL_VAR_SSA and d.src == var:
                 c, ott = _points[st[2]]
                 if ott == 0:
-                    sites.append((c, None, size))
-        elif o == Op.MLIL_CALL and u.dest.operation == Op.MLIL_CONST_PTR and u.params \
-                and u.params[0].operation == Op.MLIL_VAR and u.params[0].src == var:
-            sites.append((None, u.dest.constant, size))
+                    sites.append((c, None, size, call))
+        elif o == Op.MLIL_CALL_SSA and u.dest.operation == Op.MLIL_CONST_PTR \
+                and u.params and u.params[0].operation == Op.MLIL_VAR_SSA and u.params[0].src == var:
+            sites.append((None, u.dest.constant, size, call))
 
 
 # 1. constructors / destructors (vptr stores on this) and sizes (operator new sites), per function: BN keeps the IL
@@ -173,7 +176,7 @@ else:
                 elif _mi.operation == Op.MLIL_CALL and _mi.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT) \
                         and _mi.dest.constant in _new_addrs and _mi.output and _mi.params \
                         and _mi.params[0].operation == Op.MLIL_CONST:
-                    _new_uses(_m, _mi.output[0], _mi.params[0].constant, _sites, set())
+                    _new_uses(_m.ssa_form, _mi.ssa_form.output[0], _mi.params[0].constant, _mi.address, _sites, set())
     _lap("1b il")
     _count("functions scanned", len(_by_func))
     if _limit is None and not _nocache:
@@ -200,13 +203,13 @@ def _forwards_to(a):
 
 
 # constructors that only forward to one (no vptr store of their own): reached from operator new sites
-for _ctor in sorted(set(c for _cls, c, _n in _sites if c is not None and c not in _ctors)):
+for _ctor in sorted(set(c for _cls, c, _n, _call in _sites if c is not None and c not in _ctors)):
     _to = _forwards_to(_ctor)
     if _to in _ctors:
         _ctors[_ctor] = _ctors[_to]
         _count("ctors forwarding")
 _lap("1c forwarding ctors")
-_sizes = _fields.class_sizes(_sites, _ctors)
+_sizes = _fields.class_sizes(_sites, _ctors, _types)
 _virtual = set(s for t in _types.values() for vt in t.vtables for s in vt.slots if isinstance(s, int))
 _count("ctors/dtors", len(_ctors))
 _count("classes sized", len(_sizes))
@@ -312,7 +315,7 @@ for _k, _v in _final_counts.items():
 _review += _final_review
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
-with open(_rv, "w") as _fh:
+with open(_rv, "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_review) + "\n\n" + "\n".join(_fields.format_layouts(_lays)) + "\n")
 print("review -> %s" % _rv)
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(

@@ -26,13 +26,13 @@ _t0 = time.time()
 if _env.get("DUMP_TYPES"):
     # baseline for BASELINE: every function's type as BN infers it (run this on a fresh view of the binary)
     import json
-    with open(_env["DUMP_TYPES"], "w") as _fh:
+    with open(_env["DUMP_TYPES"], "w", encoding="utf-8") as _fh:
         json.dump({"%#x" % f.start: str(f.type) for f in bv.functions}, _fh)
     raise SystemExit("dumped %d function types into %s" % (len(bv.functions), _env["DUMP_TYPES"]))
 _baseline = None
 if _env.get("BASELINE"):
     import json
-    with open(_env["BASELINE"]) as _fh:
+    with open(_env["BASELINE"], encoding="utf-8") as _fh:
         _baseline = json.load(_fh)
 
 
@@ -143,7 +143,7 @@ _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _rv = os.path.join(REPO, ".scratch/classes/%s.types.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
-with open(_rv, "w") as _fh:
+with open(_rv, "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_review) + "\n")
 print("review -> %s" % _rv)
 print("%s: %d classes, %d functions planned; %s (%.1f s)" % (

@@ -72,7 +72,7 @@ def _dump_fields(bv):
     for script in ("bn_class_apply.py", "bn_class_types.py", "bn_class_fields.py"):
         g = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": {"APPLY": "1", "NOCACHE": "1"}}
         path = os.path.join(REPO, "tests", script)
-        with open(path) as fh:
+        with open(path, encoding="utf-8") as fh:
             exec(compile(fh.read(), path, "exec"), g)
     lines = ["%s %d" % kv for kv in sorted(g["_counts"].items()) if not kv[0].startswith("s ")]  # no timings
     return lines + [""] + g["_fields"].format_layouts(g["_lays"])
@@ -106,7 +106,7 @@ for _path in _bins:
         os.makedirs(_dir, exist_ok=True)
         _base = os.path.splitext(os.path.basename(_path))[0]
         for _key, _lines in _texts.items():
-            with open(os.path.join(_dir, "%s.%s" % (_base, _key)), "w") as _fh:
+            with open(os.path.join(_dir, "%s.%s" % (_base, _key)), "w", encoding="utf-8") as _fh:
                 _fh.write("\n".join(_lines) + "\n")
         _ok += 1
     finally:

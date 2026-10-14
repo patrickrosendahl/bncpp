@@ -1,0 +1,100 @@
+// enlist(Worker*) @ 0x400698
+{
+    uint64_t registered_1 = (uint64_t)registered;
+    registered = (uint32_t)registered_1 + 1;
+    *(uint64_t*)(&registry + ((registered_1 & 0xf) << 3)) = arg1;
+    int64_t result = (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))();
+    *(uint32_t*)((char*)arg1 + 8) += (uint32_t)result;
+    return result;
+}
+
+// make_worker() @ 0x4006ec
+{
+    Worker* result = operator new(0x30);
+    *(uint64_t*)result = &data_404030;
+    *(uint32_t*)((char*)result + 8) = 0;
+    __builtin_memset((char*)result + 0x10, 0, 0x20);
+    enlist(result);
+    return result;
+}
+
+// sub_400734 @ 0x400734
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_driver() @ 0x400748
+{
+    Worker* result = operator new(0x38);
+    *(uint64_t*)result = &data_404030;
+    *(uint32_t*)((char*)result + 8) = 0;
+    __builtin_memset((char*)result + 0x10, 0, 0x20);
+    enlist(result);
+    *(uint64_t*)result = &data_404068;
+    *(uint64_t*)((char*)result + 0x30) = 0x3ff0000000000000;
+    enlist(result);
+    return result;
+}
+
+// sub_4007b0 @ 0x4007b0
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_group() @ 0x4007c4
+{
+    Worker* result = operator new(0x78);
+    *(uint64_t*)result = &data_404030;
+    *(uint32_t*)((char*)result + 8) = 0;
+    __builtin_memset((char*)result + 0x10, 0, 0x20);
+    enlist(result);
+    *(uint64_t*)result = &data_404068;
+    *(uint64_t*)((char*)result + 0x30) = 0x3ff0000000000000;
+    enlist(result);
+    *(uint64_t*)result = &data_4040a8;
+    __builtin_memset((char*)result + 0x38, 0, 0x40);
+    enlist(result);
+    return result;
+}
+
+// sub_400858 @ 0x400858
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x40086c
+{
+    return;
+}
+
+// Driver::~Driver(struct Driver* this) @ 0x400870
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Worker::pump(struct Worker* this) @ 0x400874
+{
+    return *(uint64_t*)((char*)this + (((uint64_t)*(uint32_t*)((char*)this + 8) & 3) << 3) + 0x10);
+}
+
+// Driver::pump(struct Driver* this) @ 0x400888
+{
+    return (int64_t)(*(uint64_t*)((char*)this + 0x30) * (double)
+        *(uint64_t*)((char*)this + (((uint64_t)*(uint32_t*)((char*)this + 8) & 3) << 3) + 0x10));
+}
+
+// NoteGroup::pump(struct NoteGroup* this) @ 0x4008ac
+{
+    uint64_t x8_3 = (uint64_t)*(uint32_t*)((char*)this + 8);
+    return *(uint64_t*)((char*)this + ((x8_3 & 7) << 3) + 0x38) + (int64_t)(
+        *(uint64_t*)((char*)this + 0x30) * (double)
+        *(uint64_t*)((char*)this + ((x8_3 & 3) << 3) + 0x10));
+}
+

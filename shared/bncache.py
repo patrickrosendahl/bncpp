@@ -38,7 +38,7 @@ class Cache:
 
     def _read(self, path):
         try:
-            with open(path) as fh:
+            with open(path, encoding="utf-8") as fh:
                 data = json.load(fh)
         except (OSError, ValueError):
             return {}
@@ -47,7 +47,7 @@ class Cache:
     def _write(self):
         self.data["sha256"] = self.sha256
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
-        with open(self.path + ".tmp", "w") as fh:
+        with open(self.path + ".tmp", "w", encoding="utf-8") as fh:
             json.dump(self.data, fh)
         os.replace(self.path + ".tmp", self.path)
 
