@@ -19,6 +19,7 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               own accesses' end. Width of X: its size, else the end of its bases and members.
   names       vptr at 0; a member someone named in the existing struct keeps its name and type; else a name
               given for (class, offset) (overrides, e.g. from another session's schema); else field_<offset>.
+              An override inside a base subobject names the base's member (unless the base has another one there).
 
 Pure Python, no Binary Ninja import: member types are opaque values the caller supplies (BN Type objects).
 """
@@ -36,7 +37,7 @@ class Member:
 
 
 class ClassLayout:
-    __slots__ = ("typeinfo", "name", "width", "width_from", "bases", "members")
+    __slots__ = ("typeinfo", "name", "width", "width_from", "bases", "members", "notes")
 
     def __init__(self, typeinfo, name):
         self.typeinfo = typeinfo
@@ -45,6 +46,7 @@ class ClassLayout:
         self.width_from = "vptr"  # "new" (operator new) / "members" / "vptr"
         self.bases = []           # [(base typeinfo, offset)]
         self.members = []         # [Member], sorted by offset
+        self.notes = []           # [str]: overrides moved into a base or dropped (the review)
 
 
 def ancestors(types, addr):
@@ -176,6 +178,25 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                     acc[b].setdefault(off - boff, (s, ty))
                     break
 
+    # the same for the overrides: a name given for a derived class's offset inside a base names the base's member
+    # (one object, one layout); a different name there already is a conflict: the base's stays, the review says so
+    overrides = dict(overrides)
+    for a in sorted(classes, key=lambda a: -depth[a]):
+        for (lab, off), (name, oty) in sorted(overrides.items(), key=lambda kv: kv[0][1]):
+            if lab != labels[a] or off == 0:
+                continue
+            for b, boff in out[a].bases:
+                if boff <= off < boff + out[b].width:
+                    del overrides[(lab, off)]
+                    key, there = (labels[b], off - boff), overrides.get((labels[b], off - boff))
+                    if there is None or there == (name, oty):
+                        overrides[key] = (name, oty)
+                        out[a].notes.append("override %#x %s -> base %s %#x" % (off, name, labels[b], off - boff))
+                    else:
+                        out[a].notes.append("override %#x %s dropped: base %s %#x is %s" % (
+                            off, name, labels[b], off - boff, there[0]))
+                    break
+
     for a in classes:
         lay, label = out[a], labels[a]
         taken = {}
@@ -217,4 +238,5 @@ def format_layouts(lays, types=None):
             "  base %s @ %#x" % (lays[b].name, off) for b, off in lay.bases)))
         for m in lay.members:
             out.append("  %#6x %-24s %s  [%s]" % (m.offset, m.name, m.type, m.source))
+        out += ["  note: " + n for n in lay.notes]
     return out
