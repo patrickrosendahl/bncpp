@@ -35,6 +35,7 @@ $B --bndb BIN --timeout 300 tests/bn_class_scan.py     # -> .scratch/classes/<bi
 python3 -I tests/ref_class_scan.py BIN --compare .scratch/classes/<bin>.bn.classes   # vs the file (exit 1: structure)
 $B --bndb DB --timeout 600 [--env APPLY=1] tests/bn_class_apply.py          # names (R:/D:/C: directives)
 $B --bndb DB --timeout 1800 --env BASELINE=F [--env APPLY=1] tests/bn_class_types.py   # structs + 'X* this'
+$B --bndb DB --timeout 1800 --env BASELINE=F [--env NAMES=F] [--env APPLY=1] tests/bn_class_fields.py  # sizes, bases, fields
 $B --bndb DB --timeout 900 tests/bn_vcall_count.py     # HLIL indirect / named vptr calls (a sample)
 ```
 Details and the suite layout (Fernflower style): wiki `testing.md`.

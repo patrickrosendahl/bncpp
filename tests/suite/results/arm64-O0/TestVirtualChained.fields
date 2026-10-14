@@ -1,0 +1,35 @@
+classes sized 7
+ctor already typed 14
+ctors forwarding 4
+ctors/dtors 14
+fields 3
+fields named (override) 0
+functions scanned 20
+rounds 2
+stable 1
+structs 10
+structs with a base 5
+
+struct Shape  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Shape::VTable*  [vptr]
+struct Named  (0x8 bytes, from derived)
+     0x0 vptr                     struct Named::VTable*  [vptr]
+struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Circle::VTable*  [vptr]
+     0x8 field_8                  double  [access]
+struct NamedCircle  (0x18 bytes, from new)  base Circle @ 0x0  base Named @ 0x10
+     0x0 vptr                     struct NamedCircle::VTable*  [vptr]
+struct Box<int32_t>  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Box<int32_t>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct Box<double>  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Box<double>::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]
+struct Left  (0x8 bytes, from new)
+     0x0 vptr                     struct Left::VTable*  [vptr]
+struct Node  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Node::VTable*  [vptr]
+struct Right  (0x8 bytes, from new)
+     0x0 vptr                     struct Right::VTable*  [vptr]
+struct Diamond  (0x10 bytes, from new)  base Left @ 0x0  base Right @ 0x8
+     0x0 vptr                     struct Diamond::VTable*  [vptr]

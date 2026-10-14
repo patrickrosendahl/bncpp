@@ -10,6 +10,9 @@
 #          the offline reference of `suite.py ref-lsda`)
 #   .classes  the class scan (cpp/rtti.py through cpp/bnimage.py) with BN's names of the slot functions, then
 #          the names cpp/rtti_names.py gives (checked)
+#   .fields   the class structs after the whole class pipeline with APPLY in this throwaway view
+#          (tests/bn_class_apply.py, bn_class_types.py, bn_class_fields.py NOCACHE=1): counts, then the layouts
+#          (cpp/rtti_fields.py; checked). Runs last: it changes the view's names and types
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import glob, importlib, os
 import binaryninja as _bn
@@ -24,9 +27,9 @@ _lsda = importlib.import_module(_dev["pkgname"] + ".cpp.lsda")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
 _rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
 _rtti_names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
-_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda,classes"
+_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda,classes,fields"
 _kinds = [k.strip() for k in _kinds_arg.split(",") if k.strip()]
-if set(_kinds) - {"pc", "pcpp", "lsda", "classes"}:
+if set(_kinds) - {"pc", "pcpp", "lsda", "classes", "fields"}:
     raise ValueError("DUMP_KINDS: unknown kind in %r" % _kinds_arg)
 _bins = globals().get("DUMP_BINARIES") or sorted(glob.glob(os.path.join(REPO, "tests/suite/bin/*/*.dylib")))
 _only = (globals().get("env") or {}).get("DUMP_TESTS") or os.environ.get("DUMP_TESTS")
@@ -62,6 +65,19 @@ def _dump_classes(bv):
     return lines
 
 
+def _dump_fields(bv):
+    if not _rtti.scan(_bnimage.BNImage(bv)):
+        return ["no typeinfo"]
+    g = {}
+    for script in ("bn_class_apply.py", "bn_class_types.py", "bn_class_fields.py"):
+        g = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": {"APPLY": "1", "NOCACHE": "1"}}
+        path = os.path.join(REPO, "tests", script)
+        with open(path) as fh:
+            exec(compile(fh.read(), path, "exec"), g)
+    lines = ["%s %d" % kv for kv in sorted(g["_counts"].items()) if not kv[0].startswith("s ")]  # no timings
+    return lines + [""] + g["_fields"].format_layouts(g["_lays"])
+
+
 _ok = 0
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) if "DUMP_BINARIES" not in globals() else "other"
@@ -84,6 +100,8 @@ for _path in _bins:
             _texts["lsda"] = _dump_lsda(_bv)
         if "classes" in _kinds:
             _texts["classes"] = _dump_classes(_bv)
+        if "fields" in _kinds:  # last: changes the view
+            _texts["fields"] = _dump_fields(_bv)
         _dir = os.path.join(_out, _variant)
         os.makedirs(_dir, exist_ok=True)
         _base = os.path.splitext(os.path.basename(_path))[0]

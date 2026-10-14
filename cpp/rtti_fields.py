@@ -5,7 +5,9 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
   ctors       a function that stores a vtable address point of class X into its own 'this' (the first parameter
               or a copy of it), at offset 0, is a constructor or destructor of X; with stores of several classes
               of one hierarchy (a derived constructor inlines its base's) the most derived one. Such functions get
-              'X* this' too, so their field accesses count.
+              'X* this' too, so their field accesses count. A tiny function that only passes its 'this' on to a
+              constructor of X (the complete-object constructor C1 tail-calling the base-object one C2) is one
+              too (found from the operator new sites, by the caller: tests/bn_class_fields.py).
   sizes       operator new(N) whose result receives X's vptr at offset 0, or goes to a constructor of X as 'this':
               X is N bytes. The most frequent N (a tie: the largest).
   bases       si: the base at offset 0; vmi: each non-virtual base at offset_flags >> 8 (virtual bases sit at
@@ -92,14 +94,24 @@ def base_offsets(t, types):
     return out
 
 
-def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_type=None):
+def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_type=None, int_type=None,
+            widths=None):
     """{class typeinfo: ClassLayout} for every class with a primary vtable or accesses.
 
     accesses: {typeinfo: {offset: (size, type)}} -- what the code accesses through 'X*' (BN)
     existing: {typeinfo: [(offset, name, type, size, user?)]} -- the struct's members now; user = someone named
               it (not vptr / field_* / an override name), kept as it is
     overrides: {(label, offset): (name, type or None)}
-    vptr_type: vptr_type(label) -> the type of X's vptr member"""
+    vptr_type: vptr_type(label) -> the type of X's vptr member
+    int_type:  int_type(n) -> an n-byte integer type: an access wider than the gap to the next member (BN types
+               a 16-byte SSE copy of two fields as int128) is narrowed to the widest of 8 / 4 / 2 / 1 bytes that
+               fits; a name without a type the code never accesses (a sub-object whose address is taken) becomes
+               a 1-byte placeholder
+    widths:    {typeinfo: width of the struct now} -- once a struct has a base structure, BN reports the derived
+               class's accesses as the base's too (get_code_refs_for_type_field): a base class keeps its size from
+               new, else the width of its struct, and its accesses past it are the derived classes', dropped;
+               any class is cut to its size from new and a base to fit into each derived class with a size
+               (width "derived" when that cuts it)"""
     existing = existing or {}
     overrides = overrides or {}
     classes = [a for a, t in types.items() if any(vt.primary for vt in t.vtables) or a in accesses]
@@ -107,6 +119,26 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
     out = {a: ClassLayout(a, labels[a]) for a in classes}
     for a in classes:
         out[a].bases = [(b, off) for b, off in base_offsets(types[a], types) if b in out]
+    depth = {a: len(ancestors(types, a)) for a in classes}
+    # cap: no part of a class lies past its size from new, and a base subobject fits into every derived object of
+    # a known size (deepest classes first, so a cap reaches all the way up); BN reports a sibling's accesses for
+    # every class of the chain, which alone would make the bases wider than the objects
+    cap = {}
+    for a in sorted(classes, key=lambda a: -depth[a]):
+        c = min([v for v in (sizes.get(a), cap.get(a)) if v is not None], default=None)
+        if c is None:
+            continue
+        cap[a] = c
+        for b, off in out[a].bases:
+            if c - off > 0:
+                cap[b] = min(cap.get(b, c - off), c - off)
+    kept = {}
+    for b in set(b for a in classes for b, _off in out[a].bases):
+        w = (widths or {}).get(b)
+        if b not in sizes and w is not None and w > 8:
+            kept[b] = min(w, cap.get(b, w))
+    for a, c in list(cap.items()) + list(kept.items()):
+        acc[a] = {off: v for off, v in acc[a].items() if off < c}
 
     # widths before lifting: the size, else the end of the own accesses and bases (fixed, so lifting is stable)
     def own_end(a, seen=()):
@@ -118,16 +150,16 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
 
     def width(a, seen=()):
         if a not in memo:
-            memo[a] = sizes[a] if a in sizes else own_end(a, seen)
+            memo[a] = sizes[a] if a in sizes else kept[a] if a in kept else own_end(a, seen)
+            memo[a] = min(memo[a], cap.get(a, memo[a]))
         return memo[a]
 
     for a in classes:
-        out[a].width = max(width(a), own_end(a))
+        out[a].width = min(max(width(a), own_end(a)), cap.get(a, 1 << 62))
         out[a].width_from = "new" if a in sizes and sizes[a] >= own_end(a) else (
-            "members" if out[a].width > 8 else "vptr")
+            "derived" if a in cap and out[a].width == cap[a] else "members" if out[a].width > 8 else "vptr")
 
     # lift a derived class's accesses inside a base into the base, deepest classes first (so they go all the way up)
-    depth = {a: len(ancestors(types, a)) for a in classes}
     for a in sorted(classes, key=lambda a: -depth[a]):
         for off in sorted(acc[a]):
             for b, boff in out[a].bases:
@@ -152,9 +184,19 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
             taken[off] = Member(off, name or "field_%x" % off, oty if oty is not None else ty, size,
                                 "override" if name else "access")
         for (lab, off), (name, oty) in overrides.items():  # a named offset the code did not show: still a member
-            if lab == label and off not in taken and not any(s <= off < e for s, e in in_base) and oty is not None:
-                taken[off] = Member(off, name, oty, None, "override")
-        lay.members = [taken[o] for o in sorted(taken)]
+            if lab == label and off not in taken and not any(s <= off < e for s, e in in_base):
+                if oty is None and int_type is not None:
+                    taken[off] = Member(off, name, int_type(1), 1, "override")
+                elif oty is not None:
+                    taken[off] = Member(off, name, oty, None, "override")
+        offs = sorted(taken)
+        for o, nxt in zip(offs, offs[1:] + [lay.width]):
+            m = taken[o]
+            narrow = m.source == "access" or (m.source == "override" and overrides.get((label, o), (0, 0))[1] is None)
+            if int_type is not None and narrow and m.size and m.size > nxt - o > 0:
+                n = next(k for k in (8, 4, 2, 1) if k <= nxt - o)
+                taken[o] = Member(o, m.name, int_type(n), n, m.source)
+        lay.members = [taken[o] for o in offs]
     return out
 
 

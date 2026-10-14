@@ -3,7 +3,9 @@
 #   bnrun --bndb DB --timeout 1800 tests/bn_class_fields.py                     # dry run: plan + review file
 #   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_fields.py       # apply (in RAM), then save PATH
 #   options: --env BASELINE=F (as bn_class_types.py), --env NAMES=F (field names: lines 'label offset name [type]'),
-#            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only)
+#            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only),
+#            --env NOCACHE=1 (step 1 always anew, no cache file: the suite, tests/bn_dump.py),
+#            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4)
 # Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
 # the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
 # bncpp-22: constructors / destructors get 'X* this', then the class structs get their size, base subobjects and
@@ -42,7 +44,7 @@ if _env.get("NAMES"):
             _p = _line.split("#")[0].split(None, 3)
             if len(_p) >= 3:
                 _overrides[(_p[0], int(_p[1], 0))] = (_p[2], _p[3].strip() if len(_p) > 3 else None)
-_CTORS_VERSION = 1
+_CTORS_VERSION = 2
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _OPERATOR_NEW = ("__Znwm", "__Znam", "__ZnwmRKSt9nothrow_t", "__ZnamRKSt9nothrow_t")
@@ -110,13 +112,14 @@ def _is_this(m, p0, var, seen):
 
 
 def _store_site(mi):
-    """(base var, offset, address point) of a vptr store '[base + off] = point', else None"""
-    if mi.operation != Op.MLIL_STORE or mi.src.operation not in (Op.MLIL_CONST, Op.MLIL_CONST_PTR) \
-            or mi.src.constant not in _points:
+    """(base var, offset, address point) of a vptr store '[base + off] = point', else None; once the base has a
+    struct type (bn_class_types.py, or BN's own) the store is 'base->member = point' (MLIL_STORE_STRUCT)"""
+    if mi.operation not in (Op.MLIL_STORE, Op.MLIL_STORE_STRUCT) \
+            or mi.src.operation not in (Op.MLIL_CONST, Op.MLIL_CONST_PTR) or mi.src.constant not in _points:
         return None
-    d, off = mi.dest, 0
+    d, off = mi.dest, mi.offset if mi.operation == Op.MLIL_STORE_STRUCT else 0
     if d.operation == Op.MLIL_ADD and d.right.operation == Op.MLIL_CONST:
-        off, d = d.right.constant, d.left
+        off, d = off + d.right.constant, d.left
     return (d.src, off, mi.src.constant) if d.operation == Op.MLIL_VAR else None
 
 
@@ -129,7 +132,7 @@ def _new_uses(m, var, size, sites, seen):
         o = u.operation
         if o == Op.MLIL_SET_VAR and u.src.operation == Op.MLIL_VAR and u.src.src == var:
             _new_uses(m, u.dest, size, sites, seen)
-        elif o == Op.MLIL_STORE:
+        elif o in (Op.MLIL_STORE, Op.MLIL_STORE_STRUCT):
             st = _store_site(u)
             if st is not None and st[0] == var and st[1] == 0:
                 c, ott = _points[st[2]]
@@ -142,8 +145,9 @@ def _new_uses(m, var, size, sites, seen):
 
 # 1. constructors / destructors (vptr stores on this) and sizes (operator new sites), per function: BN keeps the IL
 # of only analysis.limits.cacheSize (256) functions, so jumping between functions rebuilds it again and again
-_cache_file = _bncache.Cache(bv)
-_cache = _cache_file.get("ctors", _CTORS_VERSION) if _limit is None else None
+_nocache = _env.get("NOCACHE") == "1"
+_cache_file = None if _nocache else _bncache.Cache(bv)
+_cache = _cache_file.get("ctors", _CTORS_VERSION) if _limit is None and not _nocache else None
 if _cache is not None:
     _stores = {int(k, 0): [tuple(x) for x in v] for k, v in _cache["stores"].items()}
     _sites = [tuple(x) for x in _cache["sites"]]
@@ -172,10 +176,36 @@ else:
                     _new_uses(_m, _mi.output[0], _mi.params[0].constant, _sites, set())
     _lap("1b il")
     _count("functions scanned", len(_by_func))
-    if _limit is None:
+    if _limit is None and not _nocache:
         _cache_file.put("ctors", _CTORS_VERSION, {"sites": _sites,
                                                   "stores": {"%#x" % k: v for k, v in sorted(_stores.items())}})
 _ctors = _fields.ctor_classes(_types, _stores)
+
+
+def _forwards_to(a):
+    """the function a tiny function a only passes its 'this' on to (C1 -> C2 constructors: 'return C2(this, ...)'),
+    else None; size-checked before its IL is built"""
+    f = bv.get_function_at(a)
+    if f is None or f.total_bytes > 48 or not len(f.parameter_vars):
+        return None
+    m = f.mlil
+    if m is None or len(m) > 6:  # O0 spills this first: var_10 = this; rdi = var_10; C2(rdi)
+        return None
+    p0 = f.parameter_vars[0]
+    for ins in m.instructions:
+        if ins.operation in (Op.MLIL_CALL, Op.MLIL_TAILCALL) and ins.dest.operation == Op.MLIL_CONST_PTR \
+                and ins.params and ins.params[0].operation == Op.MLIL_VAR and _is_this(m, p0, ins.params[0].src, set()):
+            return ins.dest.constant
+    return None
+
+
+# constructors that only forward to one (no vptr store of their own): reached from operator new sites
+for _ctor in sorted(set(c for _cls, c, _n in _sites if c is not None and c not in _ctors)):
+    _to = _forwards_to(_ctor)
+    if _to in _ctors:
+        _ctors[_ctor] = _ctors[_to]
+        _count("ctors forwarding")
+_lap("1c forwarding ctors")
 _sizes = _fields.class_sizes(_sites, _ctors)
 _virtual = set(s for t in _types.values() for vt in t.vtables for s in vt.slots if isinstance(s, int))
 _count("ctors/dtors", len(_ctors))
@@ -207,53 +237,79 @@ if _apply:
     bv.update_analysis_and_wait()
 _lap("2 ctor types")
 
-# 3. accesses and the current members, per class struct that exists
-_accesses, _existing = {}, {}
-_override_names = set(n for n, _t in _overrides.values())
-for _a in list(_types)[:_limit]:
-    _qn = QualifiedName([_labels[_a]])
-    _t = bv.get_type_by_name(_qn)
-    if _t is None or not hasattr(_t, "members"):
-        continue
-    _existing[_a] = [(m.offset, m.name, m.type, m.type.width,
-                      not (m.name == "vptr" or m.name.startswith("field_") or m.name in _override_names))
-                     for m in _t.members]
-    try:
-        _s = bv.create_structure_from_offset_access(_qn)
-    except Exception:
-        continue
-    _accesses[_a] = {m.offset: (m.type.width, m.type) for m in _s.members if m.offset != 0}
-_lap("3 accesses")
 _parsed = {}
 for _k, (_n, _ts) in _overrides.items():
     _parsed[_k] = (_n, bv.parse_type_string(_ts)[0] if _ts else None)
-_lays = _fields.layouts(_types, _labels, _sizes, _accesses, _existing, _parsed,
-                        lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")))
+_override_names = set(n for n, _t in _overrides.values())
 
-# 4. the structs
-_defs = []
-for _a, _lay in sorted(_lays.items()):
-    if _a not in _existing:
-        continue  # no struct of ours (bn_class_types.py makes them)
-    _s = StructureBuilder.create()
-    _s.width = _lay.width
-    _s.base_structures = [BaseStructure(_ref(_lays[b].name), off, _lays[b].width) for b, off in _lay.bases]
-    for _m in _lay.members:
-        _s.add_member_at_offset(_m.name, _m.type, _m.offset, overwrite_existing=False)
-    _n_fields = sum(1 for m in _lay.members if m.source != "vptr")
-    _count("structs", 1)
-    _count("fields", _n_fields)
-    _count("fields named (override)", sum(1 for m in _lay.members if m.source == "override"))
-    _count("structs with a base", 1 if _lay.bases else 0)
-    _review.append("apply struct %s %#x (%s)%s: %s" % (
-        _lay.name, _lay.width, _lay.width_from, "".join(" base %s@%#x" % (_lays[b].name, o) for b, o in _lay.bases),
-        ", ".join("%#x %s" % (m.offset, m.name) for m in _lay.members)))
-    _defs.append((QualifiedName([_lay.name]), _s))
-if _apply and _defs:
-    bv.define_user_types([(n, s.immutable_copy()) for n, s in _defs], None)
-    bv.update_analysis_and_wait()
 
-_lap("4 structs")
+def _plan():
+    """steps 3 and 4 once: the layouts from the accesses BN sees now, the review lines and the struct definitions"""
+    # 3. accesses and the current members, per class struct that exists
+    accesses, existing, widths = {}, {}, {}
+    for a in list(_types)[:_limit]:
+        qn = QualifiedName([_labels[a]])
+        t = bv.get_type_by_name(qn)
+        if t is None or not hasattr(t, "members"):
+            continue
+        widths[a] = t.width
+        existing[a] = [(m.offset, m.name, m.type, m.type.width,
+                        not (m.name == "vptr" or m.name.startswith("field_") or m.name in _override_names))
+                       for m in t.members]
+        try:
+            s = bv.create_structure_from_offset_access(qn)
+        except Exception:
+            continue
+        accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0}
+    lays = _fields.layouts(_types, _labels, _sizes, accesses, existing, _parsed,
+                           lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")),
+                           lambda n: Type.int(n, False), widths)
+    # 4. the structs
+    counts, review, defs, shape = {}, [], [], []
+    for a, lay in sorted(lays.items()):
+        if a not in existing:
+            continue  # no struct of ours (bn_class_types.py makes them)
+        s = StructureBuilder.create()
+        s.width = lay.width
+        s.base_structures = [BaseStructure(_ref(lays[b].name), off, lays[b].width) for b, off in lay.bases]
+        for m in lay.members:
+            s.add_member_at_offset(m.name, m.type, m.offset, overwrite_existing=False)
+        for key, n in (("structs", 1), ("fields", sum(1 for m in lay.members if m.source != "vptr")),
+                       ("fields named (override)", sum(1 for m in lay.members if m.source == "override")),
+                       ("structs with a base", 1 if lay.bases else 0)):
+            counts[key] = counts.get(key, 0) + n
+        review.append("apply struct %s %#x (%s)%s: %s" % (
+            lay.name, lay.width, lay.width_from, "".join(" base %s@%#x" % (lays[b].name, o) for b, o in lay.bases),
+            ", ".join("%#x %s" % (m.offset, m.name) for m in lay.members)))
+        defs.append((QualifiedName([lay.name]), s))
+        shape.append((lay.name, lay.width, tuple(lay.bases), tuple((m.offset, m.name, str(m.type))
+                                                                    for m in lay.members)))
+    return lays, counts, review, defs, shape
+
+
+# APPLY repeats 3 and 4 until the layouts no longer change: BN reports more accesses once a struct is wider (and
+# the derived ones as its bases'), so one pass is not a fixpoint and a second APPLY would still change structs
+_rounds, _prev = int(_env.get("ROUNDS") or 4), None
+for _round in range(1, (_rounds if _apply else 1) + 1):
+    _lays, _round_counts, _round_review, _defs, _shape = _plan()
+    _diff = [] if _prev is None else [x for x, y in zip(_shape, _prev) if x != y]
+    _changed = None if _prev is None else len(_diff) + abs(len(_shape) - len(_prev))
+    print("round %d: %s%s" % (_round, ", ".join("%s %d" % kv for kv in sorted(_round_counts.items())),
+                              "" if _changed is None else ", structs changed %d %s" % (
+                                  _changed, " ".join("%s(%#x)" % (x[0], x[1]) for x in _diff[:10]))))
+    _lap("3+4 round %d" % _round)
+    if _changed == 0:
+        break
+    _prev = _shape
+    _final_review, _final_counts = _round_review, _round_counts
+    if _apply and _defs:
+        bv.define_user_types([(n, s.immutable_copy()) for n, s in _defs], None)
+        bv.update_analysis_and_wait()
+_count("rounds", _round)
+_count("stable", 1 if _changed == 0 or not _apply else 0)
+for _k, _v in _final_counts.items():
+    _count(_k, _v)
+_review += _final_review
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w") as _fh:

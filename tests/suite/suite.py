@@ -91,7 +91,7 @@ def build(names):
     print("built %d tests x %d variants into %s" % (len(names), len(VARIANTS), BIN))
 
 
-CHECKED = ("pcpp", "lsda", "classes")  # output kinds compared against a reference
+CHECKED = ("pcpp", "lsda", "classes", "fields")  # output kinds compared against a reference
 
 
 def pairs(names):
