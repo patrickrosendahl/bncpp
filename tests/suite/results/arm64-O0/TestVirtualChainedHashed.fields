@@ -1,7 +1,7 @@
 classes sized 0
 ctor already typed 10
 ctors/dtors 10
-fields 5
+fields 4
 fields named (override) 0
 functions scanned 10
 rounds 2
@@ -13,7 +13,7 @@ struct Shape  (0x8 bytes, from vptr)
      0x0 vptr                     struct Shape::VTable*  [vptr]
 struct Named  (0x8 bytes, from vptr)
      0x0 vptr                     struct Named::VTable*  [vptr]
-struct Circle  (0x10 bytes, from members)  base Shape @ 0x0
+struct Circle  (0x10 bytes, from derived)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  double  [access]
 struct NamedCircle  (0x18 bytes, from members)  base Circle @ 0x0  base Named @ 0x10
@@ -24,9 +24,8 @@ struct Box<int32_t>  (0xc bytes, from members)  base Shape @ 0x0
 struct Box<double>  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Box<double>::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
-struct Left  (0x10 bytes, from members)
+struct Left  (0x8 bytes, from derived)
      0x0 vptr                     struct Left::VTable*  [vptr]
-     0x8 field_8                  int64_t  [access]
 struct Node  (0x8 bytes, from vptr)
      0x0 vptr                     struct Node::VTable*  [vptr]
 struct Right  (0x10 bytes, from members)

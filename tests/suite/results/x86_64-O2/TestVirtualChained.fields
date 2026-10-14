@@ -19,7 +19,7 @@ struct Box<int32_t>  (0x10 bytes, from new)
 struct Box<double>  (0x10 bytes, from new)
      0x0 vptr                     struct Box<double>::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
-struct Left  (0x8 bytes, from vptr)
+struct Left  (0x8 bytes, from derived)
      0x0 vptr                     struct Left::VTable*  [vptr]
 struct Right  (0x8 bytes, from derived)
      0x0 vptr                     struct Right::VTable*  [vptr]

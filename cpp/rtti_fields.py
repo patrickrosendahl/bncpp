@@ -12,7 +12,9 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               X is N bytes. The most frequent N (a tie: the largest). Inlined constructors store the vptr of
               each class of the chain in turn: only the most derived class of one call counts.
   bases       si: the base at offset 0; vmi: each non-virtual base at offset_flags >> 8 (virtual bases sit at
-              run-time offsets: left out). In BN: base structures.
+              run-time offsets: left out). In BN: base structures. A base ends where the derived class's next
+              base starts; what BN showed of it past that moves down into the derived classes that hold the
+              offset (not into their other bases: whose it is is a guess).
   fields      the offsets the code accesses through 'X*' (BN's create_structure_from_offset_access, after the
               constructors are typed). An access of a derived class inside a base's range belongs to the base
               (moved there, unless the base has a member at that offset); the base's width is its size, else its
@@ -120,8 +122,8 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
     widths:    {typeinfo: width of the struct now} -- once a struct has a base structure, BN reports the derived
                class's accesses as the base's too (get_code_refs_for_type_field): a base class keeps its size from
                new, else the width of its struct, and its accesses past it are the derived classes', dropped;
-               any class is cut to its size from new and a base to fit into each derived class with a size
-               (width "derived" when that cuts it)"""
+               any class is cut to its size from new and a base to fit into each derived class with a size and
+               before the derived class's next base (width "derived" when that cuts it)"""
     existing = existing or {}
     overrides = overrides or {}
     classes = [a for a, t in types.items() if any(vt.primary for vt in t.vtables) or a in accesses]
@@ -133,20 +135,47 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
     # cap: no part of a class lies past its size from new, and a base subobject fits into every derived object of
     # a known size (deepest classes first, so a cap reaches all the way up); BN reports a sibling's accesses for
     # every class of the chain, which alone would make the bases wider than the objects
-    cap = {}
-    for a in sorted(classes, key=lambda a: -depth[a]):
-        c = min([v for v in (sizes.get(a), cap.get(a)) if v is not None], default=None)
-        if c is None:
-            continue
-        cap[a] = c
+    def caps(next_base):
+        cap = {}
+        for a in sorted(classes, key=lambda a: -depth[a]):
+            c = min([v for v in (sizes.get(a), cap.get(a)) if v is not None], default=None)
+            # a base ends where the class's next base starts (vmi offsets: the compiler's layout, exact)
+            offs = sorted(set(off for _b, off in out[a].bases)) if next_base else ()
+            for b, off in out[a].bases:
+                nxt = next((o for o in offs if o > off), None)
+                end = min([v for v in (nxt, c) if v is not None], default=None)
+                if end is not None and end - off > 0:
+                    cap[b] = min(cap.get(b, end - off), end - off)
+            if c is not None:
+                cap[a] = c
+        kept = {}
+        for b in set(b for a in classes for b, _off in out[a].bases):
+            w = (widths or {}).get(b)
+            if b not in sizes and w is not None and w > 8:
+                kept[b] = min(w, cap.get(b, w))
+        limit = dict(kept)
+        limit.update(cap)
+        return cap, kept, limit
+
+    cap, kept, limit = caps(True)
+    # an access the base showed before the next-base cut (shallowest bases first, so it can travel down a chain):
+    # the code reached it through the base's pointer to a bigger object, so it belongs to a derived class whose
+    # object holds it (its size from new, else its cap); several such classes each get it (BN does not say whose)
+    _cap0, _kept0, limit0 = caps(False)
+    # not lifted into another base later: whose they are is a guess, a shared base would hand them to all its classes
+    derived, moved = {}, {}
+    for a in classes:
         for b, off in out[a].bases:
-            if c - off > 0:
-                cap[b] = min(cap.get(b, c - off), c - off)
-    kept = {}
-    for b in set(b for a in classes for b, _off in out[a].bases):
-        w = (widths or {}).get(b)
-        if b not in sizes and w is not None and w > 8:
-            kept[b] = min(w, cap.get(b, w))
+            derived.setdefault(b, []).append((a, off))
+    for b in sorted(limit, key=lambda b: depth[b]):
+        for off, v in sorted(acc[b].items()):
+            if not limit[b] <= off < limit0.get(b, 1 << 62):
+                continue
+            for a, boff in derived.get(b, ()):
+                reach = sizes.get(a) or limit0.get(a) or cap.get(a) or 0  # a cut class passes it on in turn
+                if off + boff < reach and off + boff not in acc[a]:
+                    acc[a][off + boff] = v
+                    moved.setdefault(a, set()).add(off + boff)
     for a, c in list(cap.items()) + list(kept.items()):
         acc[a] = {off: v for off, v in acc[a].items() if off < c}
 
@@ -175,7 +204,8 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
             for b, boff in out[a].bases:
                 if boff <= off < boff + out[b].width and off != 0:  # 0: the class's own vptr
                     s, ty = acc[a].pop(off)
-                    acc[b].setdefault(off - boff, (s, ty))
+                    if off not in moved.get(a, ()):
+                        acc[b].setdefault(off - boff, (s, ty))
                     break
 
     # the same for the overrides: a name given for a derived class's offset inside a base names the base's member
