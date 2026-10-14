@@ -1,17 +1,18 @@
-classes sized 4
+classes sized 5
 ctor already typed 2
 ctors/dtors 2
-fields 10
+fields 12
 fields named (override) 0
-functions scanned 8
+functions scanned 9
+params with direct callers 0
 pointer fields kept 0
-pointer fields typed 4
+pointer fields typed 5
 pointer fields: contradiction 1
-ptr store functions scanned 9
-ptr stores 14
+ptr store functions scanned 10
+ptr stores 15
 rounds 2
 stable 1
-structs 6
+structs 7
 structs with a base 0
 
 struct Child  (0x18 bytes, from new)
@@ -27,7 +28,7 @@ struct Owner  (0x28 bytes, from new)
     0x20 field_20                 struct Engine*  [pointer]
   pointer 0x8 typed: Engine  (Engine vptr)
   pointer 0x10 typed: Child  (Child vptr)
-  pointer 0x18 no struct: -  (0x404160 vptr)
+  pointer 0x18 no struct: -  (0x4041b0 vptr)
   pointer 0x20 typed: Engine  (Engine field)
 struct Engine  (0x10 bytes, from new)
      0x0 vptr                     struct Engine::VTable*  [vptr]
@@ -36,6 +37,11 @@ struct Slot  (0x10 bytes, from new)
      0x0 vptr                     struct Slot::VTable*  [vptr]
      0x8 field_8                  struct Child::VTable**  [access]
   pointer 0x8 contradiction: -  (Child vptr, Engine vptr)
+struct FastBlock  (0x18 bytes, from new)
+     0x0 vptr                     struct FastBlock::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+    0x10 field_10                 int64_t  [access]
+  pointer 0x8 typed: Engine  (Engine vptr)
 struct Square  (0x10 bytes, from members)
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]

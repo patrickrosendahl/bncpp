@@ -4,6 +4,7 @@ ctors/dtors 10
 fields 4
 fields named (override) 0
 functions scanned 10
+params with direct callers 0
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0

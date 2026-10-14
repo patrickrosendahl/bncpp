@@ -1,7 +1,9 @@
 // Fields that hold object pointers (bncpp-34): typed 'Y*' from what is stored into them. An object from operator
 // new (Engine), the constructing object's own 'this' (Child::parent), objects of two sibling classes (Owner::shape:
 // their common base Shape), a field copied from another typed field (Owner::spare, the fixpoint), and unrelated
-// classes stored into one field (Slot::any: a contradiction, left alone).
+// classes stored into one field (Slot::any: a contradiction, left alone). A constructor parameter stored into a
+// field (Block::eng, bncpp-28): the parameter's class from the arguments at its direct callers, through the derived
+// constructor's own parameter (void*: the demangled names would type it otherwise).
 #define TEST extern "C++" __attribute__((noinline, visibility("default")))
 
 struct Owner;
@@ -55,6 +57,17 @@ struct Slot {
     virtual void hold_engine() { any = new Engine; }
     virtual void hold_child(Owner *o) { any = new Child(o); }
 };
+struct Block {
+    Engine *eng;
+    Block(void *e) : eng(static_cast<Engine *>(e)) {}
+    virtual ~Block() {}
+    virtual long go() { return eng->tick(); }
+};
+struct FastBlock : Block {
+    long boost = 2;
+    FastBlock(void *e) : Block(e) {}
+    long go() override { return boost * eng->tick(); }
+};
 
 long Child::run() { return id + parent->engine->rate; }
 Owner::Owner() {
@@ -66,3 +79,4 @@ Owner::Owner() {
 TEST void announce(void *p) { static void *last; last = p; }
 TEST Owner *make_owner() { return new Owner; }
 TEST Slot *make_slot() { return new Slot; }
+TEST Block *make_block() { return new FastBlock(new Engine); }

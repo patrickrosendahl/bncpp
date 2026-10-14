@@ -1,54 +1,62 @@
 typeinfo 0x404088  class mangled 5Child
   vtable 0x404070  offset_to_top 0  3 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
     [2] 0x400648 Child::run(struct Child* this)
 typeinfo 0x404098  class mangled 5Owner
   vtable 0x404030  offset_to_top 0  6 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
-    [2] 0x400844 Owner::step(struct Owner* this)
-    [3] 0x4008ac Owner::reshape(struct Owner* this, int32_t)
-    [4] 0x400904 Owner::share(struct Owner* this)
-    [5] 0x400910 Owner::mix(struct Owner* this)
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x4008bc Owner::step(struct Owner* this)
+    [3] 0x400924 Owner::reshape(struct Owner* this, int32_t)
+    [4] 0x40097c Owner::share(struct Owner* this)
+    [5] 0x400988 Owner::mix(struct Owner* this)
 typeinfo 0x4040d0  class mangled 6Engine
   vtable 0x4040b8  offset_to_top 0  3 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
-    [2] 0x400928 Engine::tick(struct Engine* this)
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x4009a0 Engine::tick(struct Engine* this)
 typeinfo 0x404110  class mangled 4Slot
   vtable 0x4040f0  offset_to_top 0  4 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
-    [2] 0x400930 Slot::hold_engine(struct Slot* this)
-    [3] 0x400974 Slot::hold_child(struct Slot* this, Owner*)
-typeinfo 0x404148  si    mangled 6Square
-  base 0x404160 5Shape
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x4009a8 Slot::hold_engine(struct Slot* this)
+    [3] 0x4009ec Slot::hold_child(struct Slot* this, Owner*)
+typeinfo 0x404148  si    mangled 9FastBlock
+  base 0x404160 5Block
   vtable 0x404130  offset_to_top 0  3 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
-    [2] 0x4009c0 Square::area(struct Square* this)
-typeinfo 0x404160  class mangled 5Shape
-typeinfo 0x404198  si    mangled 6Circle
-  base 0x404160 5Shape
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x400a38 FastBlock::go(struct FastBlock* this)
+typeinfo 0x404160  class mangled 5Block
+typeinfo 0x404198  si    mangled 6Square
+  base 0x4041b0 5Shape
   vtable 0x404180  offset_to_top 0  3 slots
-    [0] 0x40083c Slot::~Slot(struct Slot* this)
-    [1] 0x400840 Slot::~Slot(struct Slot* this)
-    [2] 0x4009cc Circle::area(struct Circle* this)
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x400a64 Square::area(struct Square* this)
+typeinfo 0x4041b0  class mangled 5Shape
+typeinfo 0x4041e8  si    mangled 6Circle
+  base 0x4041b0 5Shape
+  vtable 0x4041d0  offset_to_top 0  3 slots
+    [0] 0x4008b4 Slot::~Slot(struct Slot* this)
+    [1] 0x4008b8 Slot::~Slot(struct Slot* this)
+    [2] 0x400a70 Circle::area(struct Circle* this)
 
 names (cpp/rtti_names.py; now: BN's name)
 R 0x400648 Child::vfunc2   [now: Child::run(struct Child* this)]
-C 0x40083c virtual in unrelated classes: Child[0], Owner[0], Engine[0], Slot[0], Square[0], Circle[0]
-C 0x400840 virtual in unrelated classes: Child[1], Owner[1], Engine[1], Slot[1], Square[1], Circle[1]
-R 0x400844 Owner::vfunc2   [now: Owner::step(struct Owner* this)]
-R 0x4008ac Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
-R 0x400904 Owner::vfunc4   [now: Owner::share(struct Owner* this)]
-R 0x400910 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
-R 0x400928 Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
-R 0x400930 Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
-R 0x400974 Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
-R 0x4009c0 Square::vfunc2   [now: Square::area(struct Square* this)]
-R 0x4009cc Circle::vfunc2   [now: Circle::area(struct Circle* this)]
+C 0x4008b4 virtual in unrelated classes: Child[0], Owner[0], Engine[0], Slot[0], FastBlock[0], Square[0] ...
+C 0x4008b8 virtual in unrelated classes: Child[1], Owner[1], Engine[1], Slot[1], FastBlock[1], Square[1] ...
+R 0x4008bc Owner::vfunc2   [now: Owner::step(struct Owner* this)]
+R 0x400924 Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
+R 0x40097c Owner::vfunc4   [now: Owner::share(struct Owner* this)]
+R 0x400988 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
+R 0x4009a0 Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
+R 0x4009a8 Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
+R 0x4009ec Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
+R 0x400a38 FastBlock::vfunc2   [now: FastBlock::go(struct FastBlock* this)]
+R 0x400a64 Square::vfunc2   [now: Square::area(struct Square* this)]
+R 0x400a70 Circle::vfunc2   [now: Circle::area(struct Circle* this)]
 D 0x404020 vtable_for_Owner   [now: _vtable_for_Owner]
 D 0x404060 vtable_for_Child   [now: _vtable_for_Child]
 D 0x404088 typeinfo_for_Child   [now: _typeinfo_for_Child]
@@ -57,8 +65,11 @@ D 0x4040a8 vtable_for_Engine   [now: _vtable_for_Engine]
 D 0x4040d0 typeinfo_for_Engine
 D 0x4040e0 vtable_for_Slot   [now: _vtable_for_Slot]
 D 0x404110 typeinfo_for_Slot
-D 0x404120 vtable_for_Square   [now: _vtable_for_Square]
-D 0x404148 typeinfo_for_Square
-D 0x404160 typeinfo_for_Shape
-D 0x404170 vtable_for_Circle   [now: _vtable_for_Circle]
-D 0x404198 typeinfo_for_Circle
+D 0x404120 vtable_for_FastBlock   [now: _vtable_for_FastBlock]
+D 0x404148 typeinfo_for_FastBlock
+D 0x404160 typeinfo_for_Block
+D 0x404170 vtable_for_Square   [now: _vtable_for_Square]
+D 0x404198 typeinfo_for_Square
+D 0x4041b0 typeinfo_for_Shape
+D 0x4041c0 vtable_for_Circle   [now: _vtable_for_Circle]
+D 0x4041e8 typeinfo_for_Circle

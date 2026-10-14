@@ -88,29 +88,63 @@
     Slot::Slot(this);
 }
 
-// Child::~Child(struct Child* this) @ 0x4008b0
+// make_block() @ 0x4008b0
+{
+    struct FastBlock* result = operator new(0x18);
+    struct Engine* rax = operator new(0x10);
+    Engine::Engine(rax);
+    FastBlock::FastBlock(result, rax);
+    return result;
+}
+
+// sub_4008fa @ 0x4008fa
+{
+    *(uint64_t*)((char*)arg5 - 8) = arg4;
+    *(uint32_t*)((char*)arg5 - 0xc) = arg3;
+    operator delete(*(uint64_t*)((char*)arg5 - 0x20));
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 8));
+    /* no return */
+}
+
+// sub_400908 @ 0x400908
+{
+    void* rdi_2 = *(uint64_t*)((char*)arg5 - 0x18);
+    *(uint64_t*)((char*)arg5 - 8) = arg4;
+    *(uint32_t*)((char*)arg5 - 0xc) = arg3;
+    operator delete(rdi_2);
+    operator delete(*(uint64_t*)((char*)arg5 - 0x20));
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 8));
+    /* no return */
+}
+
+// FastBlock::FastBlock(struct FastBlock* this, void*) @ 0x400930
+{
+    FastBlock::FastBlock(this, arg2);
+}
+
+// Child::~Child(struct Child* this) @ 0x400960
 {
     return;
 }
 
-// Child::~Child(struct Child* this) @ 0x4008d0
+// Child::~Child(struct Child* this) @ 0x400980
 {
     Child::~Child(this);
     operator delete(this);
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x400900
+// Owner::~Owner(struct Owner* this) @ 0x4009b0
 {
     return;
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x400920
+// Owner::~Owner(struct Owner* this) @ 0x4009d0
 {
     Owner::~Owner(this);
     operator delete(this);
 }
 
-// Owner::step(struct Owner* this) @ 0x400950
+// Owner::step(struct Owner* this) @ 0x400a00
 {
     int64_t* rdi = *(uint64_t*)((char*)this + 8);
     int64_t rax_2 = (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
@@ -129,7 +163,7 @@
     return rcx_2 + var_30;
 }
 
-// Owner::reshape(struct Owner* this, int32_t) @ 0x4009d0
+// Owner::reshape(struct Owner* this, int32_t) @ 0x400a80
 {
     struct Owner* result;
 
@@ -151,13 +185,13 @@
     return result;
 }
 
-// Owner::share(struct Owner* this) @ 0x400a40
+// Owner::share(struct Owner* this) @ 0x400af0
 {
     *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
     return this;
 }
 
-// Owner::mix(struct Owner* this) @ 0x400a60
+// Owner::mix(struct Owner* this) @ 0x400b10
 {
     if (!*(uint64_t*)((char*)this + 0x20))
         return 0;
@@ -166,35 +200,35 @@
     return (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
 }
 
-// Engine::Engine(struct Engine* this) @ 0x400ab0
+// Engine::Engine(struct Engine* this) @ 0x400b60
 {
     *(uint64_t*)this = &_vtable_for_Engine;
     *(uint64_t*)((char*)this + 8) = 0xbb80;
     announce(this);
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400af0
+// Engine::~Engine(struct Engine* this) @ 0x400ba0
 {
     return;
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400b10
+// Engine::~Engine(struct Engine* this) @ 0x400bc0
 {
     Engine::~Engine(this);
     operator delete(this);
 }
 
-// Engine::tick(struct Engine* this) @ 0x400b40
+// Engine::tick(struct Engine* this) @ 0x400bf0
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400b60
+// Engine::~Engine(struct Engine* this) @ 0x400c10
 {
     struct Engine* this_1 = this;
 }
 
-// Child::Child(struct Child* this, Owner*) @ 0x400b70
+// Child::Child(struct Child* this, Owner*) @ 0x400c20
 {
     *(uint64_t*)this = &_vtable_for_Child;
     *(uint64_t*)((char*)this + 8) = arg2;
@@ -202,24 +236,24 @@
     announce(this);
 }
 
-// Slot::Slot(struct Slot* this) @ 0x400bb0
+// Slot::Slot(struct Slot* this) @ 0x400c60
 {
     *(uint64_t*)this = &_vtable_for_Slot;
     *(uint64_t*)((char*)this + 8) = 0;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400be0
+// Slot::~Slot(struct Slot* this) @ 0x400c90
 {
     return;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400c00
+// Slot::~Slot(struct Slot* this) @ 0x400cb0
 {
     Slot::~Slot(this);
     operator delete(this);
 }
 
-// Slot::hold_engine(struct Slot* this) @ 0x400c30
+// Slot::hold_engine(struct Slot* this) @ 0x400ce0
 {
     struct Engine* rax_1 = operator new(0x10);
     Engine::Engine(rax_1);
@@ -227,7 +261,7 @@
     return this;
 }
 
-// sub_400c71 @ 0x400c71
+// sub_400d21 @ 0x400d21
 {
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
@@ -237,7 +271,7 @@
     /* no return */
 }
 
-// Slot::hold_child(struct Slot* this, Owner*) @ 0x400c90
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400d40
 {
     struct Child* rax_1 = operator new(0x18);
     Child::Child(rax_1, arg2);
@@ -245,7 +279,7 @@
     return this;
 }
 
-// sub_400cd9 @ 0x400cd9
+// sub_400d89 @ 0x400d89
 {
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x28);
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
@@ -255,110 +289,167 @@
     /* no return */
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400d00
+// Slot::~Slot(struct Slot* this) @ 0x400db0
 {
     struct Slot* this_1 = this;
 }
 
-// Child::~Child(struct Child* this) @ 0x400d10
+// FastBlock::FastBlock(struct FastBlock* this, void*) @ 0x400dc0
+{
+    Block::Block(this, arg2);
+    *(uint64_t*)this = &_vtable_for_FastBlock{for `Block'};
+    *(uint64_t*)((char*)this + 0x10) = 2;
+}
+
+// Block::Block(struct Block* this, void*) @ 0x400e10
+{
+    *(uint64_t*)this = &_vtable_for_Block;
+    *(uint64_t*)((char*)this + 8) = arg2;
+}
+
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x400e40
+{
+    FastBlock::~FastBlock(this);
+}
+
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x400e60
+{
+    FastBlock::~FastBlock(this);
+    operator delete(this);
+}
+
+// FastBlock::go(struct FastBlock* this) @ 0x400e90
+{
+    int64_t* rdi = *(uint64_t*)((char*)this + 8);
+    return *(uint64_t*)((char*)this + 0x10) * (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
+}
+
+// Block::~Block(struct Block* this) @ 0x400ed0
+{
+    return;
+}
+
+// Block::~Block(struct Block* this) @ 0x400ef0
+{
+    Block::~Block(this);
+    operator delete(this);
+}
+
+// Block::go(struct Block* this) @ 0x400f20
+{
+    int64_t* rdi = *(uint64_t*)((char*)this + 8);
+    return (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
+}
+
+// Block::~Block(struct Block* this) @ 0x400f40
+{
+    struct Block* this_1 = this;
+}
+
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x400f50
+{
+    return;
+}
+
+// Child::~Child(struct Child* this) @ 0x400f70
 {
     struct Child* this_1 = this;
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x400d20
+// Owner::~Owner(struct Owner* this) @ 0x400f80
 {
     struct Owner* this_1 = this;
 }
 
-// Square::Square(struct Square* this) @ 0x400d30
+// Square::Square(struct Square* this) @ 0x400f90
 {
     Square::Square(this);
 }
 
-// Circle::Circle(struct Circle* this) @ 0x400d50
+// Circle::Circle(struct Circle* this) @ 0x400fb0
 {
     Circle::Circle(this);
 }
 
-// Square::Square(struct Square* this) @ 0x400d70
+// Square::Square(struct Square* this) @ 0x400fd0
 {
     Shape::Shape(this);
     *(uint64_t*)this = &_vtable_for_Square{for `Shape'};
     *(uint64_t*)((char*)this + 8) = 2;
 }
 
-// Shape::Shape(struct Shape* this) @ 0x400db0
+// Shape::Shape(struct Shape* this) @ 0x401010
 {
     *(uint64_t*)this = &_vtable_for_Shape;
 }
 
-// Square::~Square(struct Square* this) @ 0x400dd0
+// Square::~Square(struct Square* this) @ 0x401030
 {
     Square::~Square(this);
 }
 
-// Square::~Square(struct Square* this) @ 0x400df0
+// Square::~Square(struct Square* this) @ 0x401050
 {
     Square::~Square(this);
     operator delete(this);
 }
 
-// Square::area(struct Square* this) @ 0x400e20
+// Square::area(struct Square* this) @ 0x401080
 {
     return *(uint64_t*)((char*)this + 8) * *(uint64_t*)((char*)this + 8);
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x400e40
+// Shape::~Shape(struct Shape* this) @ 0x4010a0
 {
     return;
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x400e60
+// Shape::~Shape(struct Shape* this) @ 0x4010c0
 {
     Shape::~Shape(this);
     operator delete(this);
 }
 
-// Shape::area(struct Shape* this) @ 0x400e90
+// Shape::area(struct Shape* this) @ 0x4010f0
 {
     struct Shape* this_1 = this;
     return 0;
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x400ea0
+// Shape::~Shape(struct Shape* this) @ 0x401100
 {
     struct Shape* this_1 = this;
 }
 
-// Square::~Square(struct Square* this) @ 0x400eb0
+// Square::~Square(struct Square* this) @ 0x401110
 {
     return;
 }
 
-// Circle::Circle(struct Circle* this) @ 0x400ed0
+// Circle::Circle(struct Circle* this) @ 0x401130
 {
     Shape::Shape(this);
     *(uint64_t*)this = &_vtable_for_Circle{for `Shape'};
     *(uint64_t*)((char*)this + 8) = 1;
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x400f10
+// Circle::~Circle(struct Circle* this) @ 0x401170
 {
     Circle::~Circle(this);
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x400f30
+// Circle::~Circle(struct Circle* this) @ 0x401190
 {
     Circle::~Circle(this);
     operator delete(this);
 }
 
-// Circle::area(struct Circle* this) @ 0x400f60
+// Circle::area(struct Circle* this) @ 0x4011c0
 {
     return *(uint64_t*)((char*)this + 8) * 3 * *(uint64_t*)((char*)this + 8);
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x400f80
+// Circle::~Circle(struct Circle* this) @ 0x4011e0
 {
     return;
 }

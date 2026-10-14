@@ -74,18 +74,37 @@
     return result;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x40083c
+// make_block() @ 0x40083c
+{
+    void*** result = operator new(0x18);
+    void*** x0 = operator new(0x10);
+    *(uint64_t*)x0 = &data_4040b8;
+    x0[1] = 0xbb80;
+    *(uint64_t*)result = &data_404130;
+    result[1] = x0;
+    result[2] = 2;
+    return result;
+}
+
+// sub_4008a0 @ 0x4008a0
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x4008b4
 {
     return;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400840
+// Slot::~Slot(struct Slot* this) @ 0x4008b8
 {
     /* tailcall */
     return operator delete(this);
 }
 
-// Owner::step(struct Owner* this) @ 0x400844
+// Owner::step(struct Owner* this) @ 0x4008bc
 {
     int64_t x0_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
     void* x0_3 = (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
@@ -97,12 +116,12 @@
     return (char*)x0_3 + x0_1 + x0_4;
 }
 
-// Owner::reshape(struct Owner* this, int32_t) @ 0x4008ac
+// Owner::reshape(struct Owner* this, int32_t) @ 0x400924
 {
     void*** result = operator new(0x10);
     void** const x8;
 
-    x8 = !arg2 ? &data_404180 : &data_404130;
+    x8 = !arg2 ? &data_4041d0 : &data_404180;
 
     int64_t x9;
 
@@ -114,12 +133,12 @@
     return result;
 }
 
-// Owner::share(struct Owner* this) @ 0x400904
+// Owner::share(struct Owner* this) @ 0x40097c
 {
     *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
 }
 
-// Owner::mix(struct Owner* this) @ 0x400910
+// Owner::mix(struct Owner* this) @ 0x400988
 {
     int64_t* result = *(uint64_t*)((char*)this + 0x20);
 
@@ -129,12 +148,12 @@
 ❓    /* jump -> *(uint64_t*)(*(uint64_t*)result + 0x10) */
 }
 
-// Engine::tick(struct Engine* this) @ 0x400928
+// Engine::tick(struct Engine* this) @ 0x4009a0
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// Slot::hold_engine(struct Slot* this) @ 0x400930
+// Slot::hold_engine(struct Slot* this) @ 0x4009a8
 {
     void*** result = operator new(0x10);
     *(uint64_t*)result = &data_4040b8;
@@ -143,7 +162,7 @@
     return result;
 }
 
-// Slot::hold_child(struct Slot* this, Owner*) @ 0x400974
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x4009ec
 {
     struct Child::VTable** result = operator new(0x18);
     *(uint64_t*)result = &_vtable_for_Child;
@@ -153,13 +172,19 @@
     return result;
 }
 
-// Square::area(struct Square* this) @ 0x4009c0
+// FastBlock::go(struct FastBlock* this) @ 0x400a38
+{
+    return (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))() *
+        *(uint64_t*)((char*)this + 0x10);
+}
+
+// Square::area(struct Square* this) @ 0x400a64
 {
     int64_t x8 = *(uint64_t*)((char*)this + 8);
     return x8 * x8;
 }
 
-// Circle::area(struct Circle* this) @ 0x4009cc
+// Circle::area(struct Circle* this) @ 0x400a70
 {
     int64_t x8_1 = *(uint64_t*)((char*)this + 8);
     return x8_1 * x8_1 * 3;

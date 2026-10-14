@@ -75,7 +75,8 @@ def _dump_fields(bv):
         with open(path, encoding="utf-8") as fh:
             exec(compile(fh.read(), path, "exec"), g)
     lines = ["%s %d" % kv for kv in sorted(g["_counts"].items()) if not kv[0].startswith("s ")]  # no timings
-    return lines + [""] + g["_fields"].format_layouts(g["_lays"])
+    params = [line for line, _what in sorted(g["_param_review"].values())]  # bncpp-28
+    return lines + [""] + g["_fields"].format_layouts(g["_lays"]) + ([""] + params if params else [])
 
 
 _ok = 0

@@ -75,18 +75,37 @@
     return result;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400870
+// make_block() @ 0x400870
+{
+    struct Block::FastBlock::VTable** result = operator new(0x18);
+    struct Engine::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Engine;
+    rax[1] = 0xbb80;
+    result[1] = rax;
+    *(uint64_t*)result = &_vtable_for_FastBlock{for `Block'};
+    result[2] = 2;
+    return result;
+}
+
+// sub_4008d1 @ 0x4008d1
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x4008f0
 {
     return;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400880
+// Slot::~Slot(struct Slot* this) @ 0x400900
 {
     /* tailcall */
     return operator delete(this);
 }
 
-// Owner::step(struct Owner* this) @ 0x400890
+// Owner::step(struct Owner* this) @ 0x400910
 {
     int64_t* rdi = *(uint64_t*)((char*)this + 8);
     int64_t rax_1 = (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
@@ -103,7 +122,7 @@
     return rax_3 + rax_1 + rcx_1;
 }
 
-// Owner::reshape(struct Owner* this, int32_t) @ 0x4008e0
+// Owner::reshape(struct Owner* this, int32_t) @ 0x400960
 {
     struct Shape::Circle::VTable** result = operator new(0x10);
     struct Shape::Circle::VTable* const rdx = &_vtable_for_Circle{for `Shape'};
@@ -119,14 +138,14 @@
     return result;
 }
 
-// Owner::share(struct Owner* this) @ 0x400930
+// Owner::share(struct Owner* this) @ 0x4009b0
 {
     int64_t result = *(uint64_t*)((char*)this + 8);
     *(uint64_t*)((char*)this + 0x20) = result;
     return result;
 }
 
-// Owner::mix(struct Owner* this) @ 0x400940
+// Owner::mix(struct Owner* this) @ 0x4009c0
 {
     int64_t* rdi = *(uint64_t*)((char*)this + 0x20);
 
@@ -136,12 +155,12 @@
 ❓    /* jump -> *(uint64_t*)(*(uint64_t*)rdi + 0x10) */
 }
 
-// Engine::tick(struct Engine* this) @ 0x400960
+// Engine::tick(struct Engine* this) @ 0x4009e0
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// Slot::hold_engine(struct Slot* this) @ 0x400970
+// Slot::hold_engine(struct Slot* this) @ 0x4009f0
 {
     struct Engine::VTable** rax = operator new(0x10);
     *(uint64_t*)rax = &_vtable_for_Engine;
@@ -150,7 +169,7 @@
     return &_vtable_for_Engine;
 }
 
-// Slot::hold_child(struct Slot* this, Owner*) @ 0x4009b0
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400a30
 {
     int64_t rax;
     int64_t var_28 = rax;
@@ -162,13 +181,25 @@
     return &_vtable_for_Child;
 }
 
-// Square::area(struct Square* this) @ 0x400a00
+// FastBlock::go(struct FastBlock* this) @ 0x400a80
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int64_t* rax_1 = *(uint64_t*)((char*)this + 8);
+    int64_t rcx = *(uint64_t*)rax_1;
+    int64_t entry_rdx;
+    int64_t entry_rsi;
+    return (*(uint64_t*)(rcx + 0x10))(rax_1, entry_rsi, entry_rdx, rcx) *
+        *(uint64_t*)((char*)this + 0x10);
+}
+
+// Square::area(struct Square* this) @ 0x400ab0
 {
     int64_t rax = *(uint64_t*)((char*)this + 8);
     return rax * rax;
 }
 
-// Circle::area(struct Circle* this) @ 0x400a10
+// Circle::area(struct Circle* this) @ 0x400ac0
 {
     int64_t rax = *(uint64_t*)((char*)this + 8);
     return rax * rax * 3;

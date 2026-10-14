@@ -1,19 +1,21 @@
-classes sized 6
-ctor already typed 13
-ctors forwarding 6
-ctors/dtors 13
-fields 10
+classes sized 7
+ctor already typed 16
+ctors forwarding 7
+ctors/dtors 16
+fields 12
 fields named (override) 0
-functions scanned 13
+functions scanned 16
+params from callers: typed 3
+params with direct callers 7
 pointer fields kept 0
-pointer fields typed 5
+pointer fields typed 6
 pointer fields: contradiction 1
-ptr store functions scanned 14
-ptr stores 8
+ptr store functions scanned 17
+ptr stores 9
 rounds 2
 stable 1
-structs 7
-structs with a base 2
+structs 9
+structs with a base 3
 
 struct Child  (0x18 bytes, from new)
      0x0 vptr                     struct Child::VTable*  [vptr]
@@ -35,8 +37,15 @@ struct Engine  (0x10 bytes, from new)
      0x8 field_8                  int64_t  [access]
 struct Slot  (0x10 bytes, from new)
      0x0 vptr                     struct Slot::VTable*  [vptr]
-     0x8 field_8                  struct Engine*  [access]
+     0x8 field_8                  struct Child*  [access]
   pointer 0x8 contradiction: -  (Child new, Engine new)
+struct FastBlock  (0x18 bytes, from new)  base Block @ 0x0
+     0x0 vptr                     struct FastBlock::VTable*  [vptr]
+    0x10 field_10                 int64_t  [access]
+struct Block  (0x10 bytes, from members)
+     0x0 vptr                     struct Block::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+  pointer 0x8 typed: Engine  (Engine param)
 struct Square  (0x10 bytes, from new)  base Shape @ 0x0
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
@@ -45,3 +54,7 @@ struct Shape  (0x8 bytes, from vptr)
 struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
+
+apply param 0x400930 __ZN9FastBlockC1EPv arg1: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
+apply param 0x400dc0 __ZN9FastBlockC2EPv arg1: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400e10 __ZN5BlockC2EPv arg1: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]

@@ -15,6 +15,9 @@
 # bncpp-34: fields that hold an object pointer get 'Y*' from what is stored into them (step 2b, cached as section
 # "ptrstores" with _PTRS_VERSION; the stores are resolved against the current types on each pass, to a fixpoint).
 # Stores through a variable that only gets a typed source after an APPLY are not in the cache: NOCACHE=1 rescans.
+# bncpp-28: a parameter the stores come from ('this->field_40 = arg2') gets its class from the arguments at its
+# direct call sites (step 2c, cached as section "paramargs"; not for functions also in a vtable); APPLY types it too
+# (never over a user type), the review has 'param' lines.
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
@@ -70,13 +73,24 @@ def _lap(step):
 _OURS = re.compile(r"struct [^,()]*::VTable\*\*")  # BN infers X::VTable** from the vptr store once X::VTable exists
 
 
+_typed_here = set()  # functions this run typed: unprotected before, so still ours
+_OUR_PARAM = re.compile(r"struct ([^,()*]+)\* \w+")
+
+
 def _protected(f):
     """a type someone set; with BASELINE, one that differs from BN's fresh inference -- after mapping back what
-    BN inferred from our own types (X::VTable** -> void***)"""
-    if not f.has_user_type:
+    BN inferred from our own types (X::VTable** -> void***) and with our own parameters ('X* this' from step 2, a
+    parameter typed from its callers) matching anything"""
+    if not f.has_user_type or f.start in _typed_here:
         return False
     base = _baseline.get("%#x" % f.start) if _baseline is not None else None
-    return _baseline is None or base is None or _OURS.sub("void***", str(f.type)) != base
+    if _baseline is None or base is None:
+        return True
+    cur = _OURS.sub("void***", str(f.type))
+    if cur == base:
+        return False
+    pat = re.escape(_OUR_PARAM.sub(lambda m: "\0" if m.group(1) in _label_set else m.group(0), cur))
+    return re.fullmatch(pat.replace("\0", r"[^,()]+"), base) is None
 
 
 def _ref(name):
@@ -86,6 +100,7 @@ def _ref(name):
 _img = _bnimage.BNImage(bv)
 _types = _rtti.scan(_img)
 _labels = _names.labels(_types, _img.demangle, _names.label_overrides(_types, _img.symbol_at))
+_label_set = set(_labels.values())
 _points = {vt.addr: (a, vt.offset_to_top) for a, t in _types.items() for vt in t.vtables if vt.construction_for is None}
 _new_addrs = set(s.address for n in _OPERATOR_NEW for s in bv.get_symbols_by_name(n))
 _lap("0 scan")
@@ -236,6 +251,7 @@ for _fa, _c in sorted(_ctors.items()):
     _count("ctor typed")
     _review.append("apply ctor %#x %s: this = %s*   [now: %s]" % (_fa, _f.name, _label, _old))
     if _apply:
+        _typed_here.add(_fa)
         _f.type = Type.function(_old.return_value, [FunctionParameter(Type.pointer(bv.arch, _ref(_label)), "this")]
                                 + list(_old.parameters[1:]), calling_convention=_f.calling_convention,
                                 variable_arguments=_old.has_variable_arguments)
@@ -434,6 +450,74 @@ else:
     if _limit is None and not _nocache:
         _cache_file.put("ptrstores", _PTRS_VERSION, {"stores": _ptr_stores})
 _count("ptr stores", len(_ptr_stores))
+
+
+# 2c. the arguments at the direct call sites of the parameters the stores come from (bncpp-28): a constructor that
+# stores its parameter ('this->field_40 = arg2') gets the parameter's class from its callers. Recorded as
+# descriptors too, following parameters that come from a parameter of the caller; cached (section "paramargs").
+_ARGS_VERSION = 1
+
+
+def _params_in(d, out):
+    """the (function, index) of the 'param' descriptors in d"""
+    if d is None:
+        return out
+    if d[0] == "param":
+        out.add((d[1], d[2]))
+    elif d[0] == "load":
+        _params_in(d[1], out)
+    elif d[0] in ("phi", "or"):
+        for x in d[1]:
+            _params_in(x, out)
+    return out
+
+
+_acache = _cache_file.get("paramargs", _ARGS_VERSION) if _limit is None and not _nocache and _pcache is not None \
+    else None
+if _acache is not None:
+    _param_args = {tuple(int(x, 0) for x in k.split(":")): v for k, v in _acache["args"].items()}
+    _count("step 2c from cache")
+else:
+    _param_args = {}  # (function, index) -> [descriptor at a direct call site]
+    _todo = sorted(set().union(*[_params_in(sd, set()) for _a, _o, _dd, sd in _ptr_stores]) if _ptr_stores else ())
+    _sites_of = {}  # caller -> {(call address, callee)}
+    _done = set()
+    while _todo:
+        _need = {}  # callee -> indexes not scanned yet
+        for _fi in _todo:
+            if _fi not in _done:
+                _done.add(_fi)
+                _need.setdefault(_fi[0], set()).add(_fi[1])
+        _todo, _by_caller = [], {}
+        for _fa in _need:
+            if _fa in _virtual:
+                continue  # also reached through the vtable: callers with other classes are not seen
+            for _r in bv.get_code_refs(_fa):
+                if _r.function is not None:
+                    _by_caller.setdefault(_r.function.start, (_r.function, set()))[1].add((_r.address, _fa))
+        for _f, _calls in _by_caller.values():
+            _m = _f.mlil
+            if _m is None:
+                continue
+            _ssa, _memo = _m.ssa_form, {}
+            for _addr, _fa in sorted(_calls):
+                for _mi in _mlil_at(_m, _addr):
+                    _s = _mi.ssa_form
+                    if _s.operation not in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA) \
+                            or _s.dest.operation != Op.MLIL_CONST_PTR or _s.dest.constant != _fa:
+                        continue
+                    for _i in _need[_fa]:
+                        _p = _s.params[_i] if _i < len(_s.params) else None
+                        _d = _desc(_f, _ssa, _p.src, _memo) if _p is not None and _p.operation == Op.MLIL_VAR_SSA \
+                            else None
+                        _param_args.setdefault((_fa, _i), []).append(_d)
+                        _todo += sorted(_params_in(_d, set()) - _done)
+        _todo = sorted(set(_todo))
+    _lap("2c callers")
+    if _limit is None and not _nocache:
+        _cache_file.put("paramargs", _ARGS_VERSION, {"args": {"%#x:%d" % k: v for k, v in
+                                                              sorted(_param_args.items())}})
+_count("params with direct callers", len(_param_args))
 _new_class = {call: c for (call, _size), c in _fields.new_classes(_sites, _ctors, _types).items()}
 _by_label = {l: a for a, l in _labels.items()}
 
@@ -464,7 +548,7 @@ def _member_class(lays, c, off, depth=0):
     return None
 
 
-def _resolve(d, lays):
+def _resolve(d, lays, seen=frozenset()):
     """(class, kind) a descriptor resolves to now, else None"""
     k = d[0]
     if k == "vptr":
@@ -481,23 +565,51 @@ def _resolve(d, lays):
         else:
             ps = f.type.parameters
             c = _class_of(ps[d[2]].type) if d[2] < len(ps) else None
+            if c is None:
+                return _param_class(d[1], d[2], lays, seen)
         return (c, k) if c is not None else None
     if k == "load":
-        b = _resolve(d[1], lays)
+        b = _resolve(d[1], lays, seen)
         c = _member_class(lays, b[0], d[2]) if b is not None else None
         return (c, "field") if c is not None else None
     if k == "phi":
-        rs = [_resolve(x, lays) for x in d[1]]
+        rs = [_resolve(x, lays, seen) for x in d[1]]
         cs = set(r[0] for r in rs if r is not None)
         return (cs.pop(), "phi") if None not in rs and len(cs) == 1 else None
     if k == "or":
-        return next((r for r in (_resolve(x, lays) for x in d[1]) if r is not None), None)
+        return next((r for r in (_resolve(x, lays, seen) for x in d[1]) if r is not None), None)
     return None
+
+
+_param_review = {}  # (function, index) -> (review line, outcome): over all rounds (an applied one is typed after)
+_param_plan = {}  # (function, index) -> (class or None, {class: [kind]}): the last _evidence pass's
+
+
+def _param_class(fa, i, lays, seen):
+    """(class, 'caller') of an untyped parameter from the arguments at its direct call sites (bncpp-28): one class,
+    or their common base at offset 0; unrelated classes: a contradiction (None). Arguments that resolve to nothing
+    are left out, as the stores are"""
+    key = (fa, i)
+    if key in seen or key not in _param_args:
+        return None
+    if key in _param_plan:
+        c = _param_plan[key][0]
+        return (c, "caller") if c is not None else None
+    ev = {}
+    for d in _param_args[key]:
+        r = _resolve(d, lays, seen | {key}) if d is not None else None
+        if r is not None:
+            ev.setdefault(r[0], []).append(r[1])
+    c = _fields.pointer_class(_types, sorted(ev)) if ev else None
+    if not seen:  # a result inside a cycle depends on where it was entered: only the outermost one is kept
+        _param_plan[key] = (c, ev)
+    return (c, "caller") if c is not None else None
 
 
 def _evidence(lays):
     """{(class, offset): {class stored: [kind]}} from the pointer stores, against the layouts"""
     ev = {}
+    _param_plan.clear()
     for _addr, off, dd, sd in _ptr_stores:
         dst = _resolve(dd, lays)
         src = _resolve(sd, lays) if dst is not None else None
@@ -542,8 +654,27 @@ def _plan():
         if ev is not None and now == typed:
             break
         typed = now
-    # 4. the structs
+    # 4. the structs; the parameters typed from their callers (bncpp-28)
     counts, review, defs, shape = {}, [], [], []
+    params = []
+    for fa, i in sorted(_param_args):
+        f = bv.get_function_at(fa)
+        ps = f.type.parameters if f is not None else []
+        if i >= len(ps) or _class_of(ps[i].type) is not None:
+            continue
+        _param_class(fa, i, lays, frozenset())
+        c, ev = _param_plan.get((fa, i), (None, {}))
+        if not ev:
+            continue
+        unknown = sum(1 for d in _param_args[(fa, i)] if d is None or _resolve(d, lays) is None)
+        what = "contradiction" if c is None else "no struct" if c not in lays or c not in existing \
+            else "kept (user)" if _protected(f) else "typed"
+        _param_review[(fa, i)] = ("%s param %#x %s arg%d: %s  (%s; %d call sites unresolved)   [now: %s]" % (
+            "apply" if what == "typed" else "keep ", fa, f.name, i, lays[c].name if c in lays else "-",
+            ", ".join("%s %s" % (lays[k].name if k in lays else "%#x" % k, "/".join(sorted(set(v))))
+                      for k, v in sorted(ev.items())), unknown, ps[i].type), what)
+        if what == "typed":
+            params.append((f, i, lays[c].name))
     for a, lay in sorted(lays.items()):
         if a not in existing:
             continue  # no struct of ours (bn_class_types.py makes them)
@@ -565,32 +696,43 @@ def _plan():
         defs.append((QualifiedName([lay.name]), s))
         shape.append((lay.name, lay.width, tuple(lay.bases), tuple((m.offset, m.name, str(m.type))
                                                                     for m in lay.members)))
-    return lays, counts, review, defs, shape
+    return lays, counts, review, defs, shape, params
 
 
 # APPLY repeats 3 and 4 until the layouts no longer change: BN reports more accesses once a struct is wider (and
 # the derived ones as its bases'), so one pass is not a fixpoint and a second APPLY would still change structs
 _rounds, _prev = int(_env.get("ROUNDS") or 4), None
 for _round in range(1, (_rounds if _apply else 1) + 1):
-    _lays, _round_counts, _round_review, _defs, _shape = _plan()
+    _lays, _round_counts, _round_review, _defs, _shape, _params = _plan()
     _diff = [] if _prev is None else [x for x, y in zip(_shape, _prev) if x != y]
     _changed = None if _prev is None else len(_diff) + abs(len(_shape) - len(_prev))
     print("round %d: %s%s" % (_round, ", ".join("%s %d" % kv for kv in sorted(_round_counts.items())),
                               "" if _changed is None else ", structs changed %d %s" % (
                                   _changed, " ".join("%s(%#x)" % (x[0], x[1]) for x in _diff[:10]))))
     _lap("3+4 round %d" % _round)
-    if _changed == 0:
+    if _changed == 0 and not _params:
         break
     _prev = _shape
     _final_review, _final_counts = _round_review, _round_counts
     if _apply and _defs:
         bv.define_user_types([(n, s.immutable_copy()) for n, s in _defs], None)
+    if _apply:
+        for _f, _i, _label in _params:
+            _old = _f.type
+            _ps = list(_old.parameters)
+            _typed_here.add(_f.start)
+            _ps[_i] = FunctionParameter(Type.pointer(bv.arch, _ref(_label)), _ps[_i].name)
+            _f.type = Type.function(_old.return_value, _ps, calling_convention=_f.calling_convention,
+                                    variable_arguments=_old.has_variable_arguments)
+    if _apply and (_defs or _params):
         bv.update_analysis_and_wait()
 _count("rounds", _round)
 _count("stable", 1 if _changed == 0 or not _apply else 0)
 for _k, _v in _final_counts.items():
     _count(_k, _v)
-_review += _final_review
+for _line, _what in _param_review.values():
+    _count("params from callers: " + _what)
+_review += _final_review + [line for line, _what in sorted(_param_review.values())]
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w", encoding="utf-8") as _fh:
