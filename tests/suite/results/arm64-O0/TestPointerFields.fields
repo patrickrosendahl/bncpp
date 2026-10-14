@@ -1,0 +1,46 @@
+classes sized 5
+ctor already typed 12
+ctors forwarding 5
+ctors/dtors 12
+fields 10
+fields named (override) 0
+functions scanned 13
+pointer fields kept 0
+pointer fields typed 5
+pointer fields: contradiction 0
+ptr store functions scanned 14
+ptr stores 8
+rounds 2
+stable 1
+structs 7
+structs with a base 2
+
+struct Child  (0x18 bytes, from members)
+     0x0 vptr                     struct Child::VTable*  [vptr]
+     0x8 field_8                  struct Owner*  [pointer]
+    0x10 field_10                 int64_t  [access]
+  pointer 0x8 typed: Owner  (Owner param)
+struct Owner  (0x28 bytes, from new)
+     0x0 vptr                     struct Owner::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+    0x10 field_10                 int64_t*  [access]
+    0x18 field_18                 struct Shape*  [pointer]
+    0x20 field_20                 struct Engine*  [pointer]
+  pointer 0x8 typed: Engine  (Engine new)
+  pointer 0x18 typed: Shape  (Square new, Circle new)
+  pointer 0x20 typed: Engine  (Engine field)
+struct Engine  (0x10 bytes, from new)
+     0x0 vptr                     struct Engine::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]
+struct Slot  (0x10 bytes, from new)
+     0x0 vptr                     struct Slot::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+  pointer 0x8 typed: Engine  (Engine new)
+struct Square  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Square::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]
+struct Shape  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Shape::VTable*  [vptr]
+struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Circle::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]

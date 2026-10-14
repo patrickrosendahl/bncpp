@@ -5,6 +5,11 @@ ctors/dtors 14
 fields 3
 fields named (override) 0
 functions scanned 13
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 13
+ptr stores 0
 rounds 2
 stable 1
 structs 10

@@ -1,0 +1,353 @@
+// Child::run(struct Child* this) @ 0x400698
+{
+    return *(uint64_t*)((char*)this + 0x10)
+        + *(uint64_t*)(*(uint64_t*)(*(uint64_t*)((char*)this + 8) + 8) + 8);
+}
+
+// Owner::Owner(struct Owner* this) @ 0x4006c0
+{
+    *(uint64_t*)this = &data_404030;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    *(uint64_t*)((char*)this + 0x20) = 0;
+    struct Engine* x0 = operator new(0x10);
+    Engine::Engine(x0);
+    *(uint64_t*)((char*)this + 8) = x0;
+    struct Child* x0_1 = operator new(0x18);
+    Child::Child(x0_1, this);
+    *(uint64_t*)((char*)this + 0x10) = x0_1;
+    announce(this);
+}
+
+// sub_400748 @ 0x400748
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// Engine::Engine(struct Engine* this) @ 0x400788
+{
+    struct Engine* this_1 = this;
+    Engine::Engine(this);
+}
+
+// Child::Child(struct Child* this, Owner*) @ 0x4007b4
+{
+    struct Child* this_1 = this;
+    Child::Child(this, arg2);
+}
+
+// announce(void*) @ 0x4007e8
+{
+    announce(void*)::last = arg1;
+}
+
+// Owner::Owner(struct Owner* this) @ 0x400804
+{
+    struct Owner* this_1 = this;
+    Owner::Owner(this);
+}
+
+// make_owner() @ 0x400830
+{
+    struct Owner* result = operator new(0x28);
+    Owner::Owner(result);
+    return result;
+}
+
+// sub_400860 @ 0x400860
+{
+    *(uint64_t*)((char*)arg3 - 8) = arg1;
+    *(uint32_t*)((char*)arg3 - 0xc) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 8));
+    /* no return */
+}
+
+// make_slot() @ 0x400884
+{
+    struct Slot* result = operator new(0x10);
+    Slot::Slot(result);
+    return result;
+}
+
+// Slot::Slot(struct Slot* this) @ 0x4008b0
+{
+    struct Slot* this_1 = this;
+    Slot::Slot(this);
+}
+
+// Child::~Child(struct Child* this) @ 0x4008dc
+{
+    struct Child* this_1 = this;
+}
+
+// Child::~Child(struct Child* this) @ 0x400908
+{
+    Child::~Child(this);
+    operator delete(this);
+}
+
+// Owner::~Owner(struct Owner* this) @ 0x400938
+{
+    struct Owner* this_1 = this;
+}
+
+// Owner::~Owner(struct Owner* this) @ 0x400964
+{
+    Owner::~Owner(this);
+    operator delete(this);
+}
+
+// Owner::step(struct Owner* this) @ 0x400994
+{
+    int64_t x9_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))()
+        + (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
+    int64_t var_38;
+
+    if (!*(uint64_t*)((char*)this + 0x18))
+        var_38 = 0;
+    else
+        var_38 = (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x10))();
+
+    return x9_1 + var_38;
+}
+
+// Owner::reshape(struct Owner* this, int32_t) @ 0x400a34
+{
+    struct Square* result;
+
+    if (!arg2)
+    {
+        struct Square* result_2 = operator new(0x10);
+        Circle::Circle(result_2);
+        result = result_2;
+        *(uint64_t*)((char*)this + 0x18) = result;
+    }
+    else
+    {
+        struct Square* result_1 = operator new(0x10);
+        Square::Square(result_1);
+        result = result_1;
+        *(uint64_t*)((char*)this + 0x18) = result;
+    }
+
+    return result;
+}
+
+// Owner::share(struct Owner* this) @ 0x400aa8
+{
+    *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
+}
+
+// Owner::mix(struct Owner* this) @ 0x400ac4
+{
+    if (!*(uint64_t*)((char*)this + 0x20))
+        return 0;
+
+    return (*(uint64_t*)(**(uint64_t**)((char*)this + 0x20) + 0x10))();
+}
+
+// Engine::Engine(struct Engine* this) @ 0x400b20
+{
+    struct Engine* this_1 = this;
+    *(uint64_t*)this = &data_4040b8;
+    *(uint64_t*)((char*)this + 8) = 0xbb80;
+    announce(this);
+}
+
+// Engine::~Engine(struct Engine* this) @ 0x400b64
+{
+    struct Engine* this_1 = this;
+}
+
+// Engine::~Engine(struct Engine* this) @ 0x400b90
+{
+    Engine::~Engine(this);
+    operator delete(this);
+}
+
+// Engine::tick(struct Engine* this) @ 0x400bc0
+{
+    return *(uint64_t*)((char*)this + 8);
+}
+
+// Engine::~Engine(struct Engine* this) @ 0x400bd8
+{
+    return;
+}
+
+// Child::Child(struct Child* this, Owner*) @ 0x400bec
+{
+    struct Child* this_1 = this;
+    *(uint64_t*)this = &_vtable_for_Child;
+    *(uint64_t*)((char*)this + 8) = arg2;
+    *(uint64_t*)((char*)this + 0x10) = 0;
+    announce(this);
+}
+
+// Slot::Slot(struct Slot* this) @ 0x400c38
+{
+    *(uint64_t*)this = &data_4040f0;
+    *(uint64_t*)((char*)this + 8) = 0;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400c60
+{
+    struct Slot* this_1 = this;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400c8c
+{
+    Slot::~Slot(this);
+    operator delete(this);
+}
+
+// Slot::hold_engine(struct Slot* this) @ 0x400cbc
+{
+    struct Engine* result = operator new(0x10);
+    Engine::Engine(result);
+    *(uint64_t*)((char*)this + 8) = result;
+    return result;
+}
+
+// sub_400d00 @ 0x400d00
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400d24
+{
+    struct Child* result = operator new(0x18);
+    Child::Child(result, arg2);
+    *(uint64_t*)((char*)this + 8) = result;
+    return result;
+}
+
+// sub_400d70 @ 0x400d70
+{
+    int32_t x1;
+    int32_t arg_14 = x1;
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400d94
+{
+    return;
+}
+
+// Child::~Child(struct Child* this) @ 0x400da8
+{
+    return;
+}
+
+// Owner::~Owner(struct Owner* this) @ 0x400dbc
+{
+    return;
+}
+
+// Square::Square(struct Square* this) @ 0x400dd0
+{
+    struct Square* this_1 = this;
+    Square::Square(this);
+}
+
+// Circle::Circle(struct Circle* this) @ 0x400dfc
+{
+    struct Circle* this_1 = this;
+    Circle::Circle(this);
+}
+
+// Square::Square(struct Square* this) @ 0x400e28
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_404130;
+    *(uint64_t*)((char*)this + 8) = 2;
+}
+
+// Shape::Shape(struct Shape* this) @ 0x400e6c
+{
+    *(uint64_t*)this = &data_404180;
+}
+
+// Square::~Square(struct Square* this) @ 0x400e90
+{
+    struct Square* this_1 = this;
+    Square::~Square(this);
+}
+
+// Square::~Square(struct Square* this) @ 0x400ebc
+{
+    Square::~Square(this);
+    operator delete(this);
+}
+
+// Square::area(struct Square* this) @ 0x400eec
+{
+    return *(uint64_t*)((char*)this + 8) * *(uint64_t*)((char*)this + 8);
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400f0c
+{
+    struct Shape* this_1 = this;
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400f38
+{
+    Shape::~Shape(this);
+    operator delete(this);
+}
+
+// Shape::area(struct Shape* this) @ 0x400f68
+{
+    struct Shape* this_1 = this;
+    return 0;
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400f7c
+{
+    return;
+}
+
+// Square::~Square(struct Square* this) @ 0x400f90
+{
+    struct Square* this_1 = this;
+}
+
+// Circle::Circle(struct Circle* this) @ 0x400fbc
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_4041a8;
+    *(uint64_t*)((char*)this + 8) = 1;
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x401000
+{
+    struct Circle* this_1 = this;
+    Circle::~Circle(this);
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x40102c
+{
+    Circle::~Circle(this);
+    operator delete(this);
+}
+
+// Circle::area(struct Circle* this) @ 0x40105c
+{
+    return 3 * *(uint64_t*)((char*)this + 8) * *(uint64_t*)((char*)this + 8);
+}
+
+// Circle::~Circle(struct Circle* this) @ 0x401084
+{
+    struct Circle* this_1 = this;
+}
+

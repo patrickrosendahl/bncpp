@@ -1,0 +1,176 @@
+// Child::run(struct Child* this) @ 0x400640
+{
+    return *(uint64_t*)(*(uint64_t*)(*(uint64_t*)((char*)this + 8) + 8) + 8)
+        + *(uint64_t*)((char*)this + 0x10);
+}
+
+// Owner::Owner(struct Owner* this) @ 0x400660
+{
+    *(uint64_t*)this = &_vtable_for_Owner;
+    *(uint128_t*)((char*)this + 0x18) = {0};
+    struct Engine::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Engine;
+    rax[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = rax;
+    struct Child::VTable** rax_1 = operator new(0x18);
+    *(uint64_t*)rax_1 = &_vtable_for_Child;
+    rax_1[1] = this;
+    rax_1[2] = 0;
+    *(uint64_t*)((char*)this + 0x10) = rax_1;
+    /* tailcall */
+    return announce(this);
+}
+
+// announce(void*) @ 0x4006f0
+{
+    return;
+}
+
+// Owner::Owner(struct Owner* this) @ 0x400700
+{
+    *(uint64_t*)this = &_vtable_for_Owner;
+    *(uint128_t*)((char*)this + 0x18) = {0};
+    struct Engine::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Engine;
+    rax[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = rax;
+    struct Child::VTable** rax_1 = operator new(0x18);
+    *(uint64_t*)rax_1 = &_vtable_for_Child;
+    rax_1[1] = this;
+    rax_1[2] = 0;
+    *(uint64_t*)((char*)this + 0x10) = rax_1;
+    /* tailcall */
+    return announce(this);
+}
+
+// make_owner() @ 0x400790
+{
+    struct Owner::VTable** result = operator new(0x28);
+    *(uint64_t*)result = &_vtable_for_Owner;
+    *(uint128_t*)((char*)result + 0x18) = {0};
+    struct Engine::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Engine;
+    rax[1] = 0xbb80;
+    result[1] = rax;
+    struct Child::VTable** rax_1 = operator new(0x18);
+    *(uint64_t*)rax_1 = &_vtable_for_Child;
+    rax_1[1] = result;
+    rax_1[2] = 0;
+    result[2] = rax_1;
+    return result;
+}
+
+// sub_400827 @ 0x400827
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_slot() @ 0x400840
+{
+    struct Slot::VTable** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_Slot;
+    result[1] = 0;
+    return result;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400870
+{
+    return;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400880
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Owner::step(struct Owner* this) @ 0x400890
+{
+    int64_t* rdi = *(uint64_t*)((char*)this + 8);
+    int64_t rax_1 = (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi);
+    int64_t* rdi_1 = *(uint64_t*)((char*)this + 0x10);
+    int64_t rax_3 = (*(uint64_t*)(*(uint64_t*)rdi_1 + 0x10))(rdi_1);
+    int64_t* rdi_2 = *(uint64_t*)((char*)this + 0x18);
+    int64_t rcx_1;
+
+    if (!rdi_2)
+        rcx_1 = 0;
+    else
+        rcx_1 = (*(uint64_t*)(*(uint64_t*)rdi_2 + 0x10))(rdi_2);
+
+    return rax_3 + rax_1 + rcx_1;
+}
+
+// Owner::reshape(struct Owner* this, int32_t) @ 0x4008e0
+{
+    struct Shape::Circle::VTable** result = operator new(0x10);
+    struct Shape::Circle::VTable* const rdx = &_vtable_for_Circle{for `Shape'};
+    int64_t rsi = 0;
+
+    if (arg2)
+        rdx = &_vtable_for_Square{for `Shape'};
+
+    (uint8_t)rsi = arg2;
+    *(uint64_t*)result = rdx;
+    result[1] = rsi + 1;
+    *(uint64_t*)((char*)this + 0x18) = result;
+    return result;
+}
+
+// Owner::share(struct Owner* this) @ 0x400930
+{
+    int64_t result = *(uint64_t*)((char*)this + 8);
+    *(uint64_t*)((char*)this + 0x20) = result;
+    return result;
+}
+
+// Owner::mix(struct Owner* this) @ 0x400940
+{
+    int64_t* rdi = *(uint64_t*)((char*)this + 0x20);
+
+    if (!rdi)
+        return 0;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)rdi + 0x10) */
+}
+
+// Engine::tick(struct Engine* this) @ 0x400960
+{
+    return *(uint64_t*)((char*)this + 8);
+}
+
+// Slot::hold_engine(struct Slot* this) @ 0x400970
+{
+    struct Engine::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_Engine;
+    rax[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = rax;
+    return &_vtable_for_Engine;
+}
+
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x4009b0
+{
+    int64_t rax;
+    int64_t var_28 = rax;
+    struct Child::VTable** rax_1 = operator new(0x18);
+    *(uint64_t*)rax_1 = &_vtable_for_Child;
+    rax_1[1] = arg2;
+    rax_1[2] = 0;
+    *(uint64_t*)((char*)this + 8) = rax_1;
+    return &_vtable_for_Child;
+}
+
+// Square::area(struct Square* this) @ 0x400a00
+{
+    int64_t rax = *(uint64_t*)((char*)this + 8);
+    return rax * rax;
+}
+
+// Circle::area(struct Circle* this) @ 0x400a10
+{
+    int64_t rax = *(uint64_t*)((char*)this + 8);
+    return rax * rax * 3;
+}
+

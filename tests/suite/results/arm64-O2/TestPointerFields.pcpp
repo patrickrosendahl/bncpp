@@ -1,0 +1,167 @@
+// Child::run(struct Child* this) @ 0x400648
+{
+    return *(uint64_t*)(*(uint64_t*)(*(uint64_t*)((char*)this + 8) + 8) + 8)
+        + *(uint64_t*)((char*)this + 0x10);
+}
+
+// Owner::Owner(struct Owner* this) @ 0x40065c
+{
+    *(uint64_t*)this = &data_404030;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    *(uint64_t*)((char*)this + 0x20) = 0;
+    void*** x0 = operator new(0x10);
+    *(uint64_t*)x0 = &data_4040b8;
+    x0[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = x0;
+    struct Child::VTable** x0_1 = operator new(0x18);
+    *(uint64_t*)x0_1 = &_vtable_for_Child;
+    x0_1[1] = this;
+    x0_1[2] = 0;
+    *(uint64_t*)((char*)this + 0x10) = x0_1;
+}
+
+// announce(void*) @ 0x4006e4
+{
+    return;
+}
+
+// Owner::Owner(struct Owner* this) @ 0x4006e8
+{
+    *(uint64_t*)this = &data_404030;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    *(uint64_t*)((char*)this + 0x20) = 0;
+    void*** x0 = operator new(0x10);
+    *(uint64_t*)x0 = &data_4040b8;
+    x0[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = x0;
+    struct Child::VTable** x0_1 = operator new(0x18);
+    *(uint64_t*)x0_1 = &_vtable_for_Child;
+    x0_1[1] = this;
+    x0_1[2] = 0;
+    *(uint64_t*)((char*)this + 0x10) = x0_1;
+}
+
+// make_owner() @ 0x400770
+{
+    void*** result = operator new(0x28);
+    *(uint64_t*)result = &data_404030;
+    result[3] = 0;
+    result[4] = 0;
+    void*** x0 = operator new(0x10);
+    *(uint64_t*)x0 = &data_4040b8;
+    x0[1] = 0xbb80;
+    result[1] = x0;
+    struct Child::VTable** x0_1 = operator new(0x18);
+    *(uint64_t*)x0_1 = &_vtable_for_Child;
+    x0_1[1] = result;
+    x0_1[2] = 0;
+    result[2] = x0_1;
+    return result;
+}
+
+// sub_400800 @ 0x400800
+{
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_slot() @ 0x400814
+{
+    void*** result = operator new(0x10);
+    *(uint64_t*)result = &data_4040f0;
+    result[1] = 0;
+    return result;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x40083c
+{
+    return;
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x400840
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Owner::step(struct Owner* this) @ 0x400844
+{
+    int64_t x0_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
+    void* x0_3 = (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
+    int64_t* x0_4 = *(uint64_t*)((char*)this + 0x18);
+
+    if (x0_4)
+        x0_4 = (*(uint64_t*)(*(uint64_t*)x0_4 + 0x10))();
+
+    return (char*)x0_3 + x0_1 + x0_4;
+}
+
+// Owner::reshape(struct Owner* this, int32_t) @ 0x4008ac
+{
+    void*** result = operator new(0x10);
+    void** const x8;
+
+    x8 = !arg2 ? &data_404180 : &data_404130;
+
+    int64_t x9;
+
+    x9 = arg2 ? 2 : 1;
+
+    *(uint64_t*)result = x8;
+    result[1] = x9;
+    *(uint64_t*)((char*)this + 0x18) = result;
+    return result;
+}
+
+// Owner::share(struct Owner* this) @ 0x400904
+{
+    *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
+}
+
+// Owner::mix(struct Owner* this) @ 0x400910
+{
+    int64_t* result = *(uint64_t*)((char*)this + 0x20);
+
+    if (!result)
+        return result;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)result + 0x10) */
+}
+
+// Engine::tick(struct Engine* this) @ 0x400928
+{
+    return *(uint64_t*)((char*)this + 8);
+}
+
+// Slot::hold_engine(struct Slot* this) @ 0x400930
+{
+    void*** result = operator new(0x10);
+    *(uint64_t*)result = &data_4040b8;
+    result[1] = 0xbb80;
+    *(uint64_t*)((char*)this + 8) = result;
+    return result;
+}
+
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400974
+{
+    struct Child::VTable** result = operator new(0x18);
+    *(uint64_t*)result = &_vtable_for_Child;
+    result[1] = arg2;
+    result[2] = 0;
+    *(uint64_t*)((char*)this + 8) = result;
+    return result;
+}
+
+// Square::area(struct Square* this) @ 0x4009c0
+{
+    int64_t x8 = *(uint64_t*)((char*)this + 8);
+    return x8 * x8;
+}
+
+// Circle::area(struct Circle* this) @ 0x4009cc
+{
+    int64_t x8_1 = *(uint64_t*)((char*)this + 8);
+    return x8_1 * x8_1 * 3;
+}
+

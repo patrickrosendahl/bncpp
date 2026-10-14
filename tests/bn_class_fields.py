@@ -12,11 +12,14 @@
 # fields (cpp/rtti_fields.py). A dry run plans with the accesses BN sees now (constructors still untyped, so
 # fewer fields); APPLY types the constructors first, re-analyses, then reads the accesses. Never over a user type,
 # a user-named member or a struct that is not ours (anything but vptr / field_* / NAMES members).
-# Review: .scratch/classes/<binary>.fields.review
+# bncpp-34: fields that hold an object pointer get 'Y*' from what is stored into them (step 2b, cached as section
+# "ptrstores" with _PTRS_VERSION; the stores are resolved against the current types on each pass, to a fixpoint).
+# Stores through a variable that only gets a typed source after an APPLY are not in the cache: NOCACHE=1 rescans.
+# Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
 from binaryninja import (BaseStructure, FunctionParameter, MediumLevelILOperation as Op, NamedTypeReferenceClass,
-                         QualifiedName, StructureBuilder, Type)
+                         QualifiedName, StructureBuilder, Type, TypeClass)
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
 _dev = getattr(_bn, "_cpp_dev", None)
@@ -240,6 +243,269 @@ if _apply:
     bv.update_analysis_and_wait()
 _lap("2 ctor types")
 
+# 2b. stores of object pointers into class objects (bncpp-34), recorded with where the object and the value come
+# from (descriptors, resolved against the current types in _plan): the stores into an object from operator new or
+# one that gets a vptr stored in the function, and the stores through a typed field (BN's type field references
+# of the 8-byte members, only store instructions). Cached (section "ptrstores"): the types they resolve against
+# change, the stores do not.
+_PTRS_VERSION = 2
+
+
+def _root(ssa, v, seen):
+    """the SSA variable a value was copied from (through plain copies)"""
+    while v not in seen:
+        seen.add(v)
+        d = ssa.get_ssa_var_definition(v)
+        if d is None or d.operation != Op.MLIL_SET_VAR_SSA or d.src.operation != Op.MLIL_VAR_SSA:
+            return v
+        v = d.src.src
+    return v
+
+
+def _copies(ssa, v):
+    """v and the SSA variables copied from it"""
+    out, k = [v], 0
+    while k < len(out):
+        for u in ssa.get_ssa_var_uses(out[k]):
+            if u.operation == Op.MLIL_SET_VAR_SSA and u.src.operation == Op.MLIL_VAR_SSA and u.dest not in out:
+                out.append(u.dest)
+        k += 1
+    return out
+
+
+def _base_off(e):
+    """(SSA var, offset) of an address 'var' / 'var + c', else None"""
+    off = 0
+    if e.operation == Op.MLIL_ADD and e.right.operation == Op.MLIL_CONST:
+        e, off = e.left, e.right.constant
+    return (e.src, off) if e.operation == Op.MLIL_VAR_SSA else None
+
+
+def _stores_into(ssa, v, of=False):
+    """[(store, offset)]: the stores into the object v points to (and its copies); of: the stores of v elsewhere
+    ('p->field = v') too"""
+    cs, out = set(_copies(ssa, v)), []
+    for c in cs:
+        for u in ssa.get_ssa_var_uses(c):
+            if u.operation in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+                bo = _base_off(u.dest)
+                if bo is not None and (bo[0] in cs or (of and u.src.operation == Op.MLIL_VAR_SSA and u.src.src in cs)):
+                    out.append((u, bo[1] + (u.offset if u.operation == Op.MLIL_STORE_STRUCT_SSA else 0)))
+    return out
+
+
+def _consts(ssa, e, depth=0):
+    """the constants a value can be: a constant, or a variable set to one or to a phi of them (O2 picks the vptr of
+    one of two classes in branches and stores it once); else an empty set"""
+    if e.operation in (Op.MLIL_CONST, Op.MLIL_CONST_PTR):
+        return {e.constant}
+    if e.operation != Op.MLIL_VAR_SSA or depth > 4:
+        return set()
+    d = ssa.get_ssa_var_definition(e.src)
+    if d is not None and d.operation == Op.MLIL_SET_VAR_SSA:
+        return _consts(ssa, d.src, depth + 1)
+    if d is not None and d.operation == Op.MLIL_VAR_PHI:
+        out = set()
+        for s in d.src:
+            dd = ssa.get_ssa_var_definition(s)
+            c = _consts(ssa, dd.src, depth + 1) if dd is not None and dd.operation == Op.MLIL_SET_VAR_SSA else set()
+            if not c:
+                return set()
+            out |= c
+        return out
+    return set()
+
+
+def _desc(f, ssa, v, memo, depth=0):
+    """where the object an SSA variable points to comes from, as JSON: ['vptr', class] (a primary vptr stored at 0
+    in this function: exact), ['new', call], ['param', function, index], ['ret', callee], ['load', desc, offset],
+    ['phi', [desc]], ['or', [desc]] (the first that resolves); None if nothing"""
+    v = _root(ssa, v, set())
+    if v in memo:
+        return memo[v]
+    memo[v] = None  # a cycle through phis
+    cls = set()
+    for s, off in _stores_into(ssa, v):
+        if off == 0:
+            for k in _consts(ssa, s.src):
+                c, ott = _points.get(k, (None, None))
+                if ott == 0:
+                    cls.add(c)
+    leaf = [c for c in cls if all(o == c or o in _fields.ancestors(_types, c) for o in cls)]
+    if cls and len(leaf) != 1:  # one object of either class (branches; O2 merges the new calls): their common base
+        c = _fields.pointer_class(_types, sorted(cls))
+        leaf = [c] if c is not None else []
+    d, out = ssa.get_ssa_var_definition(v), None
+    if d is None:
+        pv = list(f.parameter_vars)
+        out = ["param", f.start, pv.index(v.var)] if v.version == 0 and v.var in pv else None
+    elif d.operation == Op.MLIL_CALL_SSA and d.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT):
+        out = ["new", d.address] if d.dest.constant in _new_addrs else ["ret", d.dest.constant]
+    elif d.operation == Op.MLIL_SET_VAR_SSA and depth < 4 and d.src.operation in (Op.MLIL_LOAD_SSA,
+                                                                                  Op.MLIL_LOAD_STRUCT_SSA):
+        bo = _base_off(d.src.src)
+        if bo is not None:
+            b = _desc(f, ssa, bo[0], memo, depth + 1)
+            off = bo[1] + (d.src.offset if d.src.operation == Op.MLIL_LOAD_STRUCT_SSA else 0)
+            out = ["load", b, off] if b is not None else None
+    elif d.operation == Op.MLIL_VAR_PHI and depth < 4:
+        srcs = [_desc(f, ssa, s, memo, depth + 1) for s in d.src]
+        out = ["phi", srcs] if srcs and all(x is not None for x in srcs) else None
+    if len(leaf) == 1:
+        out = ["vptr", leaf[0]] if out is None else ["or", [["vptr", leaf[0]], out]]
+    memo[v] = out
+    return out
+
+
+def _is_store_insn(addr):
+    """a prefilter before the IL is built: the instruction writes memory (x86 'mov [..], ..'; arm64 'st*')"""
+    toks = bv.arch.get_instruction_text(bv.read(addr, 16), addr)
+    text = "".join(t.text for t in toks[0]) if toks and toks[0] else ""
+    mn, _sp, ops = text.strip().partition(" ")
+    return mn.startswith("st") or (mn.startswith("mov") and "[" in ops.split(",")[0])
+
+
+_pcache = _cache_file.get("ptrstores", _PTRS_VERSION) if _limit is None and not _nocache else None
+if _pcache is not None:
+    _ptr_stores = _pcache["stores"]
+    _count("step 2b from cache")
+else:
+    _ptr_stores, _pfuncs = [], {}
+    for _a in list(_types)[:_limit]:
+        _qn = QualifiedName([_labels[_a]])
+        _t = bv.get_type_by_name(_qn)
+        if _t is None or not hasattr(_t, "members"):
+            continue
+        _offs = set(_mb.offset for _mb in _t.members if _mb.type.width == 8)
+        try:  # the offsets BN saw accessed: a fresh struct has only its vptr yet
+            _offs |= set(_mb.offset for _mb in bv.create_structure_from_offset_access(_qn).members
+                         if _mb.type.width == 8)
+        except Exception:
+            pass
+        for _o in sorted(_offs - {0}):
+            if True:
+                for _r in bv.get_code_refs_for_type_field(_labels[_a], _o):
+                    if _r.func is not None and _r.address not in _pfuncs.get(_r.func.start, (0, ()))[1] \
+                            and _is_store_insn(_r.address):
+                        _pfuncs.setdefault(_r.func.start, (_r.func, set()))[1].add(_r.address)
+    _seeds = {}  # function -> addresses of the vptr stores / new calls: objects built here
+    for _a in list(_points) + list(_new_addrs):
+        for _r in bv.get_code_refs(_a):
+            _seeds.setdefault(_r.function.start, (_r.function, set()))[1].add(_r.address)
+    _lap("2b refs")
+    for _fs in list(set(_pfuncs) | set(_seeds))[:_limit]:
+        _f = (_pfuncs.get(_fs) or _seeds.get(_fs))[0]
+        _m = _f.mlil
+        if _m is None:
+            continue
+        _ssa, _memo, _todo = _m.ssa_form, {}, {}
+        for _addr in sorted(_pfuncs.get(_fs, (0, set()))[1]):
+            for _mi in _mlil_at(_m, _addr):
+                _s = _mi.ssa_form
+                if _s.operation in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+                    _bo = _base_off(_s.dest)
+                    if _bo is not None:
+                        _off = _bo[1] + (_s.offset if _s.operation == Op.MLIL_STORE_STRUCT_SSA else 0)
+                        _todo[_s.instr_index] = (_s, _bo[0], _off)
+        for _addr in sorted(_seeds.get(_fs, (0, set()))[1]):
+            for _mi in _mlil_at(_m, _addr):
+                _s = _mi.ssa_form
+                _obj = None
+                if _s.operation == Op.MLIL_CALL_SSA and _s.output and _s.dest.operation in (
+                        Op.MLIL_CONST_PTR, Op.MLIL_IMPORT) and _s.dest.constant in _new_addrs:
+                    _obj = _s.output[0]
+                elif _s.operation in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+                    _bo = _base_off(_s.dest)
+                    _obj = _bo[0] if _bo is not None else None
+                if _obj is not None:
+                    for _st, _off in _stores_into(_ssa, _root(_ssa, _obj, set()), of=True):
+                        _todo.setdefault(_st.instr_index, (_st, None, _off))
+        for _st, _bv, _off in _todo.values():
+            if _off == 0 or _off % 8 or _st.src.operation != Op.MLIL_VAR_SSA:
+                continue
+            if _bv is None:
+                _bv = _base_off(_st.dest)[0]
+            _dd = _desc(_f, _ssa, _bv, _memo)
+            _sd = _desc(_f, _ssa, _st.src.src, _memo) if _dd is not None else None
+            if _sd is not None:
+                _ptr_stores.append([_st.address, _off, _dd, _sd])
+    _lap("2b il")
+    _count("ptr store functions scanned", len(set(_pfuncs) | set(_seeds)))
+    if _limit is None and not _nocache:
+        _cache_file.put("ptrstores", _PTRS_VERSION, {"stores": _ptr_stores})
+_count("ptr stores", len(_ptr_stores))
+_new_class = {call: c for (call, _size), c in _fields.new_classes(_sites, _ctors, _types).items()}
+_by_label = {l: a for a, l in _labels.items()}
+
+
+def _class_of(t):
+    """the class a type 'X*' points to, else None"""
+    if t is None or t.type_class != TypeClass.PointerTypeClass:
+        return None
+    tg = t.target
+    if tg.type_class == TypeClass.NamedTypeReferenceClass:
+        return _by_label.get(str(tg.name))
+    if tg.type_class == TypeClass.StructureTypeClass and tg.registered_name is not None:
+        return _by_label.get(str(tg.registered_name.name))
+    return None
+
+
+def _member_class(lays, c, off, depth=0):
+    """the class the member at (class, offset) points to in the layouts, looking into the base subobjects"""
+    lay = lays.get(c)
+    if lay is None or depth > 8:
+        return None
+    for m in lay.members:
+        if m.offset == off:
+            return _class_of(m.type)
+    for b, boff in lay.bases:
+        if b in lays and boff <= off < boff + lays[b].width:
+            return _member_class(lays, b, off - boff, depth + 1)
+    return None
+
+
+def _resolve(d, lays):
+    """(class, kind) a descriptor resolves to now, else None"""
+    k = d[0]
+    if k == "vptr":
+        return d[1], "vptr"
+    if k == "new":
+        c = _new_class.get(d[1])
+        return (c, "new") if c is not None else None
+    if k in ("param", "ret"):
+        f = bv.get_function_at(d[1])
+        if f is None:
+            return None
+        if k == "ret":
+            c = _class_of(f.return_type)
+        else:
+            ps = f.type.parameters
+            c = _class_of(ps[d[2]].type) if d[2] < len(ps) else None
+        return (c, k) if c is not None else None
+    if k == "load":
+        b = _resolve(d[1], lays)
+        c = _member_class(lays, b[0], d[2]) if b is not None else None
+        return (c, "field") if c is not None else None
+    if k == "phi":
+        rs = [_resolve(x, lays) for x in d[1]]
+        cs = set(r[0] for r in rs if r is not None)
+        return (cs.pop(), "phi") if None not in rs and len(cs) == 1 else None
+    if k == "or":
+        return next((r for r in (_resolve(x, lays) for x in d[1]) if r is not None), None)
+    return None
+
+
+def _evidence(lays):
+    """{(class, offset): {class stored: [kind]}} from the pointer stores, against the layouts"""
+    ev = {}
+    for _addr, off, dd, sd in _ptr_stores:
+        dst = _resolve(dd, lays)
+        src = _resolve(sd, lays) if dst is not None else None
+        if src is not None:
+            ev.setdefault((dst[0], off), {}).setdefault(src[0], []).append(src[1])
+    return ev
+
+
 _parsed = {}
 for _k, (_n, _ts) in _overrides.items():
     _parsed[_k] = (_n, bv.parse_type_string(_ts)[0] if _ts else None)
@@ -264,9 +530,18 @@ def _plan():
         except Exception:
             continue
         accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0}
-    lays = _fields.layouts(_types, _labels, _sizes, accesses, existing, _parsed,
-                           lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")),
-                           lambda n: Type.int(n, False), widths)
+    # pointer fields to a fixpoint: a field typed 'Y*' types the loads from it, whose stores are evidence in turn
+    lays, typed = None, None
+    for _i in range(8):
+        ev = _evidence(lays) if lays is not None else None
+        lays = _fields.layouts(_types, _labels, _sizes, accesses, existing, _parsed,
+                               lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")),
+                               lambda n: Type.int(n, False), widths, ev,
+                               lambda label: Type.pointer(bv.arch, _ref(label)))
+        now = set((a, p[0], p[1]) for a, lay in lays.items() for p in lay.pointers if p[3] == "typed")
+        if ev is not None and now == typed:
+            break
+        typed = now
     # 4. the structs
     counts, review, defs, shape = {}, [], [], []
     for a, lay in sorted(lays.items()):
@@ -279,6 +554,9 @@ def _plan():
             s.add_member_at_offset(m.name, m.type, m.offset, overwrite_existing=False)
         for key, n in (("structs", 1), ("fields", sum(1 for m in lay.members if m.source != "vptr")),
                        ("fields named (override)", sum(1 for m in lay.members if m.source == "override")),
+                       ("pointer fields typed", sum(1 for p in lay.pointers if p[3] == "typed")),
+                       ("pointer fields: contradiction", sum(1 for p in lay.pointers if p[3] == "contradiction")),
+                       ("pointer fields kept", sum(1 for p in lay.pointers if p[3].startswith("kept"))),
                        ("structs with a base", 1 if lay.bases else 0)):
             counts[key] = counts.get(key, 0) + n
         review.append("apply struct %s %#x (%s)%s: %s" % (

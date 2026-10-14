@@ -1,0 +1,82 @@
+typeinfo 0x402088  class mangled 5Child
+  vtable 0x402070  offset_to_top 0  3 slots
+    [0] 0x4008b0 Child::~Child(struct Child* this)
+    [1] 0x4008d0 Child::~Child(struct Child* this)
+    [2] 0x400690 Child::run(struct Child* this)
+typeinfo 0x402098  class mangled 5Owner  bind __ZTI5Owner
+  vtable 0x402030  offset_to_top 0  6 slots
+    [0] 0x400900 Owner::~Owner(struct Owner* this)
+    [1] 0x400920 Owner::~Owner(struct Owner* this)
+    [2] 0x400950 Owner::step(struct Owner* this)
+    [3] 0x4009d0 Owner::reshape(struct Owner* this, int32_t)
+    [4] 0x400a40 Owner::share(struct Owner* this)
+    [5] 0x400a60 Owner::mix(struct Owner* this)
+typeinfo 0x4020d0  class mangled 6Engine  bind __ZTI6Engine
+  vtable 0x4020b8  offset_to_top 0  3 slots
+    [0] 0x400af0 Engine::~Engine(struct Engine* this)
+    [1] 0x400b10 Engine::~Engine(struct Engine* this)
+    [2] 0x400b40 Engine::tick(struct Engine* this)
+typeinfo 0x402110  class mangled 4Slot  bind __ZTI4Slot
+  vtable 0x4020f0  offset_to_top 0  4 slots
+    [0] 0x400be0 Slot::~Slot(struct Slot* this)
+    [1] 0x400c00 Slot::~Slot(struct Slot* this)
+    [2] 0x400c30 Slot::hold_engine(struct Slot* this)
+    [3] 0x400c90 Slot::hold_child(struct Slot* this, Owner*)
+typeinfo 0x402148  si    mangled 6Square  bind __ZTI6Square
+  base 0x402160 5Shape
+  vtable 0x402130  offset_to_top 0  3 slots
+    [0] 0x400dd0 Square::~Square(struct Square* this)
+    [1] 0x400df0 Square::~Square(struct Square* this)
+    [2] 0x400e20 Square::area(struct Square* this)
+typeinfo 0x402160  class mangled 5Shape  bind __ZTI5Shape
+  vtable 0x402180  offset_to_top 0  3 slots
+    [0] 0x400e40 Shape::~Shape(struct Shape* this)
+    [1] 0x400e60 Shape::~Shape(struct Shape* this)
+    [2] 0x400e90 Shape::area(struct Shape* this)
+typeinfo 0x4021c0  si    mangled 6Circle  bind __ZTI6Circle
+  base 0x402160 5Shape
+  vtable 0x4021a8  offset_to_top 0  3 slots
+    [0] 0x400f10 Circle::~Circle(struct Circle* this)
+    [1] 0x400f30 Circle::~Circle(struct Circle* this)
+    [2] 0x400f60 Circle::area(struct Circle* this)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400690 Child::vfunc2   [now: Child::run(struct Child* this)]
+R 0x4008b0 Child::~Child   [now: Child::~Child(struct Child* this)]
+R 0x4008d0 Child::~Child [deleting]   [now: Child::~Child(struct Child* this)]
+R 0x400900 Owner::~Owner   [now: Owner::~Owner(struct Owner* this)]
+R 0x400920 Owner::~Owner [deleting]   [now: Owner::~Owner(struct Owner* this)]
+R 0x400950 Owner::vfunc2   [now: Owner::step(struct Owner* this)]
+R 0x4009d0 Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
+R 0x400a40 Owner::vfunc4   [now: Owner::share(struct Owner* this)]
+R 0x400a60 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
+R 0x400af0 Engine::~Engine   [now: Engine::~Engine(struct Engine* this)]
+R 0x400b10 Engine::~Engine [deleting]   [now: Engine::~Engine(struct Engine* this)]
+R 0x400b40 Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
+R 0x400be0 Slot::~Slot   [now: Slot::~Slot(struct Slot* this)]
+R 0x400c00 Slot::~Slot [deleting]   [now: Slot::~Slot(struct Slot* this)]
+R 0x400c30 Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
+R 0x400c90 Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
+R 0x400dd0 Square::~Square   [now: Square::~Square(struct Square* this)]
+R 0x400df0 Square::~Square [deleting]   [now: Square::~Square(struct Square* this)]
+R 0x400e20 Square::vfunc2   [now: Square::area(struct Square* this)]
+R 0x400e40 Shape::~Shape   [now: Shape::~Shape(struct Shape* this)]
+R 0x400e60 Shape::~Shape [deleting]   [now: Shape::~Shape(struct Shape* this)]
+R 0x400e90 Shape::vfunc2   [now: Shape::area(struct Shape* this)]
+R 0x400f10 Circle::~Circle   [now: Circle::~Circle(struct Circle* this)]
+R 0x400f30 Circle::~Circle [deleting]   [now: Circle::~Circle(struct Circle* this)]
+R 0x400f60 Circle::vfunc2   [now: Circle::area(struct Circle* this)]
+D 0x402020 vtable_for_Owner   [now: _vtable_for_Owner]
+D 0x402060 vtable_for_Child   [now: _vtable_for_Child]
+D 0x402088 typeinfo_for_Child   [now: _typeinfo_for_Child]
+D 0x402098 typeinfo_for_Owner   [now: _typeinfo_for_Owner]
+D 0x4020a8 vtable_for_Engine   [now: _vtable_for_Engine]
+D 0x4020d0 typeinfo_for_Engine   [now: _typeinfo_for_Engine]
+D 0x4020e0 vtable_for_Slot   [now: _vtable_for_Slot]
+D 0x402110 typeinfo_for_Slot   [now: _typeinfo_for_Slot]
+D 0x402120 vtable_for_Square   [now: _vtable_for_Square]
+D 0x402148 typeinfo_for_Square   [now: _typeinfo_for_Square]
+D 0x402160 typeinfo_for_Shape   [now: _typeinfo_for_Shape]
+D 0x402170 vtable_for_Shape   [now: _vtable_for_Shape]
+D 0x402198 vtable_for_Circle   [now: _vtable_for_Circle]
+D 0x4021c0 typeinfo_for_Circle   [now: _typeinfo_for_Circle]

@@ -22,6 +22,11 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
   names       vptr at 0; a member someone named in the existing struct keeps its name and type; else a name
               given for (class, offset) (overrides, e.g. from another session's schema); else field_<offset>.
               An override inside a base subobject names the base's member (unless the base has another one there).
+  pointers    (bncpp-34) a field that holds an object pointer gets 'Y*': evidence per (class, offset) of the classes
+              stored into it (the caller collects it: an object from operator new or with Y's vptr stored, a typed
+              parameter, a typed field, a call returning Y*); like the overrides it moves into the base that holds
+              the offset; several classes: their most derived common base at offset 0, unrelated ones: a
+              contradiction (the field stays). Never over a user member or a type from the overrides.
 
 Pure Python, no Binary Ninja import: member types are opaque values the caller supplies (BN Type objects).
 """
@@ -39,7 +44,7 @@ class Member:
 
 
 class ClassLayout:
-    __slots__ = ("typeinfo", "name", "width", "width_from", "bases", "members", "notes")
+    __slots__ = ("typeinfo", "name", "width", "width_from", "bases", "members", "notes", "pointers")
 
     def __init__(self, typeinfo, name):
         self.typeinfo = typeinfo
@@ -49,6 +54,7 @@ class ClassLayout:
         self.bases = []           # [(base typeinfo, offset)]
         self.members = []         # [Member], sorted by offset
         self.notes = []           # [str]: overrides moved into a base or dropped (the review)
+        self.pointers = []        # [(offset, class typeinfo or None, {class: [evidence kind]}, outcome)]
 
 
 def ancestors(types, addr):
@@ -75,23 +81,49 @@ def ctor_classes(types, stores):
     return out
 
 
-def class_sizes(sites, ctors, types):
-    """{class typeinfo: size} from operator new sites: [(class typeinfo or None, constructor called or None,
-    size, call address)] -- a site names the class by the vptr stored into the new object or by the constructor it
-    calls; inlined constructors store each class's vptr of the chain in turn, so per call only the most derived
-    class gets the size (none if the classes are not one hierarchy)"""
+def new_classes(sites, ctors, types):
+    """{(call address, size): class typeinfo} from operator new sites: [(class typeinfo or None, constructor called
+    or None, size, call address)] -- a site names the class by the vptr stored into the new object or by the
+    constructor it calls; inlined constructors store each class's vptr of the chain in turn, so per call only the
+    most derived class counts (none if the classes are not one hierarchy)"""
     calls = {}
     for cls, ctor, size, call in sites:
         c = cls if cls is not None else ctors.get(ctor)
         if c is not None and size:
             calls.setdefault((call, size), set()).add(c)
-    counts = {}
-    for (_call, size), cls in calls.items():
+    out = {}
+    for key, cls in calls.items():
         leaf = [c for c in cls if all(o == c or o in ancestors(types, c) for o in cls)]
         if len(leaf) == 1:
-            counts.setdefault(leaf[0], {})
-            counts[leaf[0]][size] = counts[leaf[0]].get(size, 0) + 1
+            out[key] = leaf[0]
+    return out
+
+
+def class_sizes(sites, ctors, types):
+    """{class typeinfo: size}: the most frequent size of the class's new calls (new_classes; a tie: the largest)"""
+    counts = {}
+    for (_call, size), c in new_classes(sites, ctors, types).items():
+        counts.setdefault(c, {})
+        counts[c][size] = counts[c].get(size, 0) + 1
     return {c: max(n.items(), key=lambda kv: (kv[1], kv[0]))[0] for c, n in counts.items()}
+
+
+def primary_chain(types, addr):
+    """[addr, its base at offset 0, that one's, ...]: the classes an X* is without adjusting the pointer"""
+    out = [addr]
+    while True:
+        bs = [b for b, off in base_offsets(types[out[-1]], types) if off == 0 and b not in out]
+        if not bs:
+            return out
+        out.append(bs[0])
+
+
+def pointer_class(types, classes):
+    """the class a field holding objects of these classes points to: one class; several on one primary-base chain
+    or siblings below one: their most derived common base (an unadjusted pointer, so only bases at offset 0);
+    None if they have none (unrelated classes: a contradiction)"""
+    chains = [primary_chain(types, c) for c in classes]
+    return next((c for c in chains[0] if all(c in ch for ch in chains[1:])), None)
 
 
 def base_offsets(t, types):
@@ -107,7 +139,7 @@ def base_offsets(t, types):
 
 
 def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_type=None, int_type=None,
-            widths=None):
+            widths=None, pointers=None, ptr_type=None):
     """{class typeinfo: ClassLayout} for every class with a primary vtable or accesses.
 
     accesses: {typeinfo: {offset: (size, type)}} -- what the code accesses through 'X*' (BN)
@@ -123,7 +155,9 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                class's accesses as the base's too (get_code_refs_for_type_field): a base class keeps its size from
                new, else the width of its struct, and its accesses past it are the derived classes', dropped;
                any class is cut to its size from new and a base to fit into each derived class with a size and
-               before the derived class's next base (width "derived" when that cuts it)"""
+               before the derived class's next base (width "derived" when that cuts it)
+    pointers:  {(typeinfo, offset): {class typeinfo: [evidence kind]}} -- objects stored into a field of an object of
+               the class (bncpp-34); ptr_type(label) -> the type 'label*'"""
     existing = existing or {}
     overrides = overrides or {}
     classes = [a for a, t in types.items() if any(vt.primary for vt in t.vtables) or a in accesses]
@@ -227,6 +261,20 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                             off, name, labels[b], off - boff, there[0]))
                     break
 
+    # the pointer evidence too: an object stored at a derived class's offset inside a base is the base's field
+    ptrs = {}
+    for (a, off), ev in (pointers or {}).items():
+        if a in out and off != 0:
+            for c, kinds in ev.items():
+                ptrs.setdefault((a, off), {}).setdefault(c, []).extend(kinds)
+    for a in sorted(classes, key=lambda a: -depth[a]):
+        for (pa, off) in sorted(k for k in ptrs if k[0] == a):
+            for b, boff in out[a].bases:
+                if boff <= off < boff + out[b].width:
+                    for c, kinds in ptrs.pop((a, off)).items():
+                        ptrs.setdefault((b, off - boff), {}).setdefault(c, []).extend(kinds)
+                    break
+
     for a in classes:
         lay, label = out[a], labels[a]
         taken = {}
@@ -250,6 +298,24 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                     taken[off] = Member(off, name, oty, None, "override")
         offs = sorted(taken)
         for o, nxt in zip(offs, offs[1:] + [lay.width]):
+            ev = ptrs.get((a, o))
+            if ev is None or ptr_type is None:
+                continue
+            m, c = taken[o], pointer_class(types, sorted(ev))
+            if m.source not in ("access", "override") or (m.source == "override" and overrides.get(
+                    (label, o), (0, None))[1] is not None):
+                outcome = "kept (%s)" % m.source
+            elif c is None:
+                outcome = "contradiction"
+            elif c not in out or (existing and c not in existing):
+                outcome = "no struct"  # a common base without a struct of its own
+            elif nxt - o < 8:
+                outcome = "no room"
+            else:
+                taken[o] = Member(o, m.name, ptr_type(labels[c]), 8, "pointer")
+                outcome = "typed"
+            lay.pointers.append((o, c, ev, outcome))
+        for o, nxt in zip(offs, offs[1:] + [lay.width]):
             m = taken[o]
             narrow = m.source == "access" or (m.source == "override" and overrides.get((label, o), (0, 0))[1] is None)
             if int_type is not None and narrow and m.size and m.size > nxt - o > 0:
@@ -269,4 +335,7 @@ def format_layouts(lays, types=None):
         for m in lay.members:
             out.append("  %#6x %-24s %s  [%s]" % (m.offset, m.name, m.type, m.source))
         out += ["  note: " + n for n in lay.notes]
+        out += ["  pointer %#x %s: %s  (%s)" % (off, outcome, lays[c].name if c in lays else "-", ", ".join(
+            "%s %s" % (lays[y].name if y in lays else "%#x" % y, "/".join(sorted(set(k)))) for y, k in sorted(ev.items())))
+                for off, c, ev, outcome in lay.pointers]
     return out

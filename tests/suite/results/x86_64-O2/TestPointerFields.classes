@@ -1,0 +1,64 @@
+typeinfo 0x401088  class mangled 5Child
+  vtable 0x401070  offset_to_top 0  3 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400640 Child::run(struct Child* this)
+typeinfo 0x401098  class mangled 5Owner  bind __ZTI5Owner
+  vtable 0x401030  offset_to_top 0  6 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400890 Owner::step(struct Owner* this)
+    [3] 0x4008e0 Owner::reshape(struct Owner* this, int32_t)
+    [4] 0x400930 Owner::share(struct Owner* this)
+    [5] 0x400940 Owner::mix(struct Owner* this)
+typeinfo 0x4010d0  class mangled 6Engine  bind __ZTI6Engine
+  vtable 0x4010b8  offset_to_top 0  3 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400960 Engine::tick(struct Engine* this)
+typeinfo 0x401110  class mangled 4Slot  bind __ZTI4Slot
+  vtable 0x4010f0  offset_to_top 0  4 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400970 Slot::hold_engine(struct Slot* this)
+    [3] 0x4009b0 Slot::hold_child(struct Slot* this, Owner*)
+typeinfo 0x401148  si    mangled 6Square  bind __ZTI6Square
+  base 0x401160 5Shape
+  vtable 0x401130  offset_to_top 0  3 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400a00 Square::area(struct Square* this)
+typeinfo 0x401160  class mangled 5Shape  bind __ZTI5Shape
+typeinfo 0x401198  si    mangled 6Circle  bind __ZTI6Circle
+  base 0x401160 5Shape
+  vtable 0x401180  offset_to_top 0  3 slots
+    [0] 0x400870 Slot::~Slot(struct Slot* this)
+    [1] 0x400880 Slot::~Slot(struct Slot* this)
+    [2] 0x400a10 Circle::area(struct Circle* this)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400640 Child::vfunc2   [now: Child::run(struct Child* this)]
+C 0x400870 virtual in unrelated classes: Child[0], Owner[0], Engine[0], Slot[0], Square[0], Circle[0]
+C 0x400880 virtual in unrelated classes: Child[1], Owner[1], Engine[1], Slot[1], Square[1], Circle[1]
+R 0x400890 Owner::vfunc2   [now: Owner::step(struct Owner* this)]
+R 0x4008e0 Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
+R 0x400930 Owner::vfunc4   [now: Owner::share(struct Owner* this)]
+R 0x400940 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
+R 0x400960 Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
+R 0x400970 Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
+R 0x4009b0 Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
+R 0x400a00 Square::vfunc2   [now: Square::area(struct Square* this)]
+R 0x400a10 Circle::vfunc2   [now: Circle::area(struct Circle* this)]
+D 0x401020 vtable_for_Owner   [now: _vtable_for_Owner]
+D 0x401060 vtable_for_Child   [now: _vtable_for_Child]
+D 0x401088 typeinfo_for_Child   [now: _typeinfo_for_Child]
+D 0x401098 typeinfo_for_Owner   [now: _typeinfo_for_Owner]
+D 0x4010a8 vtable_for_Engine   [now: _vtable_for_Engine]
+D 0x4010d0 typeinfo_for_Engine   [now: _typeinfo_for_Engine]
+D 0x4010e0 vtable_for_Slot   [now: _vtable_for_Slot]
+D 0x401110 typeinfo_for_Slot   [now: _typeinfo_for_Slot]
+D 0x401120 vtable_for_Square   [now: _vtable_for_Square]
+D 0x401148 typeinfo_for_Square   [now: _typeinfo_for_Square]
+D 0x401160 typeinfo_for_Shape   [now: _typeinfo_for_Shape]
+D 0x401170 vtable_for_Circle   [now: _vtable_for_Circle]
+D 0x401198 typeinfo_for_Circle   [now: _typeinfo_for_Circle]
