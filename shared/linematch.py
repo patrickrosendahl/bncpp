@@ -72,18 +72,41 @@ def _src_feature_index(sf):
     return sf  # SourceFile already exposes .lines; helpers below read it directly
 
 
+def _file_index(sfile):
+    """a per-file inverted index over its features (built once, cached on the file): exact (kind, value) ->
+    [lines], and the string / assert-text values with their lines for the substring-tolerant str queries"""
+    idx = getattr(sfile, "_feat_index", None)
+    if idx is None:
+        idx = {"exact": {}, "strings": []}
+        for ln, feats in sfile.lines.items():
+            for k, v in feats:
+                idx["exact"].setdefault((k, v), []).append(ln)
+                if k in ("str", "text") and isinstance(v, str):
+                    idx["strings"].append((v, ln, k))
+        sfile._feat_index = idx
+    return idx
+
+
+def _file_lines_for(sfile, kind, value):
+    """the lines of a file whose features match (kind, value): same semantics as scanning its lines -- for a
+    str, an equal or (with both >= 6 chars) containing source string, or an assert text that contains it;
+    num / call match exactly. The scan ran per feature per source function, which crawled on the kernelcache
+    (hundreds of features x hundreds of functions per file); here each file is read once"""
+    if kind == "str" and isinstance(value, str):
+        cache = sfile.__dict__.setdefault("_str_queries", {})
+        if value not in cache:
+            out = set(_file_index(sfile)["exact"].get(("str", value), []))
+            for v, ln, k in _file_index(sfile)["strings"]:
+                if k == "str" and _feat_eq("str", v, value) or k == "text" and value and value in v:
+                    out.add(ln)
+            cache[value] = sorted(out)
+        return cache[value]
+    return _file_index(sfile)["exact"].get((kind, value), [])
+
+
 def _source_lines_for(tree, sfile, sfunc, kind, value):
     """the lines of a source function that carry a feature equal to value"""
-    out = []
-    for ln in range(sfunc.first, sfunc.last + 1):
-        for k, v in sfile.lines.get(ln, ()):
-            if k == kind and _feat_eq(k, v, value):
-                out.append(ln)
-                break
-            if kind == "str" and k == "text" and value and value in v:
-                out.append(ln)
-                break
-    return out
+    return [ln for ln in _file_lines_for(sfile, kind, value) if sfunc.first <= ln <= sfunc.last]
 
 
 def _feat_eq(kind, a, b):
@@ -94,9 +117,10 @@ def _feat_eq(kind, a, b):
     return a == b
 
 
-def match_function(bf, tree, want_file=None):
+def match_function(bf, tree, want_file=None, index=None):
     """pick the source function for a binary function; returns (SourceFile, SourceFunction, anchors) or None.
-    anchors: [(addr, line, kind)] with kind file-line / string / const / call"""
+    anchors: [(addr, line, kind)] with kind file-line / string / const / call. index: a FileIndex over the tree
+    (pass one when matching many functions -- without it every call builds its own)"""
     feats = bf["features"]
     fls = _file_line_anchors(feats)
     # 1. a file:line anchor decides the file and gives a line inside the function
@@ -110,7 +134,7 @@ def match_function(bf, tree, want_file=None):
     # 2. score source functions: shared rare features + any file-line hits inside them
     rare = _rare(feats)
     best = None
-    files_to_try = cand_files or _files_by_rare(tree, rare)
+    files_to_try = cand_files or (index or FileIndex(tree)).files(rare)
     for p, fl_hits in (cand_files.items() if cand_files else [(p, []) for p in files_to_try]):
         sf = tree.file(p)
         for sfunc in sf.functions:
@@ -133,22 +157,62 @@ def match_function(bf, tree, want_file=None):
     return best[1], best[2], _dedupe_anchors(best[3])
 
 
-def _files_by_rare(tree, rare):
-    """files that carry at least one of the rare strings (a cheap filter before scoring every function)"""
-    strs = [v for a, k, v in rare if k == "str"]
-    if not strs:
-        return []
-    hit = []
-    for p in tree.paths:
-        sf = tree.file(p)
-        texts = set()
-        for feats in sf.lines.values():
-            for k, v in feats:
-                if k in ("str", "text"):
-                    texts.add(v)
-        if any(any(s in t or t in s for t in texts) for s in strs):
-            hit.append(p)
-    return hit
+_WORD = re.compile(r"\w{4,}")
+
+
+class FileIndex:
+    """the files a binary string can anchor in: an inverted index over the tree's str / assert-text features
+    (bncpp-36). The direct scan would read every source file per binary function -- 142k functions against a
+    1,799-file tree; here the tree is read once (lazily, on the first query), then answered from an exact-text
+    index, with a word index (words of >= 4 chars) proposing candidates that a substring check verifies both ways
+    (a string can be contained in a source text, or carry one). Per-string cached."""
+
+    def __init__(self, tree):
+        self.tree = tree
+        self._texts = {}      # path -> [str / text values]
+        self._exact = {}      # value -> [paths]
+        self._words = {}      # word -> set(paths)
+        self._cache = {}      # binary string -> [paths]
+
+    def _build(self):
+        for p in self.tree.paths:
+            sf = self.tree.file(p)
+            texts = sorted({v for feats in sf.lines.values() for k, v in feats if k in ("str", "text")})
+            self._texts[p] = texts
+            for t in texts:
+                self._exact.setdefault(t, []).append(p)
+                for w in set(_WORD.findall(t)):
+                    self._words.setdefault(w, set()).add(p)
+
+    def files_with(self, s):
+        if not self._texts:
+            self._build()
+        if s in self._cache:
+            return self._cache[s]
+        out = list(self._exact.get(s, ()))
+        words = set(_WORD.findall(s))
+        cand = set()
+        for w in words:
+            cand.update(self._words.get(w, ()))
+        if not words:
+            cand.update(self._texts)   # nothing indexable in the query: verify against everything
+        for p in cand:
+            if p not in out and any(s in t or t in s for t in self._texts[p]):
+                out.append(p)
+        out.sort()
+        self._cache[s] = out
+        return out
+
+    def files(self, rare):
+        """files that carry at least one of the rare strings (the cheap filter before scoring every function)"""
+        out, seen = [], set()
+        for a, k, v in rare:
+            if k == "str":
+                for p in self.files_with(v):
+                    if p not in seen:
+                        seen.add(p)
+                        out.append(p)
+        return out
 
 
 def _dedupe_anchors(anchors):
@@ -185,11 +249,12 @@ def rows_for_function(bf, sf, sfunc, anchors):
     return rows
 
 
-def build(bin_funcs, tree, binary=None, source=None):
+def build(bin_funcs, tree, binary=None, source=None, index=None):
     """match every binary function and return the LineMap"""
     m = LineMap(binary, source)
+    index = index if index is not None else FileIndex(tree)
     for bf in bin_funcs:
-        res = match_function(bf, tree)
+        res = match_function(bf, tree, index=index)
         if res is None:
             continue
         sf, sfunc, anchors = res

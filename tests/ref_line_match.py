@@ -22,7 +22,9 @@ from shared.linemap import format_score, score  # noqa: E402
 from shared.srcindex import SourceTree  # noqa: E402
 
 SRC = os.path.join(HERE, "linemap", "src")
-OUT = os.path.join(REPO, ".scratch", "linemap")
+# a dedicated subdir: .scratch/linemap also holds the kernel feature dump (tests/ref_kernel_linemap.py), which
+# a cleanup of the whole directory deleted once (2026-10-15) -- never rmtree the parent again
+OUT = os.path.join(REPO, ".scratch", "linemap", "fixture")
 VARIANTS = [("arm64", 0), ("arm64", 2), ("x86_64", 0), ("x86_64", 2)]
 
 
