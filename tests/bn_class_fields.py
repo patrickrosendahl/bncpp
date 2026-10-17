@@ -714,8 +714,10 @@ def _plan():
         if what == "typed":
             params.append((f, i, lays[c].name))
     for a, lay in sorted(lays.items()):
-        if a not in existing:
-            continue  # no struct of ours (bn_class_types.py makes them)
+        if a not in existing:  # no struct of ours (bn_class_types.py makes them)
+            counts["structs: no type yet (run bn_class_types.py)"] = \
+                counts.get("structs: no type yet (run bn_class_types.py)", 0) + 1
+            continue
         s = StructureBuilder.create()
         s.width = lay.width
         s.base_structures = [BaseStructure(_ref(lays[b].name), off, lays[b].width) for b, off in lay.bases]
