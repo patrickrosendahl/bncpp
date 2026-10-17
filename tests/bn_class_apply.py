@@ -5,8 +5,9 @@
 # The class scan (cpp/rtti.py) through BN, named by cpp/rtti_names.py, as annotate directives (R:/D:/C:) into
 # .scratch/classes/<binary>.directives. Applying never overwrites what someone named or wrote: a function is
 # renamed only while its name is BN's (auto symbol, sub_...), a data symbol only where there is none or an auto
-# one, a comment only where there is none. Every skip is counted.
-import importlib, os, time
+# one, a comment only where there is none. Every skip is counted. One exception: a function still carrying our own
+# placeholder Owner::vfuncN from an earlier apply takes a better name for the same owner (bncpp-23: operator()).
+import importlib, os, re, time
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -35,6 +36,14 @@ _counts = {}
 _review = []  # "apply|keep  directive  [what is there now]" for the review file
 
 
+_PLACEHOLDER = re.compile(r"^(.+)::vfunc\d+$")
+
+
+def _own_placeholder(now, text):
+    m = _PLACEHOLDER.match(now)
+    return m is not None and text.startswith(m.group(1) + "::") and text != now
+
+
 def _count(key):
     _counts[key] = _counts.get(key, 0) + 1
 
@@ -49,6 +58,12 @@ for _kind, _addr, _text in _dirs:
         if _f is None:
             _count("R no function")
             _note("skip", (_kind, _addr, _text), "no function")
+            continue
+        if not _f.symbol.auto and _own_placeholder(_f.name, _text):
+            _count("R upgrade (own placeholder)")
+            _note("apply", (_kind, _addr, _text), _f.name)
+            if _apply:
+                bv.define_user_symbol(_bn.Symbol(_bn.SymbolType.FunctionSymbol, _addr, _text))
             continue
         if not _f.symbol.auto:
             _count("R kept (named)")
