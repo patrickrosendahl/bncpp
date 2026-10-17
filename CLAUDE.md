@@ -31,6 +31,7 @@ python3 tests/suite/suite.py accept TestX…             # reviewed output -> re
 python3 tests/suite/suite.py ref-lsda                  # offline reference decode -> .scratch/suite/ref/
 python3 tests/suite/suite.py crosscheck [--diff]       # BN .lsda vs offline, names masked (exit 1: structure)
 $B --parallel --timeout 600 [--env CREATE_PADS=1] tests/bn_eh_survey.py   # landing pads / lost code per owner
+$B --bndb DB --timeout 600 [--env APPLY=1] tests/bn_landing_pads.py   # functions at LSDA pads BN missed (review)
 # classes (wiki classes.md): scan, names, types -- dry runs write .scratch/classes/<bin>.{names,types}.review
 $B --bndb BIN --timeout 300 tests/bn_class_scan.py     # -> .scratch/classes/<bin>.bn.classes
 python3 -I tests/ref_class_scan.py BIN --compare .scratch/classes/<bin>.bn.classes   # vs the file (exit 1: structure)

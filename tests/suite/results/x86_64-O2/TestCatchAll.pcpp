@@ -1,14 +1,36 @@
 // catch_all(int32_t) @ 0x4005f0
 {
-    int64_t rax;
-    int64_t var_18 = rax;
-    return may_throw(arg1);
+    may_throw(arg1);
+    int64_t entry_rbx;
+    int64_t entry_rbp;
+    /* tailcall */
+    return sub_4005fb(entry_rbx, entry_rbp);
+}
+
+// sub_4005fb @ 0x4005fb
+{
+    return;
+}
+
+// sub_400602 @ 0x400602
+{
+    ___cxa_begin_catch(arg1);
+    log_line("something");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4005fb();
 }
 
 // sub_400622 @ 0x400622
 {
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400632 @ 0x400632
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

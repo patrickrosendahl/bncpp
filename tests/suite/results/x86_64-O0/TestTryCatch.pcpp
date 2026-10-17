@@ -18,6 +18,16 @@
     /* no return */
 }
 
+// sub_40068a @ 0x40068a
+{
+    int64_t rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_free_exception(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
 // log_line(char const*) @ 0x4006e0
 {
     return _puts(arg1);
@@ -109,6 +119,12 @@
 // sub_400891 @ 0x400891
 {
     __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// sub_40089a @ 0x40089a
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

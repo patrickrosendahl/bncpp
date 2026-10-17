@@ -17,6 +17,19 @@
     /* no return */
 }
 
+// sub_400654 @ 0x400654
+{
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400664 @ 0x400664
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
 // ___clang_call_terminate @ 0x400668
 {
     ___cxa_begin_catch(arg1);
@@ -54,6 +67,45 @@
     std::runtime_error::runtime_error(thrown_exception, &arg_20);
     ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
         std::runtime_error::~runtime_error);
+    /* no return */
+}
+
+// sub_400730 @ 0x400730
+{
+    if ((int32_t)arg6 & 0x80000000)
+        operator delete(arg5);
+
+    if ((int32_t)arg4 & 0x80000000)
+    {
+        operator delete(arg3);
+
+        if (arg2 & 1)
+            ___cxa_free_exception();
+    }
+    else if (arg2)
+        ___cxa_free_exception();
+
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400764 @ 0x400764
+{
+    if ((int32_t)arg3 & 0x80000000)
+        operator delete(arg2);
+
+    ___cxa_free_exception();
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_40077c @ 0x40077c
+{
+    ___cxa_free_exception();
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
     /* no return */
 }
 

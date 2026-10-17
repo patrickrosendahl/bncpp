@@ -56,3 +56,16 @@
     /* no return */
 }
 
+// sub_400686 @ 0x400686
+{
+    if (!(*(uint8_t*)arg2 & 1))
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    operator delete(*(uint64_t*)(arg2 + 0x10));
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

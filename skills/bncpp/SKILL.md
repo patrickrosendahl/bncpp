@@ -24,7 +24,8 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
   lines → `scope_separator()`, and a final `new_line()`.
 - Exceptions inside `perform_*` callbacks are swallowed by BN (logged only) → an empty `{ }` body.
 - BN cannot unregister a language: every dev load registers "Pseudo Cpp devN"; `bn_dump.py` uses the latest.
-- Landing pads are separate functions in BN, and some handler code is in no function at all (bncpp-4).
+- Landing pads are separate functions in BN, and some are in no function at all: `cpp/landing_pads.py` creates
+  them (command, `bn_landing_pads.py`; `bn_dump.py` does it in its views). Never automatically on load (bncpp-4).
 - Shared code (`shared/`): no imports from `cpp/`, hooks for language specifics, provenance header, row in the
   wiki `code-structure.md` table; mirror the split in binary-jvm (jvm-68, bncpp-14).
 

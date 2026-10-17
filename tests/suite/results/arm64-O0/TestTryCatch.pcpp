@@ -18,6 +18,15 @@
     /* no return */
 }
 
+// sub_40069c @ 0x40069c
+{
+    int32_t x1;
+    int32_t arg_c = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
 // log_line(char const*) @ 0x400700
 {
     return _puts(arg1);
@@ -111,6 +120,12 @@
 // sub_4008f4 @ 0x4008f4
 {
     __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// sub_4008fc @ 0x4008fc
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

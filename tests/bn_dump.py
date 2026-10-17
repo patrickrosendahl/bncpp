@@ -2,7 +2,8 @@
 #   bnrun --parallel --timeout 600 tests/bn_dump.py
 #   bnrun --parallel --timeout 300 --env DUMP_KINDS=lsda tests/bn_dump.py   # only some kinds (comma list)
 #   bnrun --parallel --timeout 300 --env DUMP_TESTS=TestVirtual tests/bn_dump.py   # only test names starting so
-# Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view and writes into
+# Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
+# every landing pad BN has none at (cpp/landing_pads.py, bncpp-4) and writes into
 # .scratch/suite/out/<variant>/TestX.*:
 #   .pcpp  each function in __text / .text in the latest dev-loaded Pseudo Cpp (checked by tests/suite/suite.py)
 #   .pc    the same functions in Pseudo C (for comparison)
@@ -27,6 +28,7 @@ _lsda = importlib.import_module(_dev["pkgname"] + ".cpp.lsda")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
 _rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
 _rtti_names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
+_lp = importlib.import_module(_dev["pkgname"] + ".cpp.landing_pads")
 _kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda,classes,fields"
 _kinds = [k.strip() for k in _kinds_arg.split(",") if k.strip()]
 if set(_kinds) - {"pc", "pcpp", "lsda", "classes", "fields"}:
@@ -84,6 +86,7 @@ for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) if "DUMP_BINARIES" not in globals() else "other"
     _bv = _bn.load(_path)
     try:
+        _lp.create(_bv)  # bncpp-4: the landing pads BN did not make functions, so their handlers are dumped too
         _texts = {}
         _views = [(k, l) for k, l in (("pc", "Pseudo C"), ("pcpp", _lang)) if k in _kinds]
         if _views:

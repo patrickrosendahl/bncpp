@@ -20,6 +20,21 @@
     /* no return */
 }
 
+// sub_400656 @ 0x400656
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// sub_40067d @ 0x40067d
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
 // ___clang_call_terminate @ 0x400690
 {
     ___cxa_begin_catch(arg1);
@@ -38,10 +53,8 @@
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
 
     if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
-    {
-        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
-        /* no return */
-    }
+        /* tailcall */
+        return sub_4007a4(arg5);
 
     *(uint32_t*)((char*)arg5 - 0x18) =
         *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
@@ -54,6 +67,54 @@
     *(uint8_t*)((char*)arg5 - 0x49) = 0;
     ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
         std::runtime_error::~runtime_error);
+    /* no return */
+}
+
+// sub_400749 @ 0x400749
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    /* tailcall */
+    return sub_400783(arg5);
+}
+
+// sub_400757 @ 0x400757
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    /* tailcall */
+    return sub_40077a(arg5);
+}
+
+// sub_400765 @ 0x400765
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    std::string::~string((char*)arg5 - 0x30);
+    /* tailcall */
+    return sub_40077a(arg5);
+}
+
+// sub_40077a @ 0x40077a
+{
+    std::string::~string((char*)arg1 - 0x48);
+    /* tailcall */
+    return sub_400783(arg1);
+}
+
+// sub_400783 @ 0x400783
+{
+    if (*(uint8_t*)((char*)arg1 - 0x49) & 1)
+        ___cxa_free_exception(*(uint64_t*)((char*)arg1 - 0x58));
+
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007a4(arg1);
+}
+
+// sub_4007a4 @ 0x4007a4
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
     /* no return */
 }
 

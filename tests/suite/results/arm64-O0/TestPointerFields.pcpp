@@ -27,6 +27,15 @@
     /* no return */
 }
 
+// sub_400764 @ 0x400764
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
 // Engine::Engine(struct Engine* this) @ 0x400788
 {
     struct Engine* this_1 = this;
@@ -92,6 +101,16 @@
 {
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 8));
+    /* no return */
+}
+
+// sub_400940 @ 0x400940
+{
+    *(uint64_t*)((char*)arg3 - 8) = arg1;
+    *(uint32_t*)((char*)arg3 - 0xc) = arg2;
+    operator delete(arg5);
     operator delete(arg4);
     __Unwind_Resume(*(uint64_t*)((char*)arg3 - 8));
     /* no return */

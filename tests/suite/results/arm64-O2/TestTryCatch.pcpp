@@ -18,6 +18,13 @@
     /* no return */
 }
 
+// sub_4006c0 @ 0x4006c0
+{
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
 // log_line(char const*) @ 0x4006d4
 {
     /* tailcall */
@@ -55,6 +62,23 @@
 
 // catch_by_type(int32_t) @ 0x4007dc
 {
-    return may_throw(arg1);
+    may_throw(arg1);
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_4007ec(entry_fp);
+}
+
+// sub_4007ec @ 0x4007ec
+{
+    return;
+}
+
+// sub_4007f8 @ 0x4007f8
+{
+    int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    _printf("runtime_error: %s\n");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007ec();
 }
 

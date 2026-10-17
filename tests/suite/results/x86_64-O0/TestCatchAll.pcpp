@@ -39,6 +39,13 @@
     /* no return */
 }
 
+// sub_400668 @ 0x400668
+{
+    void (* var_8)(void* arg1) __noreturn = ___clang_call_terminate;
+    /* tailcall */
+    return ___clang_call_terminate(arg1);
+}
+
 // ___clang_call_terminate @ 0x400670
 {
     ___cxa_begin_catch(arg1);

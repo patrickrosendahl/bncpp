@@ -58,10 +58,8 @@
     if (arg2 != 2)
     {
         if (arg2 != 1)
-        {
-            __Unwind_Resume(arg1);
-            /* no return */
-        }
+            /* tailcall */
+            return sub_400708(arg1);
 
         log_line((*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))());
     }
@@ -73,10 +71,30 @@
     return sub_40068c();
 }
 
+// sub_4006f4 @ 0x4006f4
+{
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400708(arg1);
+}
+
 // sub_400700 @ 0x400700
 {
     ___cxa_end_catch();
+    struct _Unwind_Exception* entry_x0;
+    /* tailcall */
+    return sub_400708(entry_x0);
+}
+
+// sub_400708 @ 0x400708
+{
     __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400710 @ 0x400710
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

@@ -38,7 +38,13 @@
     /* no return */
 }
 
-// sub_4006e0 @ 0x4006e0
+// j_sub_4006e4 @ 0x4006e0
+{
+    /* tailcall */
+    return sub_4006e4(arg1);
+}
+
+// sub_4006e4 @ 0x4006e4
 {
     struct Guard arg_8;
     Guard::~Guard(&arg_8);

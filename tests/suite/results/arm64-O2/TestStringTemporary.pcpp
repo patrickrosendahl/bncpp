@@ -51,3 +51,16 @@
     /* no return */
 }
 
+// sub_4006b4 @ 0x4006b4
+{
+    if (!((int32_t)*(uint8_t*)((char*)arg2 + 0x17) & 0x80000000))
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    operator delete(*(uint64_t*)arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

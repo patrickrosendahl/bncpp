@@ -19,6 +19,19 @@
     /* no return */
 }
 
+// sub_400633 @ 0x400633
+{
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400643 @ 0x400643
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
 // ___clang_call_terminate @ 0x400650
 {
     ___cxa_begin_catch(arg1);
@@ -53,5 +66,43 @@
     ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
         std::runtime_error::~runtime_error);
     /* no return */
+}
+
+// sub_400706 @ 0x400706
+{
+    if (*(uint8_t*)((char*)arg2 - 0x50) & 1)
+        operator delete(*(uint64_t*)((char*)arg2 - 0x40));
+
+    if (*(uint8_t*)((char*)arg2 - 0x30) & 1)
+        operator delete(*(uint64_t*)((char*)arg2 - 0x20));
+
+    if (arg3)
+        ___cxa_free_exception();
+
+    ___cxa_end_catch();
+    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+    /* tailcall */
+    return __Unwind_Resume(arg1);
+}
+
+// sub_40072e @ 0x40072e
+{
+    if (*(uint8_t*)((char*)arg2 - 0x30) & 1)
+        operator delete(*(uint64_t*)((char*)arg2 - 0x20));
+
+    ___cxa_free_exception();
+    ___cxa_end_catch();
+    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+    /* tailcall */
+    return __Unwind_Resume(arg1);
+}
+
+// sub_400742 @ 0x400742
+{
+    ___cxa_free_exception();
+    ___cxa_end_catch();
+    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+    /* tailcall */
+    return __Unwind_Resume(arg1);
 }
 

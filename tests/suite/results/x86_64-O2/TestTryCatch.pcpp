@@ -18,6 +18,13 @@
     /* no return */
 }
 
+// sub_4006aa @ 0x4006aa
+{
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
 // log_line(char const*) @ 0x4006c0
 {
     /* tailcall */

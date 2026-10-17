@@ -87,6 +87,12 @@
     /* no return */
 }
 
+// sub_4006ff @ 0x4006ff
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
 // ___clang_call_terminate @ 0x400710
 {
     ___cxa_begin_catch(arg1);

@@ -39,3 +39,14 @@
     /* no return */
 }
 
+// sub_40070c @ 0x40070c
+{
+    int32_t x1;
+    int32_t arg_1c = x1;
+    struct Guard arg_10;
+    Guard::~Guard(&arg_10);
+    Guard::~Guard(arg2 - 0x10);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

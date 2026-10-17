@@ -1,12 +1,37 @@
 // catch_all(int32_t) @ 0x4005f8
 {
-    return may_throw(arg1);
+    may_throw(arg1);
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400608(entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400608 @ 0x400608
+{
+    return;
+}
+
+// sub_400614 @ 0x400614
+{
+    ___cxa_begin_catch(arg1);
+    log_line("something");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400608();
 }
 
 // sub_400630 @ 0x400630
 {
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400640 @ 0x400640
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

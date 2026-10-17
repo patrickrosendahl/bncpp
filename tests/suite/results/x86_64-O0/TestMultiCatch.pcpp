@@ -66,6 +66,12 @@
     /* no return */
 }
 
+// sub_4006de @ 0x4006de
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
 // ___clang_call_terminate @ 0x4006f0
 {
     ___cxa_begin_catch(arg1);
@@ -120,6 +126,15 @@
     return sub_4007e1(arg5);
 }
 
+// sub_4007c3 @ 0x4007c3
+{
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007e1(arg5);
+}
+
 // sub_4007d8 @ 0x4007d8
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
@@ -128,6 +143,12 @@
 // sub_4007e1 @ 0x4007e1
 {
     __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// sub_4007ea @ 0x4007ea
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

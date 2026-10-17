@@ -21,6 +21,16 @@
     /* no return */
 }
 
+// sub_400667 @ 0x400667
+{
+    *(uint64_t*)((char*)arg5 - 0x30) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x34) = arg3;
+    std::string::~string((char*)arg5 - 0x28);
+    std::string::~string(*(uint64_t*)((char*)arg5 - 0x48));
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x30));
+    /* no return */
+}
+
 // std::string::string[abi:ne200100]<0>(std::string* this, char const*) @ 0x4006b0
 {
     std::string::string[abi:ne200100]<0>(this, arg2);

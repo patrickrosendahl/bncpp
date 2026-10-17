@@ -28,6 +28,23 @@
     return j_sub_400710(arg3);
 }
 
+// sub_400670 @ 0x400670
+{
+    Guard::~Guard((char*)arg3 - 0x18);
+
+    if (arg2 != 1)
+        /* tailcall */
+        return sub_400728(arg3);
+
+    int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    _printf("caught %s\n");
+    *(uint32_t*)((char*)arg3 - 4) = 0xfffffffc;
+    int32_t arg_18 = 1;
+    ___cxa_end_catch();
+    /* tailcall */
+    return j_sub_400710(arg3);
+}
+
 // sub_4006e4 @ 0x4006e4
 {
     int64_t x0;
@@ -73,6 +90,12 @@
 // sub_400734 @ 0x400734
 {
     __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_40073c @ 0x40073c
+{
+    ___clang_call_terminate(arg1);
     /* no return */
 }
 

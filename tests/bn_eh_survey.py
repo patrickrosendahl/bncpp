@@ -5,8 +5,8 @@
 # off as sub_..., tail pieces), which instructions no function covers (lost code), and per landing pad: a function
 # starting there, the functions containing it, and whether the owner itself reaches it.
 # Output: .scratch/eh/<variant>/TestX.survey, and a summary line per binary.
-# CREATE_PADS=1: first create a function at every landing pad BN has none at (the bncpp-4 experiment; the view is
-# a throwaway one, nothing is saved), then survey -> .scratch/eh-pads/.
+# CREATE_PADS=1: first create a function at every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; the
+# view is a throwaway one, nothing is saved), then survey -> .scratch/eh-pads/.
 import glob, importlib, os
 import binaryninja as _bn
 
@@ -17,6 +17,7 @@ if _dev is None or "pkgname" not in _dev:
 _lsda = importlib.import_module(_dev["pkgname"] + ".cpp.lsda")
 _uw = importlib.import_module(_dev["pkgname"] + ".cpp.unwind_info")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
+_lp = importlib.import_module(_dev["pkgname"] + ".cpp.landing_pads")
 _env = globals().get("env") or {}
 _only = _env.get("DUMP_TESTS") or os.environ.get("DUMP_TESTS")
 _bins = sorted(glob.glob(os.path.join(REPO, "tests/suite/bin/*/*.dylib")))
@@ -54,18 +55,6 @@ def _covered(bv, a):
 
 def _name(f):
     return f.symbol.full_name
-
-
-def _create_pads(bv):
-    img = _bnimage.BNImage(bv)
-    n = 0
-    for start, table in _lsda.parse_all(img).items():
-        for cs in table.call_sites:
-            if cs.landing_pad is not None and bv.get_function_at(cs.landing_pad) is None:
-                bv.create_user_function(cs.landing_pad)
-                n += 1
-    bv.update_analysis_and_wait()
-    return n
 
 
 def _survey(bv):
@@ -131,7 +120,7 @@ for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path))
     _bv = _bn.load(_path)
     try:
-        _made = _create_pads(_bv) if _create else 0
+        _made = len(_lp.create(_bv)) if _create else 0
         _lines, _stats = _survey(_bv)
         _stats["created"] = _made
     finally:

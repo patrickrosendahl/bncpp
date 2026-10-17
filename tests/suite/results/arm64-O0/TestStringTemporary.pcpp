@@ -23,6 +23,17 @@
     /* no return */
 }
 
+// sub_4006a4 @ 0x4006a4
+{
+    int32_t x1;
+    int32_t arg_c = x1;
+    std::string arg_18;
+    std::string::~string(&arg_18);
+    std::string::~string(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
 // std::string::string[abi:ne200100]<0>(std::string* this, char const*) @ 0x4006e8
 {
     std::string* this_1 = this;
