@@ -3,6 +3,7 @@
 #   bnrun --bndb DB --timeout 1800 tests/bn_class_fields.py                     # dry run: plan + review file
 #   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_fields.py       # apply (in RAM), then save PATH
 #   options: --env BASELINE=F (as bn_class_types.py), --env NAMES=F (field names: lines 'label offset name [type]'),
+#            (a type BN cannot parse keeps the name untyped, a bad offset skips the line: review 'note:' lines),
 #            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only),
 #            --env NOCACHE=1 (step 1 always anew, no cache file: the suite, tests/bn_dump.py),
 #            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4)
@@ -43,13 +44,21 @@ _baseline = None
 if _env.get("BASELINE"):
     with open(_env["BASELINE"], encoding="utf-8") as _fh:
         _baseline = json.load(_fh)
-_overrides = {}
+_overrides, _override_lines, _names_notes = {}, {}, []
 if _env.get("NAMES"):
     with open(_env["NAMES"], encoding="utf-8") as _fh:
-        for _line in _fh:
+        for _lno, _line in enumerate(_fh, 1):
             _p = _line.split("#")[0].split(None, 3)
-            if len(_p) >= 3:
-                _overrides[(_p[0], int(_p[1], 0))] = (_p[2], _p[3].strip() if len(_p) > 3 else None)
+            if len(_p) < 3:
+                continue
+            try:
+                _k = (_p[0], int(_p[1], 0))
+            except ValueError:
+                _names_notes.append("note: names line %d: offset %r not a number, skipped: %s" % (
+                    _lno, _p[1], _line.strip()))
+                continue
+            _overrides[_k] = (_p[2], _p[3].strip() if len(_p) > 3 else None)
+            _override_lines[_k] = (_lno, _line.strip())
 _CTORS_VERSION = 4
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
@@ -633,9 +642,21 @@ def _evidence(lays):
     return ev
 
 
+# bncpp-35: a type BN cannot parse ('uint8', a class with no struct) keeps the name as an untyped override
 _parsed = {}
 for _k, (_n, _ts) in _overrides.items():
-    _parsed[_k] = (_n, bv.parse_type_string(_ts)[0] if _ts else None)
+    _ty = None
+    if _ts:
+        try:
+            _ty = bv.parse_type_string(_ts)[0]
+        except Exception as _e:
+            _names_notes.append("note: names line %d: type %r not parsed (%s), name kept untyped: %s" % (
+                _override_lines[_k][0], _ts, str(_e).strip().replace("\n", " "), _override_lines[_k][1]))
+            _count("names: type not parsed")
+    _parsed[_k] = (_n, _ty)
+for _n in _names_notes:
+    if "not a number" in _n:
+        _count("names: line skipped")
 _override_names = set(n for n, _t in _overrides.values())
 
 
@@ -749,7 +770,7 @@ for _k, _v in _final_counts.items():
     _count(_k, _v)
 for _line, _what in _param_review.values():
     _count("params from callers: " + _what)
-_review += _final_review + [line for line, _what in sorted(_param_review.values())]
+_review += sorted(_names_notes, key=lambda n: int(n.split()[3].rstrip(':'))) + _final_review + [line for line, _what in sorted(_param_review.values())]
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w", encoding="utf-8") as _fh:
