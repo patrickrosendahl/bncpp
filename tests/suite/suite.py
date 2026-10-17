@@ -10,8 +10,13 @@ change improves the output, review the diff and accept it as the new reference.
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
   python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
   python3 tests/suite/suite.py accept TestX ...          # output -> reference (after reviewing the diff)
+  python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [TestX ...]  # no-loss + flaws
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
+
+check (bncpp-8, shared/compare.py): per function, every call and string literal of its Pseudo C (.pc: the HLIL as
+BN prints it) must still be in its Pseudo Cpp, plus flaw counters (temporaries, gotos, exception plumbing, render
+errors, a catch clause in the LSDA but no try, ...); exit 1 if a total exceeds its gate (GATES, or --max K=V).
 
 Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view), .lsda (the decoded
 exception tables, cpp/lsda.py on cpp/bnimage.py) and .classes (the class scan, cpp/rtti.py, with the names
@@ -185,6 +190,95 @@ def compare(names, show_diff):
     return 0 if counts["ok"] == len(VARIANTS) * len(names) * len(CHECKED) else 1
 
 
+# flaw counters over a function's Pseudo Cpp (string literals removed, comments kept)
+_REG = r"(?:[xwqdsbhv]\d+|r[a-d]x|e[a-d]x|[re]?(?:si|di|bp|sp)|r\d+[dwb]?|[xyz]mm\d+|[a-d][lh]|[a-d]x)"
+COUNTERS = {
+    "temps": re.compile(r"\b(?:entry_)?%s(?:_\d+)?\b|\bvar_[0-9a-f]+(?:_\d+)?\b|\b(?:x|w|r)\d+_\d+\b" % _REG),
+    "gotos": re.compile(r"\bgoto\b"),
+    "labels": re.compile(r"^\s*label_\w+:", re.M),
+    "while_true": re.compile(r"\bwhile \(true\)|\bdo\s*$", re.M),
+    "tailcalls": re.compile(r"/\* tailcall \*/"),
+    "plumbing": re.compile(r"(?<![\w$])_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|"
+                           r"Unwind_Resume|clang_call_terminate)\s*\("),
+    "render_errors": re.compile(r"could not render"),
+}
+DISTINCT = ("temps",)
+# calls the try/catch rendering may hide (bncpp-7): not lost when they vanish
+MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_get_exception_ptr|Unwind_Resume|"
+                        r"clang_call_terminate)")
+CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+(?: const)?\s*[&*]?\s*(\w+)\)"
+# gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report
+GATES = {"lost_calls": 0, "lost_strings": 0, "render_errors": 0, "unbalanced": 0, "truncated": 0,
+         "leaked_catch_var": 0, "missing": 0}
+_FUNC = re.compile(r"^// .* @ (0x[0-9a-f]+)$")  # keyed by the address (overloads share a name)
+
+
+def _lsda_catches(path):
+    """{function name: catch clauses} from an .lsda dump (functions whose landing pads catch something)"""
+    out, cur = {}, None
+    for line in open(path).read().splitlines() if os.path.exists(path) else ():
+        if line and not line[0].isspace():
+            cur = line.split("  lsda base+")[0]
+        elif cur and "catch" in line:
+            out[cur] = out.get(cur, 0) + line.count("catch")
+    return out
+
+
+def check(names, maxes, worst, show):
+    """the no-loss check and the flaw counters of every test's Pseudo Cpp against its Pseudo C (bn_dump.py output)"""
+    sys.path.insert(0, REPO)
+    from shared import compare as C
+    rows, missing = [], 0
+    for arch, opt in VARIANTS:
+        v = variant_name(arch, opt)
+        for t in names:
+            pcpp, pc = (os.path.join(OUT, v, "%s.%s" % (t, ext)) for ext in ("pcpp", "pc"))
+            if not (os.path.exists(pcpp) and os.path.exists(pc)):
+                print("%-10s %-26s no output" % (v, t))
+                missing += 1
+                continue
+            ref = dict((k, body) for k, _h, body in C.split_functions(open(pc).read(), _FUNC))
+            catches = _lsda_catches(os.path.join(OUT, v, t + ".lsda"))
+            first = {}  # the .lsda names the function, not its address: C1/C2 ctors share a name, count it once
+            for addr, header, body in C.split_functions(open(pcpp).read(), _FUNC):
+                r = C.check_function(body, ref.get(addr), COUNTERS, DISTINCT, MAY_VANISH, CATCH_VAR)
+                name = header[3:].rsplit(" @ ", 1)[0]
+                has_try = bool(re.search(r"\btry\b", C.strip_comments(C.strip_strings("\n".join(body)))))
+                r["missing_try"] = 0
+                if name in catches:
+                    if name not in first:
+                        first[name] = r
+                        r["missing_try"] = 1
+                    if has_try:
+                        first[name]["missing_try"] = 0
+                r["function"] = "%s %s %s" % (v, t, name)
+                rows.append(r)
+                if show and show in r["function"]:
+                    print("=" * 30, r["function"], {k: x for k, x in r.items() if x and k != "function"})
+                    print("\n".join(body))
+    keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
+                             "lost_calls", "lost_strings", "stmts", "ref_stmts"]
+    total = C.totals(rows, keys)
+    total["missing"] = missing
+    print("TOTAL", " ".join("%s=%d" % kv for kv in total.items()))
+    flaws = ("lost_calls", "lost_strings", "render_errors", "unbalanced", "truncated", "leaked_catch_var",
+             "plumbing", "dead_code", "gotos", "missing_try", "temps")
+    score = lambda r: sum((len(r.get(k, ())) if isinstance(r.get(k), list) else r.get(k, 0)) *
+                          (1 if k == "temps" else 20) for k in flaws)
+    for r in sorted(rows, key=score, reverse=True)[:worst]:
+        if score(r) == 0:
+            break
+        print("  %-60s %s" % (r["function"], {k: r[k] for k in flaws if r.get(k)}))
+    gates = dict(GATES)
+    gates.update(dict((kv.split("=")[0], int(kv.split("=")[1])) for kv in maxes))
+    failed = C.gate(total, gates)
+    if failed:
+        print("FAIL", ", ".join(failed))
+        return 1
+    print("gates ok (%s)" % ", ".join("%s<=%d" % kv for kv in sorted(gates.items())))
+    return 0
+
+
 def accept(names):
     for v, t, out, ref in pairs(names):
         if os.path.exists(out):
@@ -195,7 +289,8 @@ def accept(names):
 
 def main(argv):
     cmd, args = (argv[0] if argv else "compare"), argv[1:]
-    names = [a for a in args if not a.startswith("-")]
+    names = [a for i, a in enumerate(args) if not a.startswith("-") and "=" not in a
+             and not (i and args[i - 1] in ("--worst", "--show"))]
     unknown = [n for n in names if n not in TESTS]
     if unknown:
         sys.exit("not registered: %s" % ", ".join(unknown))
@@ -205,6 +300,11 @@ def main(argv):
         ref_lsda()
     elif cmd == "crosscheck":
         return crosscheck(names or TESTS, "--diff" in args)
+    elif cmd == "check":
+        opt = lambda flag, default: args[args.index(flag) + 1] if flag in args else default
+        maxes = [a for a in args if re.match(r"^\w+=\d+$", a)]
+        names = [n for n in names if n in TESTS]
+        return check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None))
     elif cmd == "compare":
         return compare(names or TESTS, "--diff" in args)
     elif cmd == "accept":

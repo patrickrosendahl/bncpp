@@ -26,6 +26,7 @@ $B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<var
                                                        #   only some: --env DUMP_KINDS=lsda (comma list),
                                                        #   --env DUMP_TESTS=TestVirtual (name prefixes)
 python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)
+python3 tests/suite/suite.py check [--worst N] [K=V…]  # no-loss vs Pseudo C + flaw counters (exit 1: a gate)
 python3 tests/suite/suite.py accept TestX…             # reviewed output -> reference
 python3 tests/suite/suite.py ref-lsda                  # offline reference decode -> .scratch/suite/ref/
 python3 tests/suite/suite.py crosscheck [--diff]       # BN .lsda vs offline, names masked (exit 1: structure)
