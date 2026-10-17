@@ -9,38 +9,53 @@ functions of the primary vtables.
   functions    each primary-vtable function with an owner gets 'Owner* this' as its first parameter;
                destructors return void (Itanium on x86_64 / arm64). Functions in the vtables of unrelated classes
                (no owner) and secondary vtables (an adjusted 'this') are left alone.
+  anchored     (bncpp-31) a base whose vtable is not in the image (an abstract or intermediate base the linker
+               strips at -O2, a class with no virtual functions) gets a struct too, anchored by a derived
+               class's RTTI base list (cpp/rtti_fields.anchored_bases): polymorphic (a derived vtable serves
+               its subobject) -> a vptr plus X::VTable from the shortest serving vtable's slots, no data
+               variable (vtable_addr None); else no vptr and no members. The slot functions are the derived
+               classes' overrides, so the signatures fit. 'this' typing stays with the owners (the base's own
+               functions are not in the image).
 
 Pure Python, no Binary Ninja import: the plan is data; tests/bn_class_types.py builds the BN types from it.
 """
-from . import rtti_names
+from . import rtti_fields, rtti_names
 
 
 class ClassPlan:
-    __slots__ = ("typeinfo", "name", "vtable_name", "vtable_addr", "members")
+    __slots__ = ("typeinfo", "name", "vtable_name", "vtable_addr", "members", "polymorphic")
 
-    def __init__(self, typeinfo, name, vtable_addr, members):
+    def __init__(self, typeinfo, name, vtable_addr, members, polymorphic=True):
         self.typeinfo = typeinfo
         self.name = name                    # the class label (struct name)
         self.vtable_name = name + "::VTable"
-        self.vtable_addr = vtable_addr      # address point of the primary vtable
+        self.vtable_addr = vtable_addr      # address point of the primary vtable (None: an anchored base)
         self.members = members              # [(member name, slot)], slot = function address | "pure" | import
+        self.polymorphic = polymorphic      # False: an anchored base with no virtual functions (no vptr)
 
 
 def plan(types, demangle=None, call_targets=None, overrides=None, user_name=None):
-    """([ClassPlan] for every class with a primary vtable, {function: (class label, role)}).
+    """([ClassPlan] for every class with a primary vtable or anchored by a derived class's RTTI base list
+    (bncpp-31), {function: (class label, role)}).
 
     overrides: class labels someone gave (rtti_names.label_overrides). user_name(addr) -> the function's name if
     someone named it (not BN, not rtti_names.function_name), else None: that name becomes the slot's member."""
     lab = rtti_names.labels(types, demangle, overrides)
     own, _users = rtti_names.owners(types, call_targets)
+    anchored = rtti_fields.anchored_bases(types)
     classes = []
     for addr in sorted(types):
         t = types[addr]
         prim = [vt for vt in t.vtables if vt.primary]
-        if not prim:
+        slots, point = None, None
+        if prim:
+            slots, point = prim[0].slots, prim[0].addr
+        elif addr in anchored:  # a base whose vtable is not in the image (bncpp-31): None = no virtual functions
+            slots = anchored[addr]
+        else:
             continue
         members, seen = [], set()
-        for i, s in enumerate(prim[0].slots):
+        for i, s in enumerate(slots or []):
             if isinstance(s, int):
                 o = own.get(s)
                 name = rtti_names.member_name(o[1], o[2]) if o is not None else "vfunc%d" % i
@@ -56,6 +71,6 @@ def plan(types, demangle=None, call_targets=None, overrides=None, user_name=None
                 name = "%s_%d" % (name, i)
             seen.add(name)
             members.append((name, s))
-        classes.append(ClassPlan(addr, lab[addr], prim[0].addr, members))
+        classes.append(ClassPlan(addr, lab[addr], point, members, bool(prim) or slots is not None))
     functions = {f: (lab[o[0]], o[2]) for f, o in own.items() if o is not None}
     return classes, functions

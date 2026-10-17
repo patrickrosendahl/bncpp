@@ -1,0 +1,132 @@
+// make_it(int32_t) @ 0x400500
+{
+    if (arg1)
+    {
+        struct Wheel* rax_3 = operator new(0x18);
+        Bike::Bike(rax_3);
+        return rax_3;
+    }
+
+    struct Wheel* rax_1 = operator new(0x10);
+    Wheel::Wheel(rax_1);
+    return rax_1;
+}
+
+// Wheel::Wheel(struct Wheel* this) @ 0x400560
+{
+    Wheel::Wheel(this);
+}
+
+// Bike::Bike(struct Bike* this) @ 0x400580
+{
+    Bike::Bike(this);
+}
+
+// spoke_sum(Bike*) @ 0x4005a0
+{
+    uint64_t result =
+        (uint64_t)(*(uint32_t*)((char*)arg1 + 0x10) + *(uint32_t*)((char*)arg1 + 0x14));
+    int512_t zmm0;
+    (uint64_t)zmm0 = (double)(uint32_t)result;
+    return result;
+}
+
+// Wheel::Wheel(struct Wheel* this) @ 0x4005c0
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &_vtable_for_Wheel{for `Shape'};
+    *(uint64_t*)((char*)this + 8) = 0x3ff0000000000000;
+}
+
+// Shape::Shape(struct Shape* this) @ 0x400600
+{
+    *(uint64_t*)this = &_vtable_for_Shape;
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x400620
+{
+    Wheel::~Wheel(this);
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x400640
+{
+    Wheel::~Wheel(this);
+    operator delete(this);
+}
+
+// Wheel::area(struct Wheel* this) const @ 0x400670
+{
+    *(uint64_t*)((char*)this + 8);
+    return this;
+}
+
+// Wheel::kind(struct Wheel* this) const @ 0x400690
+{
+    struct Wheel* this_1 = this;
+    return "wheel";
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x4006b0
+{
+    struct Shape* this_1 = this;
+    trap(6);
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x4006c0
+{
+    struct Shape* this_1 = this;
+    trap(6);
+}
+
+// Shape::area(struct Shape* this) const @ 0x4006d0
+{
+    struct Shape* this_1 = this;
+    int512_t zmm0;
+    (uint128_t)zmm0 = {0};
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x4006e0
+{
+    return;
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400700
+{
+    struct Shape* this_1 = this;
+}
+
+// Bike::Bike(struct Bike* this) @ 0x400710
+{
+    Wheel::Wheel(this);
+    Plain::Plain((char*)this + 0x10);
+    *(uint64_t*)this = &_vtable_for_Bike{for `Wheel'};
+}
+
+// Plain::Plain(struct Plain* this) @ 0x400750
+{
+    *(uint32_t*)this = 2;
+    *(uint32_t*)((char*)this + 4) = 3;
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400770
+{
+    Bike::~Bike(this);
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400790
+{
+    Bike::~Bike(this);
+    operator delete(this);
+}
+
+// Bike::kind(struct Bike* this) const @ 0x4007c0
+{
+    struct Bike* this_1 = this;
+    return "bike";
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x4007e0
+{
+    Wheel::~Wheel(this);
+}
+

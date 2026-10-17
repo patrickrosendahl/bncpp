@@ -1,0 +1,26 @@
+classes sized 2
+ctors/dtors 0
+fields 3
+fields named (override) 0
+functions scanned 2
+params with direct callers 0
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 2
+ptr stores 0
+rounds 2
+stable 1
+structs 4
+structs with a base 2
+
+struct Wheel  (0x10 bytes, from new)  base Shape @ 0x0
+     0x0 vptr                     struct Wheel::VTable*  [vptr]
+     0x8 field_8                  double  [access]
+struct Shape  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Shape::VTable*  [vptr]
+struct Bike  (0x18 bytes, from new)  base Wheel @ 0x0  base Plain @ 0x10
+     0x0 vptr                     struct Bike::VTable*  [vptr]
+struct Plain  (0x8 bytes, from derived)
+     0x0 field_0                  int32_t  [access]
+     0x4 field_4                  int32_t  [access]

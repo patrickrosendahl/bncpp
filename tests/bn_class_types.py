@@ -4,7 +4,10 @@
 #   bnrun --bndb-save DB                                                        # then persist, path-scoped
 # bncpp-27: the class scan (cpp/rtti.py) as types (cpp/rtti_types.py) -- struct X { X::VTable* vptr; }, X::VTable
 # with a function pointer per slot, 'X* this' as the first parameter of X's primary-vtable functions, and the
-# vtable struct on the vtable's address point. Never over what someone set: an existing type of the same name,
+# vtable struct on the vtable's address point. bncpp-31: a base anchored by the RTTI base list whose vtable is
+# not in the image gets a struct too (a vptr + X::VTable from the derived classes' slots, no data variable;
+# no virtual functions: no vptr, a placeholder width the fields step sizes). Never over what someone set: an
+# existing type of the same name,
 # a function with a user type, a user data variable -- each skip is counted. Where a database marks every
 # function's type as user-set, give BN's own inference as the baseline (only types that differ are protected):
 #   bnrun --bndb RAW_BINARY --timeout 120 --env DUMP_TYPES=F tests/bn_class_types.py   (a fresh view)
@@ -77,11 +80,19 @@ for _c in _classes:
         _count("class type kept (exists)")
         _review.append("keep  type %s (exists)" % _c.name)
         continue
-    _review.append("apply type %s { %s::VTable* vptr; }   vtable %#x: %s" % (
-        _c.name, _c.name, _c.vtable_addr, ", ".join(m for m, _s in _c.members)))
     _mine.add(_c.name)
     _s = StructureBuilder.create()
-    _s.add_member_at_offset("vptr", Type.pointer(_arch, _ref(_c.vtable_name)), 0)
+    if _c.polymorphic:
+        _review.append("apply type %s { %s::VTable* vptr; }   %s" % (
+            _c.name, _c.name, "vtable %#x: %s" % (_c.vtable_addr, ", ".join(m for m, _s in _c.members))
+            if _c.vtable_addr is not None else
+            "[anchored base; vtable from the derived classes' slots: %s]" % ", ".join(m for m, _s in _c.members)))
+        _s.add_member_at_offset("vptr", Type.pointer(_arch, _ref(_c.vtable_name)), 0)
+    else:  # an anchored base with no virtual functions (bncpp-31): no vptr, the fields step sizes it
+        _count("class type anchored (no vptr)")
+        _review.append("apply type %s (anchored base, no virtual functions)   [width from the fields step]"
+                      % _c.name)
+        _s.width = 8  # a placeholder: BN needs a usable width; bn_class_fields.py sets the real one
     _new_types.append((QualifiedName([_c.name]), _s))
 _count("class types", len(_new_types))
 if _apply and _new_types:
@@ -113,10 +124,11 @@ for _f_addr, (_label, _role) in sorted(_functions.items()):
 if _apply:
     bv.update_analysis_and_wait()
 
-# vtable structs (after the functions, so their members carry the new function types), on the address points
+# vtable structs (after the functions, so their members carry the new function types), on the address points;
+# an anchored base with no virtual functions has no vtable struct (no slots; its subobject has no vptr)
 _vt_types = []
 for _c in _classes:
-    if _c.name not in _mine:
+    if _c.name not in _mine or not _c.members:
         continue
     _s = StructureBuilder.create()
     for _i, (_m, _slot) in enumerate(_c.members):
@@ -128,8 +140,8 @@ _count("vtable types", len(_vt_types))
 if _apply and _vt_types:
     bv.define_user_types([(n, t.immutable_copy()) for n, t in _vt_types], None)
 for _c in _classes:
-    if _c.name not in _mine:
-        continue
+    if _c.name not in _mine or _c.vtable_addr is None:
+        continue  # an anchored base: no vtable of its own in the image (bncpp-31)
     _dv = bv.get_data_var_at(_c.vtable_addr)
     if _dv is not None and not _dv.auto_discovered:
         _count("vtable data kept (user)")

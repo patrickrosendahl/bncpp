@@ -1,0 +1,41 @@
+typeinfo 0x401040  si    mangled 5Wheel  bind __ZTI5Wheel
+  base 0x401058 5Shape
+  vtable 0x401020  offset_to_top 0  4 slots
+    [0] 0x400620 Wheel::~Wheel(struct Wheel* this)
+    [1] 0x400640 Wheel::~Wheel(struct Wheel* this)
+    [2] 0x400670 Wheel::area(struct Wheel* this) const
+    [3] 0x400690 Wheel::kind(struct Wheel* this) const
+typeinfo 0x401058  class mangled 5Shape  bind __ZTI5Shape
+  vtable 0x401078  offset_to_top 0  4 slots
+    [0] 0x4006b0 Shape::~Shape(struct Shape* this)
+    [1] 0x4006c0 Shape::~Shape(struct Shape* this)
+    [2] 0x4006d0 Shape::area(struct Shape* this) const
+    [3] pure
+typeinfo 0x4010c8  vmi   mangled 4Bike  bind __ZTI4Bike
+  base 0x401040 5Wheel  offset_flags 0x2
+  base 0x401100 5Plain  offset_flags 0x1002
+  vtable 0x4010a8  offset_to_top 0  4 slots
+    [0] 0x400770 Bike::~Bike(struct Bike* this)
+    [1] 0x400790 Bike::~Bike(struct Bike* this)
+    [2] 0x400670 Wheel::area(struct Wheel* this) const
+    [3] 0x4007c0 Bike::kind(struct Bike* this) const
+typeinfo 0x401100  class mangled 5Plain  bind __ZTI5Plain
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400620 Wheel::~Wheel   [now: Wheel::~Wheel(struct Wheel* this)]
+R 0x400640 Wheel::~Wheel [deleting]   [now: Wheel::~Wheel(struct Wheel* this)]
+R 0x400670 Wheel::vfunc2   [now: Wheel::area(struct Wheel* this) const]
+R 0x400690 Wheel::vfunc3   [now: Wheel::kind(struct Wheel* this) const]
+R 0x4006b0 Shape::~Shape   [now: Shape::~Shape(struct Shape* this)]
+R 0x4006c0 Shape::~Shape [deleting]   [now: Shape::~Shape(struct Shape* this)]
+R 0x4006d0 Shape::vfunc2   [now: Shape::area(struct Shape* this) const]
+R 0x400770 Bike::~Bike   [now: Bike::~Bike(struct Bike* this)]
+R 0x400790 Bike::~Bike [deleting]   [now: Bike::~Bike(struct Bike* this)]
+R 0x4007c0 Bike::vfunc3   [now: Bike::kind(struct Bike* this) const]
+D 0x401010 vtable_for_Wheel   [now: _vtable_for_Wheel]
+D 0x401040 typeinfo_for_Wheel   [now: _typeinfo_for_Wheel]
+D 0x401058 typeinfo_for_Shape   [now: _typeinfo_for_Shape]
+D 0x401068 vtable_for_Shape   [now: _vtable_for_Shape]
+D 0x401098 vtable_for_Bike   [now: _vtable_for_Bike]
+D 0x4010c8 typeinfo_for_Bike   [now: _typeinfo_for_Bike]
+D 0x401100 typeinfo_for_Plain   [now: _typeinfo_for_Plain]

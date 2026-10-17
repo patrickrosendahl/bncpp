@@ -1,0 +1,135 @@
+// make_it(int32_t) @ 0x400510
+{
+    if (arg1)
+    {
+        struct Wheel* x0_2 = operator new(0x18);
+        Bike::Bike(x0_2);
+        return x0_2;
+    }
+
+    struct Wheel* x0 = operator new(0x10);
+    Wheel::Wheel(x0);
+    return x0;
+}
+
+// Wheel::Wheel(struct Wheel* this) @ 0x400574
+{
+    struct Wheel* this_1 = this;
+    Wheel::Wheel(this);
+}
+
+// Bike::Bike(struct Bike* this) @ 0x4005a0
+{
+    struct Bike* this_1 = this;
+    Bike::Bike(this);
+}
+
+// spoke_sum(Bike*) @ 0x4005cc
+{
+    int128_t v0;
+    (uint64_t)v0 =
+        (double)(int64_t)(*(uint32_t*)((char*)arg1 + 0x10) + *(uint32_t*)((char*)arg1 + 0x14));
+}
+
+// Wheel::Wheel(struct Wheel* this) @ 0x4005f4
+{
+    Shape::Shape(this);
+    *(uint64_t*)this = &data_404020;
+    *(uint64_t*)((char*)this + 8) = (double)1.0;
+}
+
+// Shape::Shape(struct Shape* this) @ 0x400638
+{
+    *(uint64_t*)this = &data_404078;
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x40065c
+{
+    struct Wheel* this_1 = this;
+    Wheel::~Wheel(this);
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x400688
+{
+    Wheel::~Wheel(this);
+    operator delete(this);
+}
+
+// Wheel::area(struct Wheel* this) const @ 0x4006b8
+{
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Wheel::kind(struct Wheel* this) const @ 0x4006d8
+{
+    struct Wheel* this_1 = this;
+    return "wheel";
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x4006f0
+{
+    struct Shape* this_1 = this;
+    trap(1);
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400704
+{
+    struct Shape* this_1 = this;
+    trap(1);
+}
+
+// Shape::area(struct Shape* this) const @ 0x400710
+{
+    struct Shape* this_1 = this;
+    int128_t v0;
+    (uint64_t)v0 = 0;
+    *(uint64_t*)((char*)&v0 + 8) = 0;
+}
+
+// Wheel::~Wheel(struct Wheel* this) @ 0x400724
+{
+    struct Wheel* this_1 = this;
+}
+
+// Shape::~Shape(struct Shape* this) @ 0x400750
+{
+    return;
+}
+
+// Bike::Bike(struct Bike* this) @ 0x400764
+{
+    Wheel::Wheel(this);
+    Plain::Plain((char*)this + 0x10);
+    *(uint64_t*)this = &data_4040a8;
+}
+
+// Plain::Plain(struct Plain* this) @ 0x4007ac
+{
+    *(uint32_t*)this = 2;
+    *(uint32_t*)((char*)this + 4) = 3;
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x4007d0
+{
+    struct Bike* this_1 = this;
+    Bike::~Bike(this);
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x4007fc
+{
+    Bike::~Bike(this);
+    operator delete(this);
+}
+
+// Bike::kind(struct Bike* this) const @ 0x40082c
+{
+    struct Bike* this_1 = this;
+    return "bike";
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400844
+{
+    struct Bike* this_1 = this;
+    Wheel::~Wheel(this);
+}
+

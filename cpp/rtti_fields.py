@@ -15,6 +15,14 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               run-time offsets: left out). In BN: base structures. A base ends where the derived class's next
               base starts; what BN showed of it past that moves down into the derived classes that hold the
               offset (not into their other bases: whose it is is a guess).
+  anchored    (bncpp-31) a base whose vtable is not in the image (an abstract or intermediate base the linker
+              strips at -O2, a root whose vtable nothing references; a class with no virtual functions) has no
+              vptr store to anchor it -- the RTTI base list anchors it instead (anchored_bases): it gets a
+              struct like any class. With a serving vtable it is polymorphic: a vptr plus X::VTable from the
+              shortest serving vtable's slots. Without one it has no vptr, and its width is the cap (the next
+              base offset or the derived class's size); without a cap it stays without a struct. It has no
+              code of its own, so the accesses BN reports for it are the derived classes': a polymorphic one
+              drops them (its width stays the vptr), one without a vptr keeps those inside its cap.
   fields      the offsets the code accesses through 'X*' (BN's create_structure_from_offset_access, after the
               constructors are typed). An access of a derived class inside a base's range belongs to the base
               (moved there, unless the base has a member at that offset); the base's width is its size, else its
@@ -139,9 +147,34 @@ def base_offsets(t, types):
     return out
 
 
+def anchored_bases(types):
+    """{base typeinfo: slots or None} for base classes without a primary vtable of their own, anchored by a
+    derived class's RTTI base list at a known offset (si: offset 0, vmi: the offset_flags; virtual bases sit at
+    run-time offsets, left out). The base is polymorphic when a vtable of a derived class serves its subobject
+    -- the derived's primary for a base at 0, its secondary at -offset (construction vtables excluded) -- and
+    the value is the shortest serving vtable's slots, from which X::VTable is synthesized: the slot functions
+    are the derived classes' overrides of the base's virtuals, so the signatures fit (the base's own vtable is
+    not in the image -- that is why it has no anchor). None: no vtable serves it, a base with no virtual
+    functions (its subobject has no vptr). A base served in one derived is served in them all, so slots win
+    over a None another derived reported."""
+    out = {}
+    for a, t in types.items():
+        if not any(vt.primary for vt in t.vtables):
+            continue
+        for b, off in base_offsets(t, types):
+            if any(vt.primary for vt in types[b].vtables):
+                continue
+            served = min((vt.slots for vt in t.vtables
+                          if vt.offset_to_top == -off and vt.construction_for is None), key=len, default=None)
+            if out.get(b) is None or (served is not None and len(served) < len(out[b])):
+                out[b] = served
+    return out
+
+
 def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_type=None, int_type=None,
             widths=None, pointers=None, ptr_type=None):
-    """{class typeinfo: ClassLayout} for every class with a primary vtable or accesses.
+    """{class typeinfo: ClassLayout} for every class with a primary vtable or accesses, plus the bases the
+    RTTI base lists anchor (bncpp-31, anchored_bases -- see the module doc).
 
     accesses: {typeinfo: {offset: (size, type)}} -- what the code accesses through 'X*' (BN)
     existing: {typeinfo: [(offset, name, type, size, user?)]} -- the struct's members now; user = someone named
@@ -162,7 +195,9 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
                the access type BN picked from one of the stores is no better than the other)"""
     existing = existing or {}
     overrides = overrides or {}
+    anchored = anchored_bases(types)
     classes = [a for a, t in types.items() if any(vt.primary for vt in t.vtables) or a in accesses]
+    classes += [a for a in anchored if a not in classes]  # bases the RTTI base lists anchor (bncpp-31)
     acc = {a: dict(accesses.get(a, {})) for a in classes}
     out = {a: ClassLayout(a, labels[a]) for a in classes}
     for a in classes:
@@ -194,6 +229,23 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
         return cap, kept, limit
 
     cap, kept, limit = caps(True)
+    # a base without a vptr that nothing can size (no next base, no derived class with a size): no struct
+    for a in [a for a in anchored if anchored[a] is None and a not in cap]:
+        del out[a], acc[a]
+        classes.remove(a)
+    for a in classes:
+        out[a].bases = [(b, off) for b, off in out[a].bases if b in out]
+    vptr_class = {a: any(vt.primary for vt in types[a].vtables) or anchored.get(a) is not None
+                  for a in classes}
+    # an anchored base has no code of its own in the image (no vtable, no constructor: it would store its vptr),
+    # so what BN reports for it are the derived classes' accesses -- along the base chain, or through an object
+    # BN typed with it (O2 merges 'new A' / 'new B' into one new; TestPointerFields). A polymorphic one has no cap
+    # that tells its end from the derived class's fields: its width stays the vptr, the accesses are dropped. A
+    # base without a vptr keeps those inside its cap (the derived class's accesses in its range, which the lift
+    # would bring there anyway: BN reports them for one or the other from round to round)
+    for a in anchored:
+        if a in acc and anchored[a] is not None:
+            acc[a] = {}
     # an access the base showed before the next-base cut (shallowest bases first, so it can travel down a chain):
     # the code reached it through the base's pointer to a bigger object, so it belongs to a derived class whose
     # object holds it (its size from new, else its cap); several such classes each get it (BN does not say whose)
@@ -217,7 +269,7 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
 
     # widths before lifting: the size, else the end of the own accesses and bases (fixed, so lifting is stable)
     def own_end(a, seen=()):
-        ends = [8] + [off + s for off, (s, _t) in acc[a].items()]
+        ends = [8 if vptr_class[a] else 0] + [off + s for off, (s, _t) in acc[a].items()]
         ends += [off + width(b, seen + (a,)) for b, off in out[a].bases if b not in seen]
         return max(ends)
 
@@ -225,7 +277,10 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
 
     def width(a, seen=()):
         if a not in memo:
-            memo[a] = sizes[a] if a in sizes else kept[a] if a in kept else own_end(a, seen)
+            # a base without a vptr (bncpp-31) has no vptr floor: its width is the cap, the next base offset or
+            # the derived class's size
+            memo[a] = sizes[a] if a in sizes else kept[a] if a in kept else (
+                cap[a] if not vptr_class[a] and a in cap else own_end(a, seen))
             memo[a] = min(memo[a], cap.get(a, memo[a]))
         return memo[a]
 
@@ -283,7 +338,7 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
         for off, name, ty, size, user in existing.get(a, []):
             if user:
                 taken[off] = Member(off, name, ty, size, "user")
-        if any(vt.primary for vt in types[a].vtables) and 0 not in taken and vptr_type is not None:
+        if vptr_class[a] and 0 not in taken and vptr_type is not None:
             taken[0] = Member(0, "vptr", vptr_type(label), 8, "vptr")
         in_base = [(boff, boff + out[b].width) for b, boff in lay.bases]
         for off, (size, ty) in sorted(acc[a].items()):

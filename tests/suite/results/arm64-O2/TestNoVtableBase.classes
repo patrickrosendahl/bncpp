@@ -1,0 +1,30 @@
+typeinfo 0x404040  si    mangled 5Wheel
+  base 0x404058 5Shape
+  vtable 0x404020  offset_to_top 0  4 slots
+    [0] 0x400580 Bike::~Bike(struct Bike* this)
+    [1] 0x400584 Bike::~Bike(struct Bike* this)
+    [2] 0x400588 Wheel::area(struct Wheel* this) const
+    [3] 0x400598 Wheel::kind(struct Wheel* this) const
+typeinfo 0x404058  class mangled 5Shape
+typeinfo 0x404098  vmi   mangled 4Bike
+  base 0x404040 5Wheel  offset_flags 0x2
+  base 0x4040d0 5Plain  offset_flags 0x1002
+  vtable 0x404078  offset_to_top 0  4 slots
+    [0] 0x400580 Bike::~Bike(struct Bike* this)
+    [1] 0x400584 Bike::~Bike(struct Bike* this)
+    [2] 0x400588 Wheel::area(struct Wheel* this) const
+    [3] 0x4005a4 Bike::kind(struct Bike* this) const
+typeinfo 0x4040d0  class mangled 5Plain
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400580 Wheel::~Wheel   [now: Bike::~Bike(struct Bike* this)]
+R 0x400584 Wheel::~Wheel [deleting]   [now: Bike::~Bike(struct Bike* this)]
+R 0x400588 Wheel::vfunc2   [now: Wheel::area(struct Wheel* this) const]
+R 0x400598 Wheel::vfunc3   [now: Wheel::kind(struct Wheel* this) const]
+R 0x4005a4 Bike::vfunc3   [now: Bike::kind(struct Bike* this) const]
+D 0x404010 vtable_for_Wheel   [now: _vtable_for_Wheel]
+D 0x404040 typeinfo_for_Wheel
+D 0x404058 typeinfo_for_Shape
+D 0x404068 vtable_for_Bike   [now: _vtable_for_Bike]
+D 0x404098 typeinfo_for_Bike
+D 0x4040d0 typeinfo_for_Plain

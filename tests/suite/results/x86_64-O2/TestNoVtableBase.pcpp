@@ -1,0 +1,52 @@
+// make_it(int32_t) @ 0x400500
+{
+    if (!arg1)
+    {
+        struct Shape::Wheel::VTable** rax_1 = operator new(0x10);
+        *(uint64_t*)rax_1 = &_vtable_for_Wheel{for `Shape'};
+        rax_1[1] = 0x3ff0000000000000;
+        return rax_1;
+    }
+
+    struct Wheel::Bike::VTable** rax = operator new(0x18);
+    rax[1] = 0x3ff0000000000000;
+    rax[2] = 0x300000002;
+    *(uint64_t*)rax = &_vtable_for_Bike{for `Wheel'};
+    return rax;
+}
+
+// spoke_sum(Bike*) @ 0x400570
+{
+    uint64_t result =
+        (uint64_t)(*(uint32_t*)((char*)arg1 + 0x14) + *(uint32_t*)((char*)arg1 + 0x10));
+    int512_t zmm0;
+    (uint64_t)zmm0 = (double)(uint32_t)result;
+    return result;
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400580
+{
+    return;
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400590
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Wheel::area(struct Wheel* this) const @ 0x4005a0
+{
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Wheel::kind(struct Wheel* this) const @ 0x4005c0
+{
+    return "wheel";
+}
+
+// Bike::kind(struct Bike* this) const @ 0x4005d0
+{
+    return "bike";
+}
+

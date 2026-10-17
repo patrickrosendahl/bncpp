@@ -1,0 +1,50 @@
+// make_it(int32_t) @ 0x400510
+{
+    if (!arg1)
+    {
+        void*** x0_1 = operator new(0x10);
+        *(uint64_t*)x0_1 = &data_404020;
+        x0_1[1] = 0x3ff0000000000000;
+        return x0_1;
+    }
+
+    void*** x0 = operator new(0x18);
+    x0[2] = 0x300000002;
+    *(uint64_t*)x0 = &data_404078;
+    x0[1] = 0x3ff0000000000000;
+    return x0;
+}
+
+// spoke_sum(Bike*) @ 0x400570
+{
+    int128_t v0;
+    (uint64_t)v0 =
+        (double)(int64_t)(*(uint32_t*)((char*)arg1 + 0x14) + *(uint32_t*)((char*)arg1 + 0x10));
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400580
+{
+    return;
+}
+
+// Bike::~Bike(struct Bike* this) @ 0x400584
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Wheel::area(struct Wheel* this) const @ 0x400588
+{
+    *(uint64_t*)((char*)this + 8);
+}
+
+// Wheel::kind(struct Wheel* this) const @ 0x400598
+{
+    return "wheel";
+}
+
+// Bike::kind(struct Bike* this) const @ 0x4005a4
+{
+    return "bike";
+}
+

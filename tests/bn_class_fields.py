@@ -103,6 +103,7 @@ _labels = _names.labels(_types, _img.demangle, _names.label_overrides(_types, _i
 _label_set = set(_labels.values())
 _points = {vt.addr: (a, vt.offset_to_top) for a, t in _types.items() for vt in t.vtables if vt.construction_for is None}
 _new_addrs = set(s.address for n in _OPERATOR_NEW for s in bv.get_symbols_by_name(n))
+_no_vptr = set(a for a, slots in _fields.anchored_bases(_types).items() if slots is None)  # bncpp-31: a field at 0
 _lap("0 scan")
 
 
@@ -655,7 +656,7 @@ def _plan():
             s = bv.create_structure_from_offset_access(qn)
         except Exception:
             continue
-        accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0}
+        accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0 or a in _no_vptr}
     # pointer fields to a fixpoint: a field typed 'Y*' types the loads from it, whose stores are evidence in turn
     _fclasses.clear()
     t_ptr = time.time()
