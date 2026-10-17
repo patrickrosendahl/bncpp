@@ -6,7 +6,8 @@
 #            (a type BN cannot parse keeps the name untyped, a bad offset skips the line: review 'note:' lines),
 #            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only),
 #            --env NOCACHE=1 (step 1 always anew, no cache file: the suite, tests/bn_dump.py),
-#            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4)
+#            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4),
+#            --env TRACE=L1,L2 (print these structs' shape every round: a struct that does not settle, bncpp-58)
 # Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
 # the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
 # bncpp-22: constructors / destructors get 'X* this', then the class structs get their size, base subobjects and
@@ -742,6 +743,7 @@ def _plan():
 # APPLY repeats 3 and 4 until the layouts no longer change: BN reports more accesses once a struct is wider (and
 # the derived ones as its bases'), so one pass is not a fixpoint and a second APPLY would still change structs
 _rounds, _prev = int(_env.get("ROUNDS") or 4), None
+_trace = set(x for x in (_env.get("TRACE") or "").split(",") if x)
 for _round in range(1, (_rounds if _apply else 1) + 1):
     _lays, _round_counts, _round_review, _defs, _shape, _params = _plan()
     _diff = [] if _prev is None else [x for x, y in zip(_shape, _prev) if x != y]
@@ -749,6 +751,9 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
     print("round %d: %s%s" % (_round, ", ".join("%s %d" % kv for kv in sorted(_round_counts.items())),
                               "" if _changed is None else ", structs changed %d %s" % (
                                   _changed, " ".join("%s(%#x)" % (x[0], x[1]) for x in _diff[:10]))))
+    for _t in _shape:
+        if _t[0] in _trace:
+            print("  trace %s %#x bases %s: %s" % (_t[0], _t[1], _t[2], " ".join("%#x %s %s" % m for m in _t[3])))
     _lap("3+4 round %d" % _round)
     if _changed == 0 and not _params:
         break

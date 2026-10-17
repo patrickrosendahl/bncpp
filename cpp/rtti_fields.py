@@ -242,10 +242,12 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
     # BN typed with it (O2 merges 'new A' / 'new B' into one new; TestPointerFields). A polymorphic one has no cap
     # that tells its end from the derived class's fields: its width stays the vptr, the accesses are dropped. A
     # base without a vptr keeps those inside its cap (the derived class's accesses in its range, which the lift
-    # would bring there anyway: BN reports them for one or the other from round to round)
+    # would bring there anyway: BN reports them for one or the other from round to round). The same holds for a
+    # polymorphic one whose struct is already wider than the vptr (kept): the lift fills that width from the
+    # derived classes, so what BN reports for it there stays -- else the fields flip every round (bncpp-58)
     for a in anchored:
         if a in acc and anchored[a] is not None:
-            acc[a] = {}
+            acc[a] = {off: v for off, v in acc[a].items() if 8 <= off < kept.get(a, 8)}
     # an access the base showed before the next-base cut (shallowest bases first, so it can travel down a chain):
     # the code reached it through the base's pointer to a bigger object, so it belongs to a derived class whose
     # object holds it (its size from new, else its cap); several such classes each get it (BN does not say whose)
