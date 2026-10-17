@@ -120,7 +120,7 @@ for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path))
     _bv = _bn.load(_path)
     try:
-        _made = len(_lp.create(_bv)) if _create else 0
+        _made = len(_lp.recover(_bv)[1]) if _create else 0
         _lines, _stats = _survey(_bv)
         _stats["created"] = _made
     finally:

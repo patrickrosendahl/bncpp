@@ -86,7 +86,7 @@ for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) if "DUMP_BINARIES" not in globals() else "other"
     _bv = _bn.load(_path)
     try:
-        _lp.create(_bv)  # bncpp-4: the landing pads BN did not make functions, so their handlers are dumped too
+        _lp.recover(_bv)  # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too
         _texts = {}
         _views = [(k, l) for k, l in (("pc", "Pseudo C"), ("pcpp", _lang)) if k in _kinds]
         if _views:
