@@ -37,6 +37,11 @@ $B --bndb DB --timeout 600 [--env APPLY=1] tests/bn_class_apply.py          # na
 $B --bndb DB --timeout 1800 --env BASELINE=F [--env APPLY=1] tests/bn_class_types.py   # structs + 'X* this'
 $B --bndb DB --timeout 1800 --env BASELINE=F [--env NAMES=F] [--env APPLY=1] tests/bn_class_fields.py  # sizes, bases, fields
 $B --bndb DB --timeout 900 tests/bn_vcall_count.py     # HLIL indirect / named vptr calls (a sample)
+# native part (C++, native/): API checkout /Users/patrick/dev/binaryninja-api on the branch matching the app's
+# Contents/Resources/api_REVISION.txt (bn-<build>); loads only on a BN restart, no dev loads
+cmake -S native -B native/build -DCMAKE_BUILD_TYPE=Release && cmake --build native/build -j
+#   installed once as a symlink (BN loads native plugins only from the plugins folder's top level):
+#   ln -s "$PWD/native/build/out/libbncpp_native.dylib" ~/Library/Application\ Support/Binary\ Ninja/plugins/
 ```
 Details and the suite layout (Fernflower style): wiki `testing.md`.
 
