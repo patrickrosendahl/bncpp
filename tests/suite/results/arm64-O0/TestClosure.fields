@@ -1,0 +1,64 @@
+classes sized 6
+ctor already typed 21
+ctor typed 7
+ctors forwarding 6
+ctors/dtors 28
+fields 7
+fields named (override) 0
+functions scanned 31
+params with direct callers 16
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 31
+ptr stores 6
+rounds 3
+stable 1
+structs 19
+structs with a base 14
+
+struct IoErr  (0x8 bytes, from vptr)  base Err @ 0x0
+     0x0 vptr                     struct IoErr::VTable*  [vptr]
+struct Err  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Err::VTable*  [vptr]
+struct ParseErr  (0x8 bytes, from vptr)  base Err @ 0x0
+     0x0 vptr                     struct ParseErr::VTable*  [vptr]
+struct RangeErr  (0x8 bytes, from vptr)  base Err @ 0x0
+     0x0 vptr                     struct RangeErr::VTable*  [vptr]
+struct Codec  (0x8 bytes, from derived)
+     0x0 vptr                     struct Codec::VTable*  [vptr]
+struct Rot  (0x8 bytes, from new)  base Codec @ 0x0
+     0x0 vptr                     struct Rot::VTable*  [vptr]
+struct Inv  (0x8 bytes, from new)  base Codec @ 0x0
+     0x0 vptr                     struct Inv::VTable*  [vptr]
+struct Swap  (0x8 bytes, from new)  base Codec @ 0x0
+     0x0 vptr                     struct Swap::VTable*  [vptr]
+struct CountSink  (0x10 bytes, from new)  base Sink @ 0x0
+     0x0 vptr                     struct CountSink::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct Sink  (0x8 bytes, from derived)
+     0x0 vptr                     struct Sink::VTable*  [vptr]
+struct NullSink  (0x8 bytes, from new)  base Sink @ 0x0
+     0x0 vptr                     struct NullSink::VTable*  [vptr]
+struct std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>  (0xc bytes, from members)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct std::__1::__function::__base<int32_t (int32_t)>  (0x8 bytes, from vptr)
+     0x0 vptr                     struct std::__1::__function::__base<int32_t (int32_t)>::VTable*  [vptr]
+struct std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>  (0x10 bytes, from members)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]
+struct std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>  (0x18 bytes, from members)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
+     0x8 field_8                  int128_t  [access]
+struct FnImpl<neg_obj()::$_0>  (0x10 bytes, from new)  base FnBase @ 0x0
+     0x0 vptr                     struct FnImpl<neg_obj()::$_0>::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]
+struct FnBase  (0x8 bytes, from vptr)
+     0x0 vptr                     struct FnBase::VTable*  [vptr]
+struct FnImpl<add_obj(int32_t)::$_0>  (0xc bytes, from members)  base FnBase @ 0x0
+     0x0 vptr                     struct FnImpl<add_obj(int32_t)::$_0>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from members)  base FnBase @ 0x0
+     0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
+     0x8 field_8                  int64_t  [access]

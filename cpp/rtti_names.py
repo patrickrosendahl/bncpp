@@ -11,6 +11,7 @@ as annotate directives (the bnrun bridge's annotate lane: R:ADDR:NAME function, 
               the class or in one along its primary-base chain (a primary base's slots are a prefix of the
               derived class's: an abstract class's deleting destructor is a trap, its derived ones show the pair).
               A function in the vtables of unrelated classes (identical code folding) only gets a comment.
+              A closure target's call slot (cpp/rtti_closures.py, bncpp-23) is Closure::operator() (member invoke).
   thunks      a function only in secondary vtables (none in a primary one) adjusts 'this' for a base subobject:
               slot i of Class's vtable for Base at +16 is Class::~Class [thunk] / [deleting] [thunk] where Base's
               slots 0 / 1 are destructors, else its target's name + ' [thunk]' where the code only forwards to one
@@ -135,7 +136,8 @@ def dtor_classes(types, call_targets=None):
 
 def owners(types, call_targets=None):
     """{function address: (owner typeinfo, index, role)} for the functions in primary vtables, role "dtor" /
-    "deleting" / "vfunc"; a function in the vtables of unrelated classes maps to None"""
+    "deleting" / "invoke" (a closure's call operator) / "vfunc"; a function in the vtables of unrelated classes
+    maps to None"""
     users = {}  # function -> [(class, index)] over primary vtables
     for addr, t in types.items():
         for vt in t.vtables:
@@ -151,7 +153,9 @@ def owners(types, call_targets=None):
         out[f] = None
         for c, i in sorted(us):  # the class all others derive from (or are)
             if all(o == c or c in _ancestors(types, o) for o in classes):
-                role = ("dtor", "deleting")[i] if c in dtor_pairs and i in (0, 1) else "vfunc"
+                cl = types[c].closure
+                role = ("dtor", "deleting")[i] if c in dtor_pairs and i in (0, 1) else \
+                    "invoke" if cl is not None and i == cl.invoke_index else "vfunc"
                 out[f] = (c, i, role)
                 break
     return out, users
@@ -219,15 +223,30 @@ def directives(types, demangle=None, call_targets=None, overrides=None):
     return out
 
 
+def _short(label):
+    """the unqualified class name without template arguments: a::B<c::D> -> B (only top-level :: split)"""
+    depth, start = 0, 0
+    for i, ch in enumerate(label):
+        if ch in "<(":
+            depth += 1
+        elif ch in ">)":
+            depth -= 1
+        elif depth == 0 and label.startswith("::", i):
+            start = i + 2
+    return label[start:].split("<", 1)[0]
+
+
 def function_name(label, index, role):
-    short = label.rsplit("::", 1)[-1].split("<", 1)[0]
+    short = _short(label)
     if role == "dtor":
         return "%s::~%s" % (label, short)
     if role == "deleting":
         return "%s::~%s [deleting]" % (label, short)
+    if role == "invoke":
+        return "%s::operator()" % label
     return "%s::vfunc%d" % (label, index)
 
 
 def member_name(index, role):
     """the vtable struct member of a slot (an identifier)"""
-    return {"dtor": "dtor", "deleting": "deleting_dtor"}.get(role, "vfunc%d" % index)
+    return {"dtor": "dtor", "deleting": "deleting_dtor", "invoke": "invoke"}.get(role, "vfunc%d" % index)

@@ -24,9 +24,12 @@ keep the real mangled name even where the string was hashed: (weak) binds of ref
 (__ZTI...) and of its name pointer (__ZTS..., reported as the matching __ZTI name).
 
 Pure Python, no Binary Ninja import: reads through an image (cpp/bnimage.py in BN; cpp/macho.py offline, as a
-reference only). Image methods used: read, section_range, section_range_at, data_sections, bound_symbols.
+reference only). Image methods used: read, section_range, section_range_at, data_sections, bound_symbols, and
+what cpp/lsda.py parse_all reads (the closure veto, cpp/rtti_closures.py).
 """
 import struct
+
+from . import lsda as _lsda, rtti_closures as _closures
 
 KINDS = {"__ZTVN10__cxxabiv117__class_type_infoE": "class",
          "__ZTVN10__cxxabiv120__si_class_type_infoE": "si",
@@ -41,7 +44,7 @@ _HEX = set("0123456789abcdef")
 
 
 class TypeInfo:
-    __slots__ = ("addr", "kind", "name", "bases", "bind_names", "vtables", "kind_from")
+    __slots__ = ("addr", "kind", "name", "bases", "bind_names", "vtables", "kind_from", "closure")
 
     def __init__(self, addr, kind, name, kind_from):
         self.addr = addr
@@ -51,6 +54,7 @@ class TypeInfo:
         self.bind_names = []        # real names from binds of references to this typeinfo (__ZTI...)
         self.vtables = []           # [VTable], primary first
         self.kind_from = kind_from  # "bind" (the vptr's bound symbol) or "layout"
+        self.closure = None         # a closure target (cpp/rtti_closures.py Closure, set by scan), else None
 
     @property
     def name_kind(self):
@@ -277,6 +281,10 @@ def scan(img):
     for t in types.values():
         t.vtables.sort(key=lambda vt: (vt.construction_for is not None, vt.offset_to_top != 0, -vt.offset_to_top,
                                        vt.addr))
+    # bncpp-23: std::function-style closure targets; the exception tables veto the types they catch
+    caught = _closures.caught(_lsda.parse_all(img).values(), getattr(img, "symbol_keys", None))
+    for a, c in _closures.classify(types, caught).items():
+        types[a].closure = c
     return types
 
 
@@ -342,6 +350,8 @@ def format_scan(types, function_name=None):
         out.append("typeinfo %#x  %-5s %s %s%s" % (
             addr, t.kind, t.name_kind, t.name or "-",
             "  bind " + ", ".join(t.bind_names) if t.bind_names else ""))
+        if t.closure is not None:
+            out.append(_closures.format_closure(t.closure))
         for b, of in t.bases:
             if isinstance(b, str):
                 base = "import %s" % b  # "?" = imported, name unknown

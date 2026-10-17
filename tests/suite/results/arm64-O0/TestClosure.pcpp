@@ -1,0 +1,1350 @@
+// add_fn(int32_t) @ 0x400698
+{
+    struct std::function<int32_t (int32_t)>* entry_result;
+    struct std::function<int32_t (int32_t)>* entry_result_1 = entry_result;
+    std::function<int32_t (int32_t)>::function<add_fn(int32_t)::$_0, void>(entry_result,
+        (uint64_t)arg1);
+    return entry_result;
+}
+
+// std::function<int32_t (int32_t)>::function<add_fn(int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, add_fn(int32_t)::$_0) @ 0x4006dc
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::function<int32_t (int32_t)>::function<add_fn(int32_t)::$_0, void>(this, (uint64_t)arg2);
+}
+
+// scale_fn(int32_t, int32_t) @ 0x400718
+{
+    struct std::function<int32_t (int32_t)>* entry_result;
+    struct std::function<int32_t (int32_t)>* entry_result_1 = entry_result;
+    int32_t var_24 = arg2;
+    std::function<int32_t (int32_t)>::function<scale_fn(int32_t, int32_t)::$_0, void>(entry_result,
+        arg1);
+    return entry_result;
+}
+
+// std::function<int32_t (int32_t)>::function<scale_fn(int32_t, int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0) @ 0x400764
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::function<int32_t (int32_t)>::function<scale_fn(int32_t, int32_t)::$_0, void>(this, arg2);
+}
+
+// pick_fn(int32_t const*, int32_t, int32_t) @ 0x400798
+{
+    struct std::function<int32_t (int32_t)>* entry_result;
+    struct std::function<int32_t (int32_t)>* entry_result_1 = entry_result;
+    int32_t var_30 = arg2;
+    int32_t var_2c = arg3;
+    std::function<int32_t (int32_t)>::function<pick_fn(int32_t const*, int32_t, int32_t)::$_0, void>(
+        entry_result, arg1);
+    return entry_result;
+}
+
+// std::function<int32_t (int32_t)>::function<pick_fn(int32_t const*, int32_t, int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0) @ 0x4007f4
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::function<int32_t (int32_t)>::function<pick_fn(int32_t const*, int32_t, int32_t)::$_0, void>(
+        this, arg2);
+}
+
+// call_fn(std::function<int32_t (int32_t)> const&, int32_t) @ 0x400830
+{
+    return std::function<int32_t (int32_t)>::operator()(arg1, arg2);
+}
+
+// std::function<int32_t (int32_t)>::operator()(struct std::function<int32_t (int32_t)>* this, int32_t) const @ 0x40085c
+{
+    int32_t var_1c = arg2;
+    return std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](this,
+        &var_1c);
+}
+
+// neg_obj() @ 0x40088c
+{
+    int64_t entry_x0;
+    return make_fn<neg_obj()::$_0>(entry_x0);
+}
+
+// make_fn<neg_obj()::$_0>(neg_obj()::$_0) @ 0x4008a8
+{
+    struct FnImpl<neg_obj()::$_0>* result;
+    int64_t x1;
+    result = operator new(0x10);
+    FnImpl<neg_obj()::$_0>::FnImpl(result, x1);
+    return result;
+}
+
+// sub_4008d8 @ 0x4008d8
+{
+    int32_t x1;
+    int32_t arg_c = x1;
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// add_obj(int32_t) @ 0x4008fc
+{
+    return make_fn<add_obj(int32_t)::$_0>((uint64_t)arg1);
+}
+
+// make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0) @ 0x40092c
+{
+    struct FnImpl<add_obj(int32_t)::$_0>* result = operator new(0x10);
+    FnImpl<add_obj(int32_t)::$_0>::FnImpl(result, (uint64_t)arg1);
+    return result;
+}
+
+// sub_400974 @ 0x400974
+{
+    int32_t x1;
+    int32_t arg_c = x1;
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// clamp_obj(int32_t, int32_t) @ 0x400998
+{
+    int32_t var_1c = arg2;
+    return make_fn<clamp_obj(int32_t, int32_t)::$_0>(arg1);
+}
+
+// make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0) @ 0x4009d0
+{
+    struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* result = operator new(0x10);
+    FnImpl<clamp_obj(int32_t, int32_t)::$_0>::FnImpl(result, arg1);
+    return result;
+}
+
+// sub_400a10 @ 0x400a10
+{
+    int32_t x1;
+    int32_t arg_14 = x1;
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// call_obj(FnBase*, int32_t) @ 0x400a34
+{
+    return (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))(arg1, (uint64_t)arg2);
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x400a68
+{
+    return;
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x400a7c
+{
+    struct Codec* this_1 = this;
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x400aa8
+{
+    Codec::~Codec(this);
+    operator delete(this);
+}
+
+// Codec::run(struct Codec* this, int32_t) @ 0x400ad8
+{
+    struct Codec* this_1 = this;
+    return (uint64_t)arg2;
+}
+
+// make_codec(int32_t) @ 0x400af0
+{
+    char var_21 = 0;
+    char var_31 = 0;
+    char var_41 = 0;
+
+    if (!arg1)
+    {
+        struct Rot* x0 = operator new(8);
+        struct Rot* var_20_1 = x0;
+        char var_21_1 = 1;
+        Rot::Rot(x0);
+        return x0;
+    }
+
+    if (arg1 != 1)
+    {
+        struct Rot* x0_4 = operator new(8);
+        struct Rot* var_40_1 = x0_4;
+        char var_41_1 = 1;
+        Swap::Swap(x0_4);
+        return x0_4;
+    }
+
+    struct Rot* x0_2 = operator new(8);
+    struct Rot* var_30_1 = x0_2;
+    char var_31_1 = 1;
+    Inv::Inv(x0_2);
+    return x0_2;
+}
+
+// Rot::Rot(struct Rot* this) @ 0x400c00
+{
+    struct Rot* this_1 = this;
+    Rot::Rot(this);
+}
+
+// Inv::Inv(struct Inv* this) @ 0x400c2c
+{
+    struct Inv* this_1 = this;
+    Inv::Inv(this);
+}
+
+// Swap::Swap(struct Swap* this) @ 0x400c58
+{
+    struct Swap* this_1 = this;
+    Swap::Swap(this);
+}
+
+// fail(int32_t) @ 0x400c84
+{
+    if (!arg1)
+    {
+        struct IoErr* thrown_exception = ___cxa_allocate_exception(8);
+        *(uint64_t*)thrown_exception = 0;
+        IoErr::IoErr(thrown_exception);
+        ___cxa_throw(thrown_exception, &typeinfo_for_IoErr, IoErr::~IoErr);
+        /* no return */
+    }
+
+    if (arg1 != 1)
+    {
+        struct RangeErr* thrown_exception_2 = ___cxa_allocate_exception(8);
+        *(uint64_t*)thrown_exception_2 = 0;
+        RangeErr::RangeErr(thrown_exception_2);
+        ___cxa_throw(thrown_exception_2, &typeinfo_for_RangeErr, RangeErr::~RangeErr);
+        /* no return */
+    }
+
+    struct ParseErr* thrown_exception_1 = ___cxa_allocate_exception(8);
+    *(uint64_t*)thrown_exception_1 = 0;
+    ParseErr::ParseErr(thrown_exception_1);
+    ___cxa_throw(thrown_exception_1, &typeinfo_for_ParseErr, ParseErr::~ParseErr);
+    /* no return */
+}
+
+// IoErr::IoErr(struct IoErr* this) @ 0x400d34
+{
+    struct IoErr* this_1 = this;
+    IoErr::IoErr(this);
+}
+
+// IoErr::~IoErr(struct IoErr* this) @ 0x400d60
+{
+    struct IoErr* this_1 = this;
+    IoErr::~IoErr(this);
+}
+
+// ParseErr::ParseErr(struct ParseErr* this) @ 0x400d8c
+{
+    struct ParseErr* this_1 = this;
+    ParseErr::ParseErr(this);
+}
+
+// ParseErr::~ParseErr(struct ParseErr* this) @ 0x400db8
+{
+    struct ParseErr* this_1 = this;
+    ParseErr::~ParseErr(this);
+}
+
+// RangeErr::RangeErr(struct RangeErr* this) @ 0x400de4
+{
+    struct RangeErr* this_1 = this;
+    RangeErr::RangeErr(this);
+}
+
+// RangeErr::~RangeErr(struct RangeErr* this) @ 0x400e10
+{
+    struct RangeErr* this_1 = this;
+    RangeErr::~RangeErr(this);
+}
+
+// try_fail(int32_t) @ 0x400e3c
+{
+    fail(arg1);
+    /* no return */
+}
+
+// sub_400e5c @ 0x400e5c
+{
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400ed8(arg3);
+}
+
+// sub_400eb0 @ 0x400eb0
+{
+    int32_t x1;
+    int32_t arg_14 = x1;
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400ed8 @ 0x400ed8
+{
+    return *(uint64_t*)((char*)arg1 - 8);
+}
+
+// sub_400ef0 @ 0x400ef0
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400ef4
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// make_sink(int32_t) @ 0x400f04
+{
+    char var_21 = 0;
+    char var_31 = 0;
+
+    if (!arg1)
+    {
+        struct CountSink* x0_2 = operator new(8);
+        struct CountSink* var_30_1 = x0_2;
+        char var_31_1 = 1;
+        NullSink::NullSink(x0_2);
+        return x0_2;
+    }
+
+    struct CountSink* x0 = operator new(0x10);
+    struct CountSink* var_20_1 = x0;
+    char var_21_1 = 1;
+    CountSink::CountSink(x0);
+    return x0;
+}
+
+// CountSink::CountSink(struct CountSink* this) @ 0x400fb8
+{
+    struct CountSink* this_1 = this;
+    CountSink::CountSink(this);
+}
+
+// NullSink::NullSink(struct NullSink* this) @ 0x400fe4
+{
+    struct NullSink* this_1 = this;
+    NullSink::NullSink(this);
+}
+
+// Rot::Rot(struct Rot* this) @ 0x401010
+{
+    Codec::Codec(this);
+    *(uint64_t*)this = &data_4040e8;
+}
+
+// Codec::Codec(struct Codec* this) @ 0x40104c
+{
+    *(uint64_t*)this = &_vtable_for_Codec;
+}
+
+// Rot::~Rot(struct Rot* this) @ 0x401070
+{
+    struct Rot* this_1 = this;
+    Rot::~Rot(this);
+}
+
+// Rot::~Rot(struct Rot* this) @ 0x40109c
+{
+    Rot::~Rot(this);
+    operator delete(this);
+}
+
+// Rot::run(struct Rot* this, int32_t) @ 0x4010cc
+{
+    struct Rot* this_1 = this;
+    return (uint64_t)(arg2 + 0xd);
+}
+
+// Rot::~Rot(struct Rot* this) @ 0x4010e8
+{
+    struct Rot* this_1 = this;
+}
+
+// Inv::Inv(struct Inv* this) @ 0x401114
+{
+    Codec::Codec(this);
+    *(uint64_t*)this = &data_404128;
+}
+
+// Inv::~Inv(struct Inv* this) @ 0x401150
+{
+    struct Inv* this_1 = this;
+    Inv::~Inv(this);
+}
+
+// Inv::~Inv(struct Inv* this) @ 0x40117c
+{
+    Inv::~Inv(this);
+    operator delete(this);
+}
+
+// Inv::run(struct Inv* this, int32_t) @ 0x4011ac
+{
+    struct Inv* this_1 = this;
+    return (uint64_t)~arg2;
+}
+
+// Inv::~Inv(struct Inv* this) @ 0x4011c8
+{
+    struct Inv* this_1 = this;
+}
+
+// Swap::Swap(struct Swap* this) @ 0x4011f4
+{
+    Codec::Codec(this);
+    *(uint64_t*)this = &data_404168;
+}
+
+// Swap::~Swap(struct Swap* this) @ 0x401230
+{
+    struct Swap* this_1 = this;
+    Swap::~Swap(this);
+}
+
+// Swap::~Swap(struct Swap* this) @ 0x40125c
+{
+    Swap::~Swap(this);
+    operator delete(this);
+}
+
+// Swap::run(struct Swap* this, int32_t) @ 0x40128c
+{
+    struct Swap* this_1 = this;
+    return (uint64_t)(arg2 >> 0x10) | (uint64_t)(arg2 << 0x10);
+}
+
+// Swap::~Swap(struct Swap* this) @ 0x4012b0
+{
+    struct Swap* this_1 = this;
+}
+
+// IoErr::IoErr(struct IoErr* this) @ 0x4012dc
+{
+    Err::Err(this);
+    *(uint64_t*)this = &data_4041a8;
+}
+
+// Err::Err(struct Err* this) @ 0x401318
+{
+    *(uint64_t*)this = &data_4041d0;
+}
+
+// IoErr::~IoErr(struct IoErr* this) @ 0x40133c
+{
+    IoErr::~IoErr(this);
+    operator delete(this);
+}
+
+// IoErr::what(struct IoErr* this) const @ 0x40136c
+{
+    struct IoErr* this_1 = this;
+    return &data_402fbc;
+}
+
+// Err::~Err(struct Err* this) @ 0x401384
+{
+    struct Err* this_1 = this;
+    trap(1);
+}
+
+// Err::~Err(struct Err* this) @ 0x401398
+{
+    struct Err* this_1 = this;
+    trap(1);
+}
+
+// IoErr::~IoErr(struct IoErr* this) @ 0x4013a4
+{
+    struct IoErr* this_1 = this;
+}
+
+// Err::~Err(struct Err* this) @ 0x4013d0
+{
+    return;
+}
+
+// ParseErr::ParseErr(struct ParseErr* this) @ 0x4013e4
+{
+    Err::Err(this);
+    *(uint64_t*)this = &data_4041f8;
+}
+
+// ParseErr::~ParseErr(struct ParseErr* this) @ 0x401420
+{
+    ParseErr::~ParseErr(this);
+    operator delete(this);
+}
+
+// ParseErr::what(struct ParseErr* this) const @ 0x401450
+{
+    struct ParseErr* this_1 = this;
+    return "parse";
+}
+
+// ParseErr::~ParseErr(struct ParseErr* this) @ 0x401468
+{
+    struct ParseErr* this_1 = this;
+}
+
+// RangeErr::RangeErr(struct RangeErr* this) @ 0x401494
+{
+    Err::Err(this);
+    *(uint64_t*)this = &data_404220;
+}
+
+// RangeErr::~RangeErr(struct RangeErr* this) @ 0x4014d0
+{
+    RangeErr::~RangeErr(this);
+    operator delete(this);
+}
+
+// RangeErr::what(struct RangeErr* this) const @ 0x401500
+{
+    struct RangeErr* this_1 = this;
+    return "range";
+}
+
+// RangeErr::~RangeErr(struct RangeErr* this) @ 0x401518
+{
+    struct RangeErr* this_1 = this;
+}
+
+// CountSink::CountSink(struct CountSink* this) @ 0x401544
+{
+    Sink::Sink(this);
+    *(uint64_t*)this = &data_404248;
+    *(uint32_t*)((char*)this + 8) = 0;
+}
+
+// Sink::Sink(struct Sink* this) @ 0x401584
+{
+    *(uint64_t*)this = &data_404298;
+}
+
+// CountSink::~CountSink(struct CountSink* this) @ 0x4015a8
+{
+    struct CountSink* this_1 = this;
+    CountSink::~CountSink(this);
+}
+
+// CountSink::~CountSink(struct CountSink* this) @ 0x4015d4
+{
+    CountSink::~CountSink(this);
+    operator delete(this);
+}
+
+// CountSink::put(struct CountSink* this, int32_t) @ 0x401604
+{
+    int32_t var_c = arg2;
+    *(uint32_t*)((char*)this + 8) += 1;
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x401628
+{
+    struct Sink* this_1 = this;
+    trap(1);
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x40163c
+{
+    struct Sink* this_1 = this;
+    trap(1);
+}
+
+// CountSink::~CountSink(struct CountSink* this) @ 0x401648
+{
+    struct CountSink* this_1 = this;
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x401674
+{
+    return;
+}
+
+// NullSink::NullSink(struct NullSink* this) @ 0x401688
+{
+    Sink::Sink(this);
+    *(uint64_t*)this = &data_4042c0;
+}
+
+// NullSink::~NullSink(struct NullSink* this) @ 0x4016c4
+{
+    struct NullSink* this_1 = this;
+    NullSink::~NullSink(this);
+}
+
+// NullSink::~NullSink(struct NullSink* this) @ 0x4016f0
+{
+    NullSink::~NullSink(this);
+    operator delete(this);
+}
+
+// NullSink::put(struct NullSink* this, int32_t) @ 0x401720
+{
+    struct NullSink* this_1 = this;
+    int32_t var_c = arg2;
+}
+
+// NullSink::~NullSink(struct NullSink* this) @ 0x401734
+{
+    struct NullSink* this_1 = this;
+}
+
+// std::function<int32_t (int32_t)>::function<add_fn(int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, add_fn(int32_t)::$_0) @ 0x401760
+{
+    int32_t var_14 = arg2;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_2 = this_1;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<add_fn(int32_t)::$_0, 0>(
+        this_1, &var_14);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<add_fn(int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, add_fn(int32_t)::$_0&&) @ 0x401798
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<add_fn(int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<add_fn(int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, add_fn(int32_t)::$_0&&) @ 0x4017cc
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](this,
+        arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<add_fn(int32_t)::$_0>(struct std::__function* this, add_fn(int32_t)::$_0 const&) @ 0x401830
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, add_fn(int32_t)::$_0&&) @ 0x401848
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, add_fn(int32_t)::$_0&&) @ 0x40187c
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404300;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](struct std::__function::__base<int32_t (int32_t)>* this) @ 0x4018c8
+{
+    *(uint64_t*)this = &data_404380;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4018ec
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401918
+{
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+    operator delete(this);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401948
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* result =
+        operator new(0x10);
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](result,
+        (char*)this + 8);
+    return result;
+}
+
+// sub_40198c @ 0x40198c
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x4019b0
+{
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](arg2,
+        (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4019e0
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4019f0
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x401a30
+{
+    return std::__invoke_r[abi:nqe210106]<int32_t, add_fn(int32_t)::$_0&, int32_t>((char*)this + 8,
+        arg2);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x401a60
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2, &_typeinfo_for_add_fn(int32_t)::$_0) & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401abc
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    return &_typeinfo_for_add_fn(int32_t)::$_0;
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x401ad4
+{
+    struct std::__function::__base<int32_t (int32_t)>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x401ae8
+{
+    struct std::__function::__base<int32_t (int32_t)>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401af4
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x401b20
+{
+    return;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, add_fn(int32_t)::$_0 const&) @ 0x401b34
+{
+    struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, add_fn(int32_t)::$_0 const&) @ 0x401b68
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404300;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<int32_t, add_fn(int32_t)::$_0&, int32_t>(struct std* this, add_fn(int32_t)::$_0&&&...) @ 0x401bb4
+{
+    return std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<add_fn(int32_t)::$_0&, int32_t>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<add_fn(int32_t)::$_0&, int32_t>(struct std::__invoke_void_return_wrapper<int32_t, false>* this, add_fn(int32_t)::$_0&&&...) @ 0x401be0
+{
+    return std::__invoke[abi:nqe210106]<add_fn(int32_t)::$_0&, int32_t>(this, arg2);
+}
+
+// std::__invoke[abi:nqe210106]<add_fn(int32_t)::$_0&, int32_t>(struct std* this, std::__invoke_result_impl&&...) @ 0x401c0c
+{
+    return add_fn(int32_t)::$_0::operator()(this, *(uint32_t*)arg2);
+}
+
+// add_fn(int32_t)::$_0::operator()(struct add_fn(int32_t)::$_0* this, int32_t) const @ 0x401c3c
+{
+    return (uint64_t)(arg2 + *(uint32_t*)this);
+}
+
+// std::type_info::operator==[abi:nqe210106](struct std::type_info* this, std::type_info const&) const @ 0x401c60
+{
+    struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* x9 =
+        *(uint64_t*)((char*)this + 8);
+    struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* x8_2 =
+        *(uint64_t*)((char*)arg2 + 8);
+
+    if (x9 == x8_2)
+        return 1;
+
+    int32_t x0_1 = std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](
+        x9, arg2);
+    int32_t x0_3;
+
+    if (!(x0_1 & 1))
+        x0_3 = std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](
+            x8_2, arg2);
+
+    char var_21;
+
+    if (!(x0_1 & 1) && !(x0_3 & 1))
+        var_21 = (char)(!_strcmp(x9 & 0x7fffffffffffffff, x8_2 & 0x7fffffffffffffff) ? 1 : 0) & 1;
+    else
+        var_21 = 0;
+
+    return (uint64_t)var_21 & 1;
+}
+
+// std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* this, uint64_t) @ 0x401d34
+{
+    return (uint64_t)(!(this & 0x8000000000000000) ? 1 : 0);
+}
+
+// std::function<int32_t (int32_t)>::function<scale_fn(int32_t, int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0) @ 0x401d50
+{
+    int64_t var_18 = arg2;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_2 = this_1;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0, 0>(
+        this_1, &var_18);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0&&) @ 0x401d88
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0&&) @ 0x401dbc
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0>(struct std::__function* this, scale_fn(int32_t, int32_t)::$_0 const&) @ 0x401e20
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0&&) @ 0x401e38
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0&&) @ 0x401e6c
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_4043e8;
+    *(uint64_t*)((char*)this + 8) = *(uint64_t*)arg2;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401eb8
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401ee4
+{
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+    operator delete(this);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401f14
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* result =
+        operator new(0x10);
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        result, (char*)this + 8);
+    return result;
+}
+
+// sub_401f58 @ 0x401f58
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x401f7c
+{
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        arg2, (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401fac
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x401fbc
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x401ffc
+{
+    return std::__invoke_r[abi:nqe210106]<int32_t, scale_fn(int32_t, int32_t)::$_0&, int32_t>(
+        (char*)this + 8, arg2);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x40202c
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2,
+            &_typeinfo_for_scale_fn(int32_t, int32_t)::$_0) & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x402088
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+    return &_typeinfo_for_scale_fn(int32_t, int32_t)::$_0;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4020a0
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0 const&) @ 0x4020cc
+{
+    struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this_1 =
+        this;
+    std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0 const&) @ 0x402100
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_4043e8;
+    *(uint64_t*)((char*)this + 8) = *(uint64_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<int32_t, scale_fn(int32_t, int32_t)::$_0&, int32_t>(struct std* this, scale_fn(int32_t, int32_t)::$_0&&&...) @ 0x40214c
+{
+    return std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0&, int32_t>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0&, int32_t>(struct std::__invoke_void_return_wrapper<int32_t, false>* this, scale_fn(int32_t, int32_t)::$_0&&&...) @ 0x402178
+{
+    return std::__invoke[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0&, int32_t>(this, arg2);
+}
+
+// std::__invoke[abi:nqe210106]<scale_fn(int32_t, int32_t)::$_0&, int32_t>(struct std* this, std::__invoke_result_impl&&...) @ 0x4021a4
+{
+    return scale_fn(int32_t, int32_t)::$_0::operator()(this, *(uint32_t*)arg2);
+}
+
+// scale_fn(int32_t, int32_t)::$_0::operator()(struct scale_fn(int32_t, int32_t)::$_0* this, int32_t) const @ 0x4021d4
+{
+    return (uint64_t)(arg2 * *(uint32_t*)this + *(uint32_t*)((char*)this + 4));
+}
+
+// std::function<int32_t (int32_t)>::function<pick_fn(int32_t const*, int32_t, int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0) @ 0x402200
+{
+    int64_t var_20 = arg2;
+    int64_t x2;
+    int64_t var_18 = x2;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_2 = this_1;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0, 0>(
+        this_1, &var_20);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&) @ 0x40223c
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&) @ 0x402270
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0>(struct std::__function* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0 const&) @ 0x4022d4
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&) @ 0x4022ec
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&) @ 0x402320
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404468;
+    *(uint128_t*)((char*)this + 8) = *(uint128_t*)arg2;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x40236c
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(
+        this);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x402398
+{
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(
+        this);
+    operator delete(this);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x4023c8
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        result = operator new(0x18);
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        result, (char*)this + 8);
+    return result;
+}
+
+// sub_40240c @ 0x40240c
+{
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x402430
+{
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        arg2, (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x402460
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x402470
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x4024b0
+{
+    return std::__invoke_r[abi:nqe210106]<int32_t, pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(
+        (char*)this + 8, arg2);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x4024e0
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2,
+            &_typeinfo_for_pick_fn(int32_t const*, int32_t, int32_t)::$_0) & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x40253c
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+    return &_typeinfo_for_pick_fn(int32_t const*, int32_t, int32_t)::$_0;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x402554
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0 const&) @ 0x402580
+{
+    struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+            *
+        this_1 = this;
+    std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0 const&) @ 0x4025b4
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404468;
+    *(uint128_t*)((char*)this + 8) = *(uint128_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<int32_t, pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(struct std* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&&...) @ 0x402600
+{
+    return std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(struct std::__invoke_void_return_wrapper<int32_t, false>* this, pick_fn(int32_t const*, int32_t, int32_t)::$_0&&&...) @ 0x40262c
+{
+    return std::__invoke[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(
+            this,
+        arg2);
+}
+
+// std::__invoke[abi:nqe210106]<pick_fn(int32_t const*, int32_t, int32_t)::$_0&, int32_t>(struct std* this, std::__invoke_result_impl&&...) @ 0x402658
+{
+    return pick_fn(int32_t const*, int32_t, int32_t)::$_0::operator()(this, *(uint32_t*)arg2);
+}
+
+// pick_fn(int32_t const*, int32_t, int32_t)::$_0::operator()(struct pick_fn(int32_t const*, int32_t, int32_t)::$_0* this, int32_t) const @ 0x402688
+{
+    int32_t var_1c;
+
+    if (arg2 & 0x80000000 || arg2 >= *(uint32_t*)((char*)this + 8))
+        var_1c = *(uint32_t*)((char*)this + 0xc);
+    else
+        var_1c = *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
+
+    return (uint64_t)var_1c;
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this, int32_t&&) const @ 0x4026f4
+{
+    if (*(uint64_t*)((char*)this + 0x18))
+    {
+        int64_t* x0 = *(uint64_t*)((char*)this + 0x18);
+        return (*(uint64_t*)(*(uint64_t*)x0 + 0x30))(x0, arg2);
+    }
+
+    std::__throw_bad_function_call[abi:nqe210106](this);
+    /* no return */
+}
+
+// std::__throw_bad_function_call[abi:nqe210106](struct std* this) @ 0x402744
+{
+    struct std::bad_function_call* thrown_exception = ___cxa_allocate_exception(8);
+    *(uint64_t*)thrown_exception = 0;
+    std::bad_function_call::bad_function_call[abi:nqe210106](thrown_exception);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::__1::bad_function_call,
+        std::bad_function_call::~bad_function_call);
+    /* no return */
+}
+
+// std::bad_function_call::bad_function_call[abi:nqe210106](struct std::bad_function_call* this) @ 0x40277c
+{
+    struct std::bad_function_call* this_1 = this;
+    std::bad_function_call::bad_function_call[abi:nqe210106](this);
+}
+
+// std::bad_function_call::bad_function_call[abi:nqe210106](struct std::bad_function_call* this) @ 0x4027a8
+{
+    std::exception::exception[abi:nqe210106](this);
+    *(uint64_t*)this = _vtable_for_std::__1::bad_function_call + 0x10;
+}
+
+// std::exception::exception[abi:nqe210106](struct std::exception* this) @ 0x4027e4
+{
+    *(uint64_t*)this = _vtable_for_std::exception + 0x10;
+}
+
+// FnImpl<neg_obj()::$_0>::FnImpl(struct FnImpl<neg_obj()::$_0>* this, neg_obj()::$_0) @ 0x402808
+{
+    struct FnImpl<neg_obj()::$_0>* this_1 = this;
+    FnImpl<neg_obj()::$_0>::FnImpl(this, arg2);
+}
+
+// FnImpl<neg_obj()::$_0>::FnImpl(struct FnImpl<neg_obj()::$_0>* this, neg_obj()::$_0) @ 0x402834
+{
+    FnBase::FnBase(this);
+    *(uint64_t*)this = &data_4044e8;
+}
+
+// FnBase::FnBase(struct FnBase* this) @ 0x402870
+{
+    *(uint64_t*)this = &data_404538;
+}
+
+// FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x402894
+{
+    struct FnImpl<neg_obj()::$_0>* this_1 = this;
+    FnImpl<neg_obj()::$_0>::~FnImpl(this);
+}
+
+// FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x4028c0
+{
+    FnImpl<neg_obj()::$_0>::~FnImpl(this);
+    operator delete(this);
+}
+
+// FnImpl<neg_obj()::$_0>::call(struct FnImpl<neg_obj()::$_0>* this, int32_t) @ 0x4028f0
+{
+    return neg_obj()::$_0::operator()((char*)this + 8, arg2);
+}
+
+// FnBase::~FnBase(struct FnBase* this) @ 0x402920
+{
+    struct FnBase* this_1 = this;
+    trap(1);
+}
+
+// FnBase::~FnBase(struct FnBase* this) @ 0x402934
+{
+    struct FnBase* this_1 = this;
+    trap(1);
+}
+
+// FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x402940
+{
+    struct FnImpl<neg_obj()::$_0>* this_1 = this;
+}
+
+// FnBase::~FnBase(struct FnBase* this) @ 0x40296c
+{
+    return;
+}
+
+// neg_obj()::$_0::operator()(struct neg_obj()::$_0* this, int32_t) const @ 0x402980
+{
+    struct neg_obj()::$_0* this_1 = this;
+    return (uint64_t)(0 - arg2);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this, add_obj(int32_t)::$_0) @ 0x4029a0
+{
+    struct FnImpl<add_obj(int32_t)::$_0>* this_1 = this;
+    FnImpl<add_obj(int32_t)::$_0>::FnImpl(this, (uint64_t)arg2);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this, add_obj(int32_t)::$_0) @ 0x4029dc
+{
+    FnBase::FnBase(this);
+    *(uint64_t*)this = &data_404560;
+    *(uint32_t*)((char*)this + 8) = arg2;
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this) @ 0x402a28
+{
+    struct FnImpl<add_obj(int32_t)::$_0>* this_1 = this;
+    FnImpl<add_obj(int32_t)::$_0>::~FnImpl(this);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this) @ 0x402a54
+{
+    FnImpl<add_obj(int32_t)::$_0>::~FnImpl(this);
+    operator delete(this);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::call(struct FnImpl<add_obj(int32_t)::$_0>* this, int32_t) @ 0x402a84
+{
+    return add_obj(int32_t)::$_0::operator()((char*)this + 8, arg2);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this) @ 0x402ab4
+{
+    struct FnImpl<add_obj(int32_t)::$_0>* this_1 = this;
+}
+
+// add_obj(int32_t)::$_0::operator()(struct add_obj(int32_t)::$_0* this, int32_t) const @ 0x402ae0
+{
+    return (uint64_t)(arg2 + *(uint32_t*)this);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, clamp_obj(int32_t, int32_t)::$_0) @ 0x402b04
+{
+    struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this_1 = this;
+    FnImpl<clamp_obj(int32_t, int32_t)::$_0>::FnImpl(this, arg2);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, clamp_obj(int32_t, int32_t)::$_0) @ 0x402b38
+{
+    FnBase::FnBase(this);
+    *(uint64_t*)this = &data_4045a0;
+    *(uint64_t*)((char*)this + 8) = arg2;
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this) @ 0x402b80
+{
+    struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this_1 = this;
+    FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(this);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this) @ 0x402bac
+{
+    FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(this);
+    operator delete(this);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::call(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, int32_t) @ 0x402bdc
+{
+    return clamp_obj(int32_t, int32_t)::$_0::operator()((char*)this + 8, arg2);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this) @ 0x402c0c
+{
+    struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this_1 = this;
+}
+
+// clamp_obj(int32_t, int32_t)::$_0::operator()(struct clamp_obj(int32_t, int32_t)::$_0* this, int32_t) const @ 0x402c38
+{
+    if (arg2 < *(uint32_t*)this)
+        return (uint64_t)*(uint32_t*)this;
+
+    int32_t var_20_1;
+
+    if (arg2 <= *(uint32_t*)((char*)this + 4))
+        var_20_1 = arg2;
+    else
+        var_20_1 = *(uint32_t*)((char*)this + 4);
+
+    return (uint64_t)var_20_1;
+}
+

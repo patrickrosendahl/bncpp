@@ -62,6 +62,7 @@ TESTS = [
     "TestClassChain",            # inlined constructor chain: one new object gets each class's vptr (.fields)
     "TestPointerFields",         # fields holding object pointers: typed Y* from the stores (.fields, bncpp-34)
     "TestNoVtableBase",          # bases without a vtable in the image, anchored by the RTTI base lists (bncpp-31)
+    "TestClosure",               # lambdas in std::function / a function object vs same-shaped classes (bncpp-23)
 ]
 
 # tests built differently from src/TestX.cpp with -undefined dynamic_lookup: name -> (source, link flags, hash

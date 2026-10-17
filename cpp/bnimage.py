@@ -9,6 +9,7 @@ offline reference (cross-checks, bug reports), never as the product.
   pointer_target(slot) -> name | address               symbol_name(addr) -> name | None
   data_sections() -> [(name, start, end)]              bound_symbols() -> {slot: raw symbol name}
   has_code_refs(addr) -> bool (optional: images that know code references)
+  symbol_keys(name) -> [raw name | address] (optional: the closure veto resolves the LSDA's catch type names)
 
 Hooks of the class modules (cpp/rtti_names.py, cpp/rtti_types.py): demangle, call_targets, symbol_at.
 """
@@ -55,6 +56,16 @@ class BNImage:
         ptr = self.bv.read_pointer(slot)
         t = self.bv.get_symbol_at(ptr)
         return t.full_name if t is not None else ptr
+
+    def symbol_keys(self, name):
+        """the symbols BN shows as name: their raw names, and the addresses of the non-import ones (resolves the
+        LSDA's catch type names: a local typeinfo, or a weak bind's import slot named __ZTI...)"""
+        out = []
+        for s in self.bv.get_symbols_by_name(name):
+            out.append(s.raw_name)
+            if s.type not in _IMPORTS:
+                out.append(s.address)
+        return out
 
     def symbol_name(self, addr):
         f = self.bv.get_function_at(addr)

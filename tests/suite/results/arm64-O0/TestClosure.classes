@@ -1,0 +1,256 @@
+typeinfo 0x404048  si    mangled 5IoErr
+  base 0x404060 3Err
+  vtable 0x4041a8  offset_to_top 0  3 slots
+    [0] 0x400d60 IoErr::~IoErr(struct IoErr* this)
+    [1] 0x40133c IoErr::~IoErr(struct IoErr* this)
+    [2] 0x40136c IoErr::what(struct IoErr* this) const
+typeinfo 0x404060  class mangled 3Err
+  vtable 0x4041d0  offset_to_top 0  3 slots
+    [0] 0x401384 Err::~Err(struct Err* this)
+    [1] 0x401398 Err::~Err(struct Err* this)
+    [2] pure
+typeinfo 0x404070  si    mangled 8ParseErr
+  base 0x404060 3Err
+  vtable 0x4041f8  offset_to_top 0  3 slots
+    [0] 0x400db8 ParseErr::~ParseErr(struct ParseErr* this)
+    [1] 0x401420 ParseErr::~ParseErr(struct ParseErr* this)
+    [2] 0x401450 ParseErr::what(struct ParseErr* this) const
+typeinfo 0x404088  si    mangled 8RangeErr
+  base 0x404060 3Err
+  vtable 0x404220  offset_to_top 0  3 slots
+    [0] 0x400e10 RangeErr::~RangeErr(struct RangeErr* this)
+    [1] 0x4014d0 RangeErr::~RangeErr(struct RangeErr* this)
+    [2] 0x401500 RangeErr::what(struct RangeErr* this) const
+typeinfo 0x4040c8  class mangled 5Codec
+  vtable 0x4040b0  offset_to_top 0  3 slots
+    [0] 0x400a7c Codec::~Codec(struct Codec* this)
+    [1] 0x400aa8 Codec::~Codec(struct Codec* this)
+    [2] 0x400ad8 Codec::run(struct Codec* this, int32_t)
+typeinfo 0x404100  si    mangled 3Rot
+  base 0x4040c8 5Codec
+  vtable 0x4040e8  offset_to_top 0  3 slots
+    [0] 0x401070 Rot::~Rot(struct Rot* this)
+    [1] 0x40109c Rot::~Rot(struct Rot* this)
+    [2] 0x4010cc Rot::run(struct Rot* this, int32_t)
+typeinfo 0x404140  si    mangled 3Inv
+  base 0x4040c8 5Codec
+  vtable 0x404128  offset_to_top 0  3 slots
+    [0] 0x401150 Inv::~Inv(struct Inv* this)
+    [1] 0x40117c Inv::~Inv(struct Inv* this)
+    [2] 0x4011ac Inv::run(struct Inv* this, int32_t)
+typeinfo 0x404180  si    mangled 4Swap
+  base 0x4040c8 5Codec
+  vtable 0x404168  offset_to_top 0  3 slots
+    [0] 0x401230 Swap::~Swap(struct Swap* this)
+    [1] 0x40125c Swap::~Swap(struct Swap* this)
+    [2] 0x40128c Swap::run(struct Swap* this, int32_t)
+typeinfo 0x404260  si    mangled 9CountSink
+  base 0x404278 4Sink
+  vtable 0x404248  offset_to_top 0  3 slots
+    [0] 0x4015a8 CountSink::~CountSink(struct CountSink* this)
+    [1] 0x4015d4 CountSink::~CountSink(struct CountSink* this)
+    [2] 0x401604 CountSink::put(struct CountSink* this, int32_t)
+typeinfo 0x404278  class mangled 4Sink
+  vtable 0x404298  offset_to_top 0  3 slots
+    [0] 0x401628 Sink::~Sink(struct Sink* this)
+    [1] 0x40163c Sink::~Sink(struct Sink* this)
+    [2] pure
+typeinfo 0x4042d8  si    mangled 8NullSink
+  base 0x404278 4Sink
+  vtable 0x4042c0  offset_to_top 0  3 slots
+    [0] 0x4016c4 NullSink::~NullSink(struct NullSink* this)
+    [1] 0x4016f0 NullSink::~NullSink(struct NullSink* this)
+    [2] 0x401720 NullSink::put(struct NullSink* this, int32_t)
+typeinfo 0x404348  si    mangled NSt3__110__function6__funcIZ6add_fniE3$_0FiiEEE
+  closure std::function  invoke [6] 0x401a30  (layout+name)
+  base 0x404360 NSt3__110__function6__baseIFiiEEE
+  vtable 0x404300  offset_to_top 0  9 slots
+    [0] 0x4018ec std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)
+    [1] 0x401918 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)
+    [2] 0x401948 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const
+    [3] 0x4019b0 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const
+    [4] 0x4019e0 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)
+    [5] 0x4019f0 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)
+    [6] 0x401a30 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)
+    [7] 0x401a60 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const
+    [8] 0x401abc std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const
+typeinfo 0x404360  class mangled NSt3__110__function6__baseIFiiEEE
+  vtable 0x404380  offset_to_top 0  9 slots
+    [0] 0x401ad4 std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)
+    [1] 0x401ae8 std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)
+    [2] pure
+    [3] pure
+    [4] pure
+    [5] pure
+    [6] pure
+    [7] pure
+    [8] pure
+typeinfo 0x4043c8  class mangled Z6add_fniE3$_0
+typeinfo 0x404430  si    mangled NSt3__110__function6__funcIZ8scale_fniiE3$_0FiiEEE
+  closure std::function  invoke [6] 0x401ffc  (layout+name)
+  base 0x404360 NSt3__110__function6__baseIFiiEEE
+  vtable 0x4043e8  offset_to_top 0  9 slots
+    [0] 0x401eb8 std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [1] 0x401ee4 std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [2] 0x401f14 std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const
+    [3] 0x401f7c std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const
+    [4] 0x401fac std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [5] 0x401fbc std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [6] 0x401ffc std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)
+    [7] 0x40202c std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const
+    [8] 0x402088 std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const
+typeinfo 0x404448  class mangled Z8scale_fniiE3$_0
+typeinfo 0x4044b0  si    mangled NSt3__110__function6__funcIZ7pick_fnPKiiiE3$_0FiiEEE
+  closure std::function  invoke [6] 0x4024b0  (layout+name)
+  base 0x404360 NSt3__110__function6__baseIFiiEEE
+  vtable 0x404468  offset_to_top 0  9 slots
+    [0] 0x40236c std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [1] 0x402398 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [2] 0x4023c8 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const
+    [3] 0x402430 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const
+    [4] 0x402460 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [5] 0x402470 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)
+    [6] 0x4024b0 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)
+    [7] 0x4024e0 std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const
+    [8] 0x40253c std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const
+typeinfo 0x4044c8  class mangled Z7pick_fnPKiiiE3$_0
+typeinfo 0x404500  si    mangled 6FnImplIZ7neg_objvE3$_0E
+  closure function object  invoke [2] 0x4028f0  (layout)
+  base 0x404518 6FnBase
+  vtable 0x4044e8  offset_to_top 0  3 slots
+    [0] 0x402894 FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this)
+    [1] 0x4028c0 FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this)
+    [2] 0x4028f0 FnImpl<neg_obj()::$_0>::call(struct FnImpl<neg_obj()::$_0>* this, int32_t)
+typeinfo 0x404518  class mangled 6FnBase
+  vtable 0x404538  offset_to_top 0  3 slots
+    [0] 0x402920 FnBase::~FnBase(struct FnBase* this)
+    [1] 0x402934 FnBase::~FnBase(struct FnBase* this)
+    [2] pure
+typeinfo 0x404578  si    mangled 6FnImplIZ7add_objiE3$_0E
+  closure function object  invoke [2] 0x402a84  (layout)
+  base 0x404518 6FnBase
+  vtable 0x404560  offset_to_top 0  3 slots
+    [0] 0x402a28 FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this)
+    [1] 0x402a54 FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this)
+    [2] 0x402a84 FnImpl<add_obj(int32_t)::$_0>::call(struct FnImpl<add_obj(int32_t)::$_0>* this, int32_t)
+typeinfo 0x4045b8  si    mangled 6FnImplIZ9clamp_objiiE3$_0E
+  closure function object  invoke [2] 0x402bdc  (layout)
+  base 0x404518 6FnBase
+  vtable 0x4045a0  offset_to_top 0  3 slots
+    [0] 0x402b80 FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this)
+    [1] 0x402bac FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this)
+    [2] 0x402bdc FnImpl<clamp_obj(int32_t, int32_t)::$_0>::call(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, int32_t)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400a7c Codec::~Codec   [now: Codec::~Codec(struct Codec* this)]
+R 0x400aa8 Codec::~Codec [deleting]   [now: Codec::~Codec(struct Codec* this)]
+R 0x400ad8 Codec::vfunc2   [now: Codec::run(struct Codec* this, int32_t)]
+R 0x400d60 IoErr::~IoErr   [now: IoErr::~IoErr(struct IoErr* this)]
+R 0x400db8 ParseErr::~ParseErr   [now: ParseErr::~ParseErr(struct ParseErr* this)]
+R 0x400e10 RangeErr::~RangeErr   [now: RangeErr::~RangeErr(struct RangeErr* this)]
+R 0x401070 Rot::~Rot   [now: Rot::~Rot(struct Rot* this)]
+R 0x40109c Rot::~Rot [deleting]   [now: Rot::~Rot(struct Rot* this)]
+R 0x4010cc Rot::vfunc2   [now: Rot::run(struct Rot* this, int32_t)]
+R 0x401150 Inv::~Inv   [now: Inv::~Inv(struct Inv* this)]
+R 0x40117c Inv::~Inv [deleting]   [now: Inv::~Inv(struct Inv* this)]
+R 0x4011ac Inv::vfunc2   [now: Inv::run(struct Inv* this, int32_t)]
+R 0x401230 Swap::~Swap   [now: Swap::~Swap(struct Swap* this)]
+R 0x40125c Swap::~Swap [deleting]   [now: Swap::~Swap(struct Swap* this)]
+R 0x40128c Swap::vfunc2   [now: Swap::run(struct Swap* this, int32_t)]
+R 0x40133c IoErr::~IoErr [deleting]   [now: IoErr::~IoErr(struct IoErr* this)]
+R 0x40136c IoErr::vfunc2   [now: IoErr::what(struct IoErr* this) const]
+R 0x401384 Err::~Err   [now: Err::~Err(struct Err* this)]
+R 0x401398 Err::~Err [deleting]   [now: Err::~Err(struct Err* this)]
+R 0x401420 ParseErr::~ParseErr [deleting]   [now: ParseErr::~ParseErr(struct ParseErr* this)]
+R 0x401450 ParseErr::vfunc2   [now: ParseErr::what(struct ParseErr* this) const]
+R 0x4014d0 RangeErr::~RangeErr [deleting]   [now: RangeErr::~RangeErr(struct RangeErr* this)]
+R 0x401500 RangeErr::vfunc2   [now: RangeErr::what(struct RangeErr* this) const]
+R 0x4015a8 CountSink::~CountSink   [now: CountSink::~CountSink(struct CountSink* this)]
+R 0x4015d4 CountSink::~CountSink [deleting]   [now: CountSink::~CountSink(struct CountSink* this)]
+R 0x401604 CountSink::vfunc2   [now: CountSink::put(struct CountSink* this, int32_t)]
+R 0x401628 Sink::~Sink   [now: Sink::~Sink(struct Sink* this)]
+R 0x40163c Sink::~Sink [deleting]   [now: Sink::~Sink(struct Sink* this)]
+R 0x4016c4 NullSink::~NullSink   [now: NullSink::~NullSink(struct NullSink* this)]
+R 0x4016f0 NullSink::~NullSink [deleting]   [now: NullSink::~NullSink(struct NullSink* this)]
+R 0x401720 NullSink::vfunc2   [now: NullSink::put(struct NullSink* this, int32_t)]
+R 0x4018ec std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401918 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func [deleting]   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401948 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc2   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x4019b0 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc3   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const]
+R 0x4019e0 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc4   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x4019f0 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc5   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401a30 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::operator()   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)]
+R 0x401a60 std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc7   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const]
+R 0x401abc std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::vfunc8   [now: std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x401ad4 std::__1::__function::__base<int32_t (int32_t)>::~__base   [now: std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)]
+R 0x401ae8 std::__1::__function::__base<int32_t (int32_t)>::~__base [deleting]   [now: std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)]
+R 0x401eb8 std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401ee4 std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func [deleting]   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401f14 std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc2   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x401f7c std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc3   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const]
+R 0x401fac std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc4   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401fbc std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc5   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401ffc std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)]
+R 0x40202c std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc7   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const]
+R 0x402088 std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc8   [now: std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x40236c std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x402398 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func [deleting]   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x4023c8 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc2   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x402430 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc3   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const]
+R 0x402460 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc4   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x402470 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc5   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x4024b0 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)]
+R 0x4024e0 std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc7   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const]
+R 0x40253c std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::vfunc8   [now: std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x402894 FnImpl<neg_obj()::$_0>::~FnImpl   [now: FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this)]
+R 0x4028c0 FnImpl<neg_obj()::$_0>::~FnImpl [deleting]   [now: FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this)]
+R 0x4028f0 FnImpl<neg_obj()::$_0>::operator()   [now: FnImpl<neg_obj()::$_0>::call(struct FnImpl<neg_obj()::$_0>* this, int32_t)]
+R 0x402920 FnBase::~FnBase   [now: FnBase::~FnBase(struct FnBase* this)]
+R 0x402934 FnBase::~FnBase [deleting]   [now: FnBase::~FnBase(struct FnBase* this)]
+R 0x402a28 FnImpl<add_obj(int32_t)::$_0>::~FnImpl   [now: FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this)]
+R 0x402a54 FnImpl<add_obj(int32_t)::$_0>::~FnImpl [deleting]   [now: FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this)]
+R 0x402a84 FnImpl<add_obj(int32_t)::$_0>::operator()   [now: FnImpl<add_obj(int32_t)::$_0>::call(struct FnImpl<add_obj(int32_t)::$_0>* this, int32_t)]
+R 0x402b80 FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl   [now: FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this)]
+R 0x402bac FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl [deleting]   [now: FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this)]
+R 0x402bdc FnImpl<clamp_obj(int32_t, int32_t)::$_0>::operator()   [now: FnImpl<clamp_obj(int32_t, int32_t)::$_0>::call(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, int32_t)]
+D 0x404048 typeinfo_for_IoErr
+D 0x404060 typeinfo_for_Err
+D 0x404070 typeinfo_for_ParseErr
+D 0x404088 typeinfo_for_RangeErr
+D 0x4040a0 vtable_for_Codec   [now: _vtable_for_Codec]
+D 0x4040c8 typeinfo_for_Codec   [now: _typeinfo_for_Codec]
+D 0x4040d8 vtable_for_Rot   [now: _vtable_for_Rot]
+D 0x404100 typeinfo_for_Rot
+D 0x404118 vtable_for_Inv   [now: _vtable_for_Inv]
+D 0x404140 typeinfo_for_Inv
+D 0x404158 vtable_for_Swap   [now: _vtable_for_Swap]
+D 0x404180 typeinfo_for_Swap
+D 0x404198 vtable_for_IoErr   [now: _vtable_for_IoErr]
+D 0x4041c0 vtable_for_Err   [now: _vtable_for_Err]
+D 0x4041e8 vtable_for_ParseErr   [now: _vtable_for_ParseErr]
+D 0x404210 vtable_for_RangeErr   [now: _vtable_for_RangeErr]
+D 0x404238 vtable_for_CountSink   [now: _vtable_for_CountSink]
+D 0x404260 typeinfo_for_CountSink
+D 0x404278 typeinfo_for_Sink
+D 0x404288 vtable_for_Sink   [now: _vtable_for_Sink]
+D 0x4042b0 vtable_for_NullSink   [now: _vtable_for_NullSink]
+D 0x4042d8 typeinfo_for_NullSink
+D 0x4042f0 vtable_for_std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>]
+D 0x404348 typeinfo_for_std::__1::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>
+D 0x404360 typeinfo_for_std::__1::__function::__base<int32_t (int32_t)>
+D 0x404370 vtable_for_std::__1::__function::__base<int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__base<int32_t (int32_t)>]
+D 0x4043c8 typeinfo_for_add_fn(int32_t)::$_0   [now: _typeinfo_for_add_fn(int32_t)::$_0]
+D 0x4043d8 vtable_for_std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>]
+D 0x404430 typeinfo_for_std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>
+D 0x404448 typeinfo_for_scale_fn(int32_t, int32_t)::$_0   [now: _typeinfo_for_scale_fn(int32_t, int32_t)::$_0]
+D 0x404458 vtable_for_std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>]
+D 0x4044b0 typeinfo_for_std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
+D 0x4044c8 typeinfo_for_pick_fn(int32_t const*, int32_t, int32_t)::$_0   [now: _typeinfo_for_pick_fn(int32_t const*, int32_t, int32_t)::$_0]
+D 0x4044d8 vtable_for_FnImpl<neg_obj()::$_0>   [now: _vtable_for_FnImpl<neg_obj()::$_0>]
+D 0x404500 typeinfo_for_FnImpl<neg_obj()::$_0>
+D 0x404518 typeinfo_for_FnBase
+D 0x404528 vtable_for_FnBase   [now: _vtable_for_FnBase]
+D 0x404550 vtable_for_FnImpl<add_obj(int32_t)::$_0>   [now: _vtable_for_FnImpl<add_obj(int32_t)::$_0>]
+D 0x404578 typeinfo_for_FnImpl<add_obj(int32_t)::$_0>
+D 0x404590 vtable_for_FnImpl<clamp_obj(int32_t, int32_t)::$_0>   [now: _vtable_for_FnImpl<clamp_obj(int32_t, int32_t)::$_0>]
+D 0x4045b8 typeinfo_for_FnImpl<clamp_obj(int32_t, int32_t)::$_0>

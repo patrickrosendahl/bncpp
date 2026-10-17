@@ -1,0 +1,507 @@
+// add_fn(int32_t) @ 0x400690
+{
+    *(uint64_t*)arg1 = &_vtable_for_std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    int32_t entry_rsi;
+    *(uint32_t*)(arg1 + 8) = entry_rsi;
+    *(uint64_t*)(arg1 + 0x20) = arg1;
+    return arg1;
+}
+
+// scale_fn(int32_t, int32_t) @ 0x4006b0
+{
+    *(uint64_t*)arg1 = &_vtable_for_std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    int64_t entry_rdx;
+    *(uint64_t*)(arg1 + 8) = (uint64_t)arg2 | entry_rdx << 0x20;
+    *(uint64_t*)(arg1 + 0x20) = arg1;
+    return arg1;
+}
+
+// pick_fn(int32_t const*, int32_t, int32_t) @ 0x4006e0
+{
+    *(uint64_t*)arg1 = &_vtable_for_std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    arg1[1] = arg2;
+    int64_t entry_rcx;
+    arg1[2] = entry_rcx << 0x20 | (uint64_t)arg3;
+    arg1[4] = arg1;
+    return arg1;
+}
+
+// call_fn(std::function<int32_t (int32_t)> const&, int32_t) @ 0x400710
+{
+    int32_t var_c = arg2;
+    struct std* rdi = *(uint64_t*)((char*)arg1 + 0x20);
+
+    if (rdi)
+        return (*(uint64_t*)(*(uint64_t*)rdi + 0x30))(rdi, &var_c);
+
+    std::__throw_bad_function_call[abi:nqe210106](rdi);
+    /* no return */
+}
+
+// neg_obj() @ 0x400740
+{
+    struct FnBase::FnImpl<neg_obj()::$_0>::VTable** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_FnImpl<neg_obj()::$_0>{for `FnBase'};
+    return result;
+}
+
+// add_obj(int32_t) @ 0x400760
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct FnBase::FnImpl<add_obj(int32_t)::$_0>::VTable** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_FnImpl<add_obj(int32_t)::$_0>{for `FnBase'};
+    result[1] = arg1;
+    return result;
+}
+
+// clamp_obj(int32_t, int32_t) @ 0x400790
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct FnBase::FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_FnImpl<clamp_obj(int32_t, int32_t)::$_0>{for `FnBase'};
+    result[1] = (uint64_t)arg1 | arg2 << 0x20;
+    return result;
+}
+
+// call_obj(FnBase*, int32_t) @ 0x4007c0
+{
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)arg1 + 0x10) */
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x4007d0
+{
+    return;
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x4007e0
+{
+    return;
+}
+
+// Codec::~Codec(struct Codec* this) @ 0x4007f0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Codec::run(struct Codec* this, int32_t) @ 0x400800
+{
+    return (uint64_t)arg2;
+}
+
+// make_codec(int32_t) @ 0x400810
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    void* __offset(vtable_for_Inv, 0x10)* result = operator new(8);
+    struct vtable_for_Inv* const rcx;
+
+    if (arg1 != 1)
+    {
+        rcx = &_vtable_for_Swap;
+
+        if (!arg1)
+            rcx = &_vtable_for_Rot;
+    }
+    else
+    {
+        rcx = &_vtable_for_Inv;
+
+        if (!arg1)
+            rcx = &_vtable_for_Rot;
+    }
+
+    *(uint64_t*)result = (char*)rcx + 0x10;
+    return result;
+}
+
+// Inv::~Inv(struct Inv* this) @ 0x400860
+{
+    return;
+}
+
+// ___clang_call_terminate @ 0x400870
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// make_sink(int32_t) @ 0x400880
+{
+    if (!arg1)
+    {
+        struct Sink::NullSink::VTable** rax_1 = operator new(8);
+        *(uint64_t*)rax_1 = &_vtable_for_NullSink{for `Sink'};
+        return rax_1;
+    }
+
+    struct Sink::CountSink::VTable** rax = operator new(0x10);
+    *(uint64_t*)rax = &_vtable_for_CountSink{for `Sink'};
+    rax[1] = 0;
+    return rax;
+}
+
+// Inv::~Inv(struct Inv* this) @ 0x4008d0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Rot::run(struct Rot* this, int32_t) @ 0x4008e0
+{
+    return (uint64_t)(arg2 + 0xd);
+}
+
+// Inv::run(struct Inv* this, int32_t) @ 0x4008f0
+{
+    return (uint64_t)~arg2;
+}
+
+// Swap::run(struct Swap* this, int32_t) @ 0x400900
+{
+    return (uint64_t)ROLD(arg2, 0x10);
+}
+
+// IoErr::what(struct IoErr* this) const @ 0x400910
+{
+    return &data_40100b;
+}
+
+// ParseErr::what(struct ParseErr* this) const @ 0x400920
+{
+    return "parse";
+}
+
+// RangeErr::what(struct RangeErr* this) const @ 0x400930
+{
+    return "range";
+}
+
+// CountSink::put(struct CountSink* this, int32_t) @ 0x400940
+{
+    *(uint32_t*)((char*)this + 8) += 1;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400950
+{
+    return;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400960
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400970
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::VTable
+        ** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    result[1] = *(uint32_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x4009a0
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    uint64_t result = (uint64_t)*(uint32_t*)((char*)this + 8);
+    *(uint32_t*)((char*)arg2 + 8) = (uint32_t)result;
+    return result;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4009c0
+{
+    return;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4009d0
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x4009f0
+{
+    return (uint64_t)(*(uint32_t*)((char*)this + 8) + *(uint32_t*)arg2);
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x400a00
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z6add_fniE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400a20
+{
+    return &_typeinfo_for_add_fn(int32_t)::$_0;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400a30
+{
+    return;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400a40
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400a50
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable
+        ** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    result[1] = *(uint64_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x400a80
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    int64_t result = *(uint64_t*)((char*)this + 8);
+    *(uint64_t*)((char*)arg2 + 8) = result;
+    return result;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400aa0
+{
+    return;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400ab0
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x400ad0
+{
+    return (uint64_t)(*(uint32_t*)((char*)this + 8) * *(uint32_t*)arg2
+        + *(uint32_t*)((char*)this + 0xc));
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x400ae0
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z8scale_fniiE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400b00
+{
+    return &_typeinfo_for_scale_fn(int32_t, int32_t)::$_0;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b10
+{
+    return;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b20
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400b30
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable
+        ** result = operator new(0x18);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    *(uint128_t*)((char*)result + 8) = *(uint128_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x400b60
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    *(uint128_t*)((char*)arg2 + 8) = *(uint128_t*)((char*)this + 8);
+    return &_vtable_for_std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b80
+{
+    return;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b90
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x400bb0
+{
+    int32_t rax = *(uint32_t*)arg2;
+    void* __offset(
+        std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>,
+        0x14) rcx_2 = ((uint64_t)rax << 2) + *(uint64_t*)((char*)this + 8);
+
+    if (rax >= *(uint32_t*)((char*)this + 0x10))
+        rcx_2 = (char*)this + 0x14;
+
+    if (rax < 0)
+        rcx_2 = (char*)this + 0x14;
+
+    return (uint64_t)*(uint32_t*)rcx_2;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x400be0
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z7pick_fnPKiiiE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400c00
+{
+    return &_typeinfo_for_pick_fn(int32_t const*, int32_t, int32_t)::$_0;
+}
+
+// std::__throw_bad_function_call[abi:nqe210106](struct std* this) @ 0x400c10
+{
+    void* __offset(vtable_for_std::__1::bad_function_call, 0x10)* thrown_exception =
+        ___cxa_allocate_exception(8);
+    *(uint64_t*)thrown_exception = _vtable_for_std::__1::bad_function_call + 0x10;
+    ___cxa_throw(thrown_exception, typeinfo_for_std::__1::bad_function_call,
+        std::bad_function_call::~bad_function_call);
+    /* no return */
+}
+
+// FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x400c50
+{
+    return;
+}
+
+// FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x400c60
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// FnImpl<neg_obj()::$_0>::call(struct FnImpl<neg_obj()::$_0>* this, int32_t) @ 0x400c70
+{
+    return (uint64_t)-(arg2);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this) @ 0x400c80
+{
+    return;
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::~FnImpl(struct FnImpl<add_obj(int32_t)::$_0>* this) @ 0x400c90
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// FnImpl<add_obj(int32_t)::$_0>::call(struct FnImpl<add_obj(int32_t)::$_0>* this, int32_t) @ 0x400ca0
+{
+    return (uint64_t)(arg2 + *(uint32_t*)((char*)this + 8));
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this) @ 0x400cb0
+{
+    return;
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::~FnImpl(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this) @ 0x400cc0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// FnImpl<clamp_obj(int32_t, int32_t)::$_0>::call(struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* this, int32_t) @ 0x400cd0
+{
+    uint64_t result = (uint64_t)*(uint32_t*)((char*)this + 8);
+
+    if (arg2 < (int32_t)result)
+        return result;
+
+    result = (uint64_t)*(uint32_t*)((char*)this + 0xc);
+
+    if (arg2 < (int32_t)result)
+        return (uint64_t)arg2;
+
+    return result;
+}
+
+// fail(int32_t) @ 0x400cf0
+{
+    struct Err::IoErr::VTable** thrown_exception = ___cxa_allocate_exception(8);
+    int64_t (* const tinfo)();
+
+    if (arg1 == 1)
+    {
+        *(uint64_t*)thrown_exception = &_vtable_for_ParseErr{for `Err'};
+        tinfo = typeinfo_for_ParseErr;
+    }
+    else if (arg1)
+    {
+        *(uint64_t*)thrown_exception = &_vtable_for_RangeErr{for `Err'};
+        tinfo = typeinfo_for_RangeErr;
+    }
+    else
+    {
+        *(uint64_t*)thrown_exception = &_vtable_for_IoErr{for `Err'};
+        tinfo = typeinfo_for_IoErr;
+    }
+
+    ___cxa_throw(thrown_exception, tinfo, Inv::~Inv);
+    /* no return */
+}
+
+// try_fail(int32_t) @ 0x400d70
+{
+    fail(arg1);
+    /* no return */
+}
+
+// sub_400d7d @ 0x400d7d
+{
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    void* rax = ___cxa_begin_catch(arg4);
+    int64_t result = (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax);
+    ___cxa_end_catch();
+    return result;
+}
+
+// sub_400da8 @ 0x400da8
+{
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400db8 @ 0x400db8
+{
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+

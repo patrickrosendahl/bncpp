@@ -1,0 +1,37 @@
+make_fn<neg_obj()::$_0>(neg_obj()::$_0)  lsda base+0x2858  lpstart +0x0  3 call sites
+  +0x0   .. +0x1c  unwind
+  +0x1c  .. +0x21  lp +0x2d  cleanup
+  +0x21  .. +0x4b  unwind
+
+make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0)  lsda base+0x2868  lpstart +0x0  3 call sites
+  +0x0   .. +0x28  unwind
+  +0x28  .. +0x2d  lp +0x39  cleanup
+  +0x2d  .. +0x57  unwind
+
+make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0)  lsda base+0x2878  lpstart +0x0  3 call sites
+  +0x0   .. +0x2c  unwind
+  +0x2c  .. +0x31  lp +0x3d  cleanup
+  +0x31  .. +0x5b  unwind
+
+try_fail(int32_t)  lsda base+0x2888  lpstart +0x0  6 call sites
+  +0xe   .. +0x13  lp +0x17  catch(typeinfo_for_Err)
+  +0x13  .. +0x47  unwind
+  +0x47  .. +0x49  lp +0x5e  cleanup
+  +0x49  .. +0x6a  unwind
+  +0x6a  .. +0x6f  lp +0x91  catch(...)
+  +0x6f  .. +0x99  unwind
+
+std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const  lsda base+0x28b4  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x35  lp +0x41  cleanup
+  +0x35  .. +0x5f  unwind
+
+std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const  lsda base+0x28c4  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x35  lp +0x41  cleanup
+  +0x35  .. +0x5f  unwind
+
+std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const  lsda base+0x28d4  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x35  lp +0x41  cleanup
+  +0x35  .. +0x5f  unwind

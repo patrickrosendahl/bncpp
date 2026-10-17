@@ -43,4 +43,7 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
 - BN reports a class's field accesses for every class of its chain (`get_code_refs_for_type_field` on a base
   lists the derived and sibling classes' too): cap a base by its derived classes' sizes; field passes run to a
   fixpoint (a second APPLY must change nothing).
+- Closure targets (std::function lambdas, function objects) are classes to RTTI: `TypeInfo.closure` (set by
+  `rtti.scan`, `cpp/rtti_closures.py`) tells them apart by the family; the LSDA's catch types veto exception
+  families -- BN names those entries `typeinfo_for_X` (resolve through `BNImage.symbol_keys`).
 - In shell heredocs that carry Markdown, quote the delimiter (`<<'EOF'`) -- or the backticks run as commands.
