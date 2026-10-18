@@ -362,6 +362,110 @@ def propagate(bin_funcs, pairs, names, tree, rounds=20, min_votes=2):
     return out
 
 
+# -- link order (bncpp-79): the linker keeps an object file's functions together and mostly in definition order
+
+ORDER_MIN_SCORE = 0.5    # an anchor score that places a function inside a bracket (a string, a rare const, a call)
+ORDER_MAX_GAP = 8        # a bracket's rest is assigned by position only when this short and the counts equal
+
+
+def _order_align(gap, cands, sf, rare_of, fls_of, index):
+    """a monotone alignment of a bracket's binary functions against its candidate source functions, by anchor
+    score (>= ORDER_MIN_SCORE); then every stretch between two placed pairs (or the bracket's ends) whose counts
+    are equal and at most ORDER_MAX_GAP is filled by position. Returns [(bf index, cand index, anchors, how)]"""
+    n, m = len(gap), len(cands)
+    w = [[None] * m for _ in range(n)]
+    for i, bf in enumerate(gap):
+        rare = rare_of(bf)
+        hits = fls_of(bf)
+        for j, c in enumerate(cands):
+            anchors, score, _ = _anchors_in(sf, c, rare, hits, index)
+            if anchors and score >= ORDER_MIN_SCORE:
+                w[i][j] = (score, anchors)
+    dp = [[0.0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        for j in range(m - 1, -1, -1):
+            best = max(dp[i + 1][j], dp[i][j + 1])
+            if w[i][j] is not None:
+                best = max(best, dp[i + 1][j + 1] + w[i][j][0])
+            dp[i][j] = best
+    placed, i, j = [], 0, 0
+    while i < n and j < m:
+        if w[i][j] is not None and dp[i][j] == dp[i + 1][j + 1] + w[i][j][0]:
+            placed.append((i, j, w[i][j][1], "anchors"))
+            i, j = i + 1, j + 1
+        elif dp[i][j] == dp[i + 1][j]:
+            i += 1
+        else:
+            j += 1
+    out = list(placed)
+    bounds = [(-1, -1)] + [(i, j) for i, j, _, _ in placed] + [(n, m)]
+    for (i0, j0), (i1, j1) in zip(bounds, bounds[1:]):
+        k = i1 - i0 - 1
+        if 0 < k <= ORDER_MAX_GAP and j1 - j0 - 1 == k:
+            out.extend((i0 + d, j0 + d, [], "position") for d in range(1, k + 1))
+    return out
+
+
+def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
+    """name unmatched binary functions from their matched neighbours: between two consecutive matched functions
+    (by address) of one source file in definition order, the functions in between can only be that file's
+    untaken, non-inline source functions defined between the two (_order_align places them). bin_funcs:
+    {start: bf}; pairs extended in place, to a fixpoint. Returns {start: (round, how)}"""
+    order = sorted(bin_funcs)
+    taken = {(sf.path, sfunc.first) for sf, sfunc, _ in pairs.values()}
+    defs = {}
+    rare_cache, fl_cache = {}, {}
+
+    def rare_of(bf):
+        if bf["start"] not in rare_cache:
+            rare_cache[bf["start"]] = _rare(bf["features"])
+        return rare_cache[bf["start"]]
+
+    def fls_of_for(path):
+        def fls_of(bf):
+            if bf["start"] not in fl_cache:
+                fl_cache[bf["start"]] = _file_line_anchors(bf["features"])
+            return [(sa, line) for sa, fn, line in fl_cache[bf["start"]] if path in tree.by_suffix(fn)]
+        return fls_of
+
+    def def_index(sf):
+        if sf.path not in defs:
+            fs = sorted(sf.functions, key=lambda f: f.first)
+            defs[sf.path] = (fs, {f.first: k for k, f in enumerate(fs)})
+        return defs[sf.path]
+
+    out = {}
+    for rnd in range(1, rounds + 1):
+        added = 0
+        matched = [a for a in order if a in pairs]
+        pos = {a: k for k, a in enumerate(order)}
+        for a, b in zip(matched, matched[1:]):
+            gap = order[pos[a] + 1:pos[b]]
+            if not gap:
+                continue
+            sfa, fa, _ = pairs[a]
+            sfb, fb, _ = pairs[b]
+            if sfa.path != sfb.path:
+                continue
+            fs, idx = def_index(sfa)
+            ia, ib = idx.get(fa.first), idx.get(fb.first)
+            if ia is None or ib is None or ib <= ia + 1:
+                continue
+            cands = [f for f in fs[ia + 1:ib] if not f.inline and (sfa.path, f.first) not in taken]
+            if not cands:
+                continue
+            gbf = [bin_funcs[g] for g in gap]
+            for i, j, anchors, how in _order_align(gbf, cands, sfa, rare_of, fls_of_for(sfa.path), index):
+                g, c = gap[i], cands[j]
+                pairs[g] = (sfa, c, _dedupe_anchors(anchors))
+                taken.add((sfa.path, c.first))
+                out[g] = (rnd, how)
+                added += 1
+        if not added:
+            break
+    return out
+
+
 _WORD = re.compile(r"\w{4,}")
 
 

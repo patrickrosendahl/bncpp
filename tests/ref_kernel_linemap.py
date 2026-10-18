@@ -8,7 +8,7 @@ join the names from the kernel symbols file, run the lazy matcher against the xn
 
   python3 -I tests/ref_kernel_linemap.py [--limit N] [--skip N] [--out MAP.json] [--quiet]
                                          [--holdout] [--no-anchors] [--no-propagate] [--only kp|pl]
-                                         [--no-exclude]
+                                         [--no-exclude] [--no-order]
 Defaults read .scratch/linemap/kernel/kernel.features.jsonl and sample/kernel/… symbols against the xnu tree;
 --out writes the matched functions' line map (bncpp-37 format).
 """
@@ -139,11 +139,12 @@ def agrees(name, sfunc):
 
 
 def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, holdout=False, anchors=True,
-        prop=True, only=None, exclude=XNU_ARM64_EXCLUDE):
+        prop=True, only=None, exclude=XNU_ARM64_EXCLUDE, order=True):
     """phases: (1) named functions -> their source function by name (the seeds); (2) the rest by anchors
     (file-line / string / rare const; the slow part, --no-anchors skips it); (3) call-graph propagation from the
-    matched pairs; (4) scores. --holdout seeds with half of the names and scores the other half: how well
-    anchors + propagation name a function nobody named"""
+    matched pairs; (3b) link order (the unmatched neighbours of one file's functions), then propagation again;
+    (4) scores. --holdout seeds with half of the names and scores the other half: how well anchors, propagation
+    and link order name a function nobody named"""
     symbols = read_symbols(symbols_path)
     demangled = demangle(set(symbols.values()))
     truth = {}
@@ -231,6 +232,16 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         for a in got:
             how[a] = "calls"
         tot["prop_rounds"] = max((r for r, _ in got.values()), default=0)
+    # 3b. link order, then propagation again from the new pairs
+    sub = {}
+    if order:
+        got = linematch.link_order(funcs, pairs, tree, index)
+        for a, (_, h) in got.items():
+            how[a], sub[a] = "order", h
+        tot["order_rounds"] = max((r for r, _ in got.values()), default=0)
+        if prop and got:
+            for a in linematch.propagate(funcs, pairs, names, tree):
+                how[a] = "calls"
     # 4. rows + scores
     hit_source, hit_files = set(), Counter()
     sample = []
@@ -253,6 +264,8 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         if n is not None and h != "name":
             ok = agrees(n, sfunc)
             tot["%s_%s" % (h, "agree" if ok else "differ")] += 1
+            if h == "order":
+                tot["order_%s_%s" % (sub[a], "agree" if ok else "differ")] += 1
             if not ok and len(sample) < 16:
                 sample.append((n, "%#x" % a, "%s -> %s" % (h, sfunc.qualname)))
     # what was there to find: named, not a seed, with the name in the tree
@@ -268,7 +281,8 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         print("functions %(functions)d (kernel proper %(kernel_proper)d, prelinked %(prelinked)d);"
               " outside the tree %(outside_tree)d" % tot)
         print("matched: by name %(matched_name)d / anchors %(matched_anchors)d / calls %(matched_calls)d"
-              " (kp %(kp_matched)d / pl %(pl_matched)d; %(prop_rounds)d propagation rounds)" % tot)
+              " / order %(matched_order)d (kp %(kp_matched)d / pl %(pl_matched)d; %(prop_rounds)d propagation,"
+              " %(order_rounds)d order rounds)" % tot)
         print("anchors: file-line %(anchor_file-line)d, string %(anchor_string)d, const %(anchor_const)d,"
               " call %(anchor_call)d" % tot)
         print("file:line anchors: %(fl_functions)d functions, %(fl_anchors)d anchors: file in the tree"
@@ -277,7 +291,9 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
             len(truth), tot["seeds"], tot["seed_matched"], tot["seed_unresolved"],
             ", held out %d" % (len(truth) - tot["seeds"]) if holdout else ""))
         print("vs the names: anchors agree %(anchors_agree)d / differ %(anchors_differ)d;"
-              " calls agree %(calls_agree)d / differ %(calls_differ)d" % tot)
+              " calls agree %(calls_agree)d / differ %(calls_differ)d;"
+              " order agree %(order_agree)d / differ %(order_differ)d (by anchors %(order_anchors_agree)d /"
+              " %(order_anchors_differ)d, by position %(order_position_agree)d / %(order_position_differ)d)" % tot)
         if holdout:
             print("held out with the name in the tree: %(findable)d, found %(found)d" % tot)
         print("source functions hit: %d in %d files" % (len(hit_source), len(hit_files)))
@@ -303,7 +319,9 @@ if __name__ == "__main__":
     ap.add_argument("--no-anchors", action="store_true", help="skip the anchor match of unnamed functions")
     ap.add_argument("--no-propagate", action="store_true")
     ap.add_argument("--only", choices=("kp", "pl"), help="kernel proper / prelinked functions only")
+    ap.add_argument("--no-order", action="store_true", help="skip the link-order phase")
     ap.add_argument("--no-exclude", action="store_true", help="keep the x86 and user-space source files")
     args = ap.parse_args()
     run(args.feats, args.symbols, args.xnu, args.out, args.limit, args.skip, args.quiet, args.holdout,
-        not args.no_anchors, not args.no_propagate, args.only, () if args.no_exclude else XNU_ARM64_EXCLUDE)
+        not args.no_anchors, not args.no_propagate, args.only, () if args.no_exclude else XNU_ARM64_EXCLUDE,
+        not args.no_order)
