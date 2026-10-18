@@ -140,8 +140,7 @@ class _Holder:
         self.vars, self.mem = set(vars_), set()
 
     def holds(self, e):
-        while e.operation in _WRAPS:
-            e = e.src
+        e = _strip(e)
         if e.operation == Op.HLIL_VAR:
             return e.var in self.vars
         return e.operation == Op.HLIL_DEREF and str(e.src) in self.mem
@@ -282,7 +281,8 @@ def callee(e):
 
 
 def _strip(e):
-    while e.operation in _WRAPS:
+    """e without extensions, low parts and offset-0 field accesses (`arg2.d`: the selector's low 32 bits)"""
+    while e.operation in _WRAPS or (e.operation == Op.HLIL_STRUCT_FIELD and e.offset == 0):
         e = e.src
     return e
 

@@ -209,7 +209,8 @@ DISTINCT = ("temps",)
 # calls the try/catch rendering may hide (bncpp-7): not lost when they vanish
 MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|Unwind_Resume|"
                         r"clang_call_terminate)")
-CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+(?: const)?\s*[&*]?\s*(\w+)\)"
+# the name needs a separator before it: `catch (T)` has none (the type's last character is not a variable)
+CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+?(?: const)?(?:\s*[&*]\s*|\s+)(\w+)\)"
 # gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report
 GATES = {"lost_calls": 0, "lost_strings": 0, "render_errors": 0, "unbalanced": 0, "truncated": 0,
          "leaked_catch_var": 0, "missing": 0, "unsettled": 0}
