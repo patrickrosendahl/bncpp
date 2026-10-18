@@ -1,5 +1,9 @@
 // string_temporary(int32_t) @ 0x400600
 {
+    // exception table (LSDA 0x400aec): 2 of 4 call sites have a landing pad
+    //   0x400644..0x40065c -> 0x400694 sub_400694: cleanup
+    //   0x400660..0x40066c -> 0x4006a4 sub_4006a4: cleanup
+
     std::string* entry_x8;
     std::string* var_18 = entry_x8;
     char var_1d = 0;
@@ -16,6 +20,9 @@
 
 // sub_400694 @ 0x400694
 {
+    // landing pad of string_temporary(int32_t) @ 0x400600
+    //   from 0x400644..0x40065c: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     std::string::~string(arg2);
@@ -25,6 +32,9 @@
 
 // sub_4006a4 @ 0x4006a4
 {
+    // landing pad of string_temporary(int32_t) @ 0x400600
+    //   from 0x400660..0x40066c: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     std::string arg_18;

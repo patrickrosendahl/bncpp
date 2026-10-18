@@ -1,5 +1,9 @@
 // nested_try(int32_t) @ 0x4005f8
 {
+    // exception table (LSDA 0x4007ac): 2 of 4 call sites have a landing pad; #n = the selector value
+    //   0x400608..0x40060c -> 0x40061c sub_40061c: catch (int32_t) #2, catch (std::runtime_error) #1
+    //   0x400648..0x400650 (in sub_40061c) -> 0x400660 sub_400660: catch (std::runtime_error) #1, cleanup, cleanup
+
     may_throw(arg1);
     int64_t entry_x19;
     int64_t entry_x20;
@@ -15,6 +19,9 @@
 
 // sub_40061c @ 0x40061c
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f8
+    //   from 0x400608..0x40060c: catch (int32_t) #2, catch (std::runtime_error) #1
+
     uint64_t arg_0;
 
     if (arg2 == 2)
@@ -43,6 +50,9 @@
 
 // sub_400660 @ 0x400660
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f8
+    //   from 0x400648..0x400650 (in sub_40061c): catch (std::runtime_error) #1, cleanup, cleanup
+
     ___cxa_end_catch();
 
     if (arg2 != 1)
@@ -60,6 +70,9 @@
 
 // try_in_loop(int32_t) @ 0x4006a8
 {
+    // exception table (LSDA 0x4007d4): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4006cc..0x4006d4 -> 0x4006e8 sub_4006e8: catch (std::runtime_error) #1, cleanup, cleanup
+
     if (arg1 < 1)
         return 0;
 
@@ -77,6 +90,9 @@
 
 // sub_4006e8 @ 0x4006e8
 {
+    // landing pad of try_in_loop(int32_t) @ 0x4006a8
+    //   from 0x4006cc..0x4006d4: catch (std::runtime_error) #1, cleanup, cleanup
+
     if (arg2 != 1)
     {
         __Unwind_Resume(arg1);

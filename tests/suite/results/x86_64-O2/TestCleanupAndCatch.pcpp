@@ -1,5 +1,10 @@
 // cleanup_and_catch(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400730): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x40060d..0x40061d -> 0x400654 sub_400654: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x40061d..0x400624 -> 0x400643 sub_400643: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x400687..0x40068c (in sub_400654) -> 0x40068e sub_40068e: cleanup
+
     int64_t rbp;
     int64_t var_8 = rbp;
     struct Guard var_28;
@@ -22,6 +27,9 @@
 
 // sub_400643 @ 0x400643
 {
+    // landing pad of cleanup_and_catch(int32_t) @ 0x4005f0
+    //   from 0x40061d..0x400624: catch (std::runtime_error) #1, cleanup, cleanup
+
     Guard::~Guard((char*)arg5 - 0x18);
 
     if (arg3 != 1)
@@ -41,6 +49,9 @@
 
 // sub_400654 @ 0x400654
 {
+    // landing pad of cleanup_and_catch(int32_t) @ 0x4005f0
+    //   from 0x40060d..0x40061d: catch (std::runtime_error) #1, cleanup, cleanup
+
     if (arg3 != 1)
     {
         Guard::~Guard((char*)arg5 - 0x20);
@@ -58,6 +69,9 @@
 
 // sub_40068e @ 0x40068e
 {
+    // landing pad of cleanup_and_catch(int32_t) @ 0x4005f0
+    //   from 0x400687..0x40068c (in sub_400654): cleanup
+
     Guard::~Guard((char*)arg2 - 0x20);
     void* const var_8 = &data_4006a2;
     /* tailcall */

@@ -10,6 +10,9 @@
 
 // make_worker() @ 0x4006fc
 {
+    // exception table (LSDA 0x400c7c): 1 of 3 call sites have a landing pad
+    //   0x400714..0x400718 -> 0x40072c sub_40072c: cleanup
+
     struct Worker* result = operator new(0x30);
     Worker::Worker(result);
     return result;
@@ -17,6 +20,9 @@
 
 // sub_40072c @ 0x40072c
 {
+    // landing pad of make_worker() @ 0x4006fc
+    //   from 0x400714..0x400718: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg4);
@@ -32,6 +38,9 @@
 
 // make_driver() @ 0x40077c
 {
+    // exception table (LSDA 0x400c8c): 1 of 3 call sites have a landing pad
+    //   0x400794..0x400798 -> 0x4007ac sub_4007ac: cleanup
+
     struct Driver* result = operator new(0x38);
     Driver::Driver(result);
     return result;
@@ -39,6 +48,9 @@
 
 // sub_4007ac @ 0x4007ac
 {
+    // landing pad of make_driver() @ 0x40077c
+    //   from 0x400794..0x400798: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg4);
@@ -54,6 +66,9 @@
 
 // make_group() @ 0x4007fc
 {
+    // exception table (LSDA 0x400c9c): 1 of 3 call sites have a landing pad
+    //   0x400814..0x400818 -> 0x40082c sub_40082c: cleanup
+
     struct NoteGroup* result = operator new(0x78);
     NoteGroup::NoteGroup(result);
     return result;
@@ -61,6 +76,9 @@
 
 // sub_40082c @ 0x40082c
 {
+    // landing pad of make_group() @ 0x4007fc
+    //   from 0x400814..0x400818: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg4);
@@ -114,6 +132,9 @@
 
 // Driver::Driver(struct Driver* this) @ 0x40098c
 {
+    // exception table (LSDA 0x400cac): 1 of 3 call sites have a landing pad
+    //   0x4009c4..0x4009c8 -> 0x4009dc sub_4009dc: cleanup
+
     Worker::Worker(this);
     *(uint64_t*)this = &data_404068;
     *(uint64_t*)((char*)this + 0x30) = (double)1.0;
@@ -122,6 +143,9 @@
 
 // sub_4009dc @ 0x4009dc
 {
+    // landing pad of Driver::Driver(struct Driver* this) @ 0x40098c
+    //   from 0x4009c4..0x4009c8: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     __Unwind_Resume(arg1);
@@ -152,6 +176,9 @@
 
 // NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400ac4
 {
+    // exception table (LSDA 0x400cbc): 1 of 3 call sites have a landing pad
+    //   0x400b2c..0x400b34 -> 0x400b48 sub_400b48: cleanup
+
     struct NoteGroup* this_1 = this;
     Driver::Driver(this);
     *(uint64_t*)this = &data_4040a8;
@@ -169,6 +196,9 @@
 
 // sub_400b48 @ 0x400b48
 {
+    // landing pad of NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400ac4
+    //   from 0x400b2c..0x400b34: cleanup
+
     int32_t x1;
     int32_t arg_14 = x1;
     Driver::~Driver(arg2);

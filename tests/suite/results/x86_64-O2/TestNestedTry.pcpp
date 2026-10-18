@@ -1,5 +1,9 @@
 // nested_try(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x40074c): 2 of 4 call sites have a landing pad; #n = the selector value
+    //   0x4005f7..0x4005fc -> 0x400601 sub_400601: catch (int32_t) #2, catch (std::runtime_error) #1
+    //   0x40062a..0x400631 (in sub_400601) -> 0x40063c sub_40063c: catch (std::runtime_error) #1, cleanup, cleanup
+
     may_throw(arg1);
     int64_t entry_rbp;
     int64_t entry_r14;
@@ -14,6 +18,9 @@
 
 // sub_400601 @ 0x400601
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x4005f7..0x4005fc: catch (int32_t) #2, catch (std::runtime_error) #1
+
     if (arg3 == 2)
     {
         int32_t rbx_1 = *(uint32_t*)___cxa_begin_catch(arg4);
@@ -39,6 +46,9 @@
 
 // sub_40063c @ 0x40063c
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x40062a..0x400631 (in sub_400601): catch (std::runtime_error) #1, cleanup, cleanup
+
     ___cxa_end_catch();
 
     if (arg3 != 1)
@@ -56,6 +66,9 @@
 
 // try_in_loop(int32_t) @ 0x400680
 {
+    // exception table (LSDA 0x400774): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4006a0..0x4006a8 -> 0x4006b4 sub_4006b4: catch (std::runtime_error) #1, cleanup, cleanup
+
     int64_t rax;
     int64_t var_28 = rax;
 
@@ -76,6 +89,9 @@
 
 // sub_4006b4 @ 0x4006b4
 {
+    // landing pad of try_in_loop(int32_t) @ 0x400680
+    //   from 0x4006a0..0x4006a8: catch (std::runtime_error) #1, cleanup, cleanup
+
     if (arg3 != 1)
     {
         void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;

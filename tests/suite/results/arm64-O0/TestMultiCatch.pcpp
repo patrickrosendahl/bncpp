@@ -1,5 +1,11 @@
 // catch_two_types(int32_t) @ 0x4005f8
 {
+    // exception table (LSDA 0x400904): 4 of 8 call sites have a landing pad; #n = the selector value
+    //   0x40060c..0x400614 -> 0x400624 sub_400624: catch (std::runtime_error) #2, catch (int32_t) #1
+    //   0x400664..0x400678 (in sub_400624) -> 0x4006ec sub_4006ec: cleanup
+    //   0x4006b0..0x4006c4 (in sub_400624) -> 0x4006d8 sub_4006d8: cleanup
+    //   0x4006f8..0x4006fc (in sub_4006ec) -> 0x40071c sub_40071c: catch (...) #3
+
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_14 = may_throw(arg1);
@@ -9,6 +15,9 @@
 
 // sub_400624 @ 0x400624
 {
+    // landing pad of catch_two_types(int32_t) @ 0x4005f8
+    //   from 0x40060c..0x400614: catch (std::runtime_error) #2, catch (int32_t) #1
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     int32_t x8_1 = *(uint32_t*)((char*)arg3 - 0x14);
@@ -40,6 +49,9 @@
 
 // sub_4006d8 @ 0x4006d8
 {
+    // landing pad of catch_two_types(int32_t) @ 0x4005f8
+    //   from 0x4006b0..0x4006c4 (in sub_400624): cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
@@ -49,6 +61,9 @@
 
 // sub_4006ec @ 0x4006ec
 {
+    // landing pad of catch_two_types(int32_t) @ 0x4005f8
+    //   from 0x400664..0x400678 (in sub_400624): cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
@@ -69,6 +84,9 @@
 
 // sub_40071c @ 0x40071c
 {
+    // landing pad of catch_two_types(int32_t) @ 0x4005f8
+    //   from 0x4006f8..0x4006fc (in sub_4006ec): catch (...) #3
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -82,6 +100,12 @@
 
 // catch_base_and_derived(int32_t) @ 0x400730
 {
+    // exception table (LSDA 0x400944): 4 of 8 call sites have a landing pad; #n = the selector value
+    //   0x400744..0x40074c -> 0x40075c sub_40075c: catch (std::invalid_argument) #2, catch (std::exception) #1
+    //   0x40079c..0x4007a0 (in sub_40075c) -> 0x400810 sub_400810: cleanup
+    //   0x4007e0..0x4007e4 (in sub_40075c) -> 0x4007f8 sub_4007f8: cleanup
+    //   0x400804..0x400820 (in sub_4007f8) -> 0x400840 sub_400840: catch (...) #3
+
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_14 = may_throw(arg1);
@@ -91,6 +115,9 @@
 
 // sub_40075c @ 0x40075c
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400730
+    //   from 0x400744..0x40074c: catch (std::invalid_argument) #2, catch (std::exception) #1
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     int32_t x8_1 = *(uint32_t*)((char*)arg3 - 0x14);
@@ -120,6 +147,9 @@
 
 // sub_4007f8 @ 0x4007f8
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400730
+    //   from 0x4007e0..0x4007e4 (in sub_40075c): cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
@@ -129,6 +159,9 @@
 
 // sub_400810 @ 0x400810
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400730
+    //   from 0x40079c..0x4007a0 (in sub_40075c): cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
@@ -149,6 +182,9 @@
 
 // sub_400840 @ 0x400840
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400730
+    //   from 0x400804..0x400820 (in sub_4007f8): catch (...) #3
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

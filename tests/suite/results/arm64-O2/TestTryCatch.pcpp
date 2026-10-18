@@ -1,5 +1,8 @@
 // may_throw(int32_t) @ 0x400648
 {
+    // exception table (LSDA 0x400914): 1 of 3 call sites have a landing pad
+    //   0x40067c..0x400688 -> 0x4006c0 sub_4006c0: cleanup
+
     if (arg1 >= 3)
     {
         struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
@@ -20,6 +23,9 @@
 
 // sub_4006c0 @ 0x4006c0
 {
+    // landing pad of may_throw(int32_t) @ 0x400648
+    //   from 0x40067c..0x400688: cleanup
+
     ___cxa_free_exception();
     __Unwind_Resume(arg1);
     /* no return */
@@ -62,6 +68,9 @@
 
 // catch_by_type(int32_t) @ 0x4007dc
 {
+    // exception table (LSDA 0x400924): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4007e8..0x4007ec -> 0x4007f8 sub_4007f8: catch (std::runtime_error) #1
+
     may_throw(arg1);
     int64_t entry_fp;
     /* tailcall */
@@ -75,6 +84,9 @@
 
 // sub_4007f8 @ 0x4007f8
 {
+    // landing pad of catch_by_type(int32_t) @ 0x4007dc
+    //   from 0x4007e8..0x4007ec: catch (std::runtime_error) #1
+
     int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     _printf("runtime_error: %s\n");
     ___cxa_end_catch();

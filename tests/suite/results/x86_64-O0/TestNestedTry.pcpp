@@ -1,5 +1,11 @@
 // nested_try(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400808): 4 of 8 call sites have a landing pad; #n = the selector value
+    //   0x4005fe..0x400603 -> 0x400613 sub_400613: catch (int32_t) #2, catch (std::runtime_error) #1
+    //   0x40063c..0x400657 (in sub_400613) -> 0x400669 sub_400669: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x4006a3..0x4006b1 (in sub_400613) -> 0x4006c1 sub_4006c1: cleanup
+    //   0x4006cd..0x4006d2 (in sub_4006c1) -> 0x4006e8 sub_4006e8: catch (...) #3
+
     int64_t rbp;
     int64_t var_8 = rbp;
     int32_t var_c = may_throw(arg1);
@@ -9,6 +15,9 @@
 
 // sub_400613 @ 0x400613
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x4005fe..0x400603: catch (int32_t) #2, catch (std::runtime_error) #1
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
 
@@ -36,6 +45,9 @@
 
 // sub_400669 @ 0x400669
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x40063c..0x400657 (in sub_400613): catch (std::runtime_error) #1, cleanup, cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
@@ -60,6 +72,9 @@
 
 // sub_4006c1 @ 0x4006c1
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x4006a3..0x4006b1 (in sub_400613): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
@@ -80,6 +95,9 @@
 
 // sub_4006e8 @ 0x4006e8
 {
+    // landing pad of nested_try(int32_t) @ 0x4005f0
+    //   from 0x4006cd..0x4006d2 (in sub_4006c1): catch (...) #3
+
     void (* var_8)(void* arg1) __noreturn = ___clang_call_terminate;
     /* tailcall */
     return ___clang_call_terminate(arg1);
@@ -94,6 +112,9 @@
 
 // try_in_loop(int32_t) @ 0x400700
 {
+    // exception table (LSDA 0x40084c): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400724..0x400729 -> 0x400739 sub_400739: catch (std::runtime_error) #1
+
     int32_t var_10 = 0;
 
     for (int32_t i = 0; i < arg1; i += 1)
@@ -104,6 +125,9 @@
 
 // sub_400739 @ 0x400739
 {
+    // landing pad of try_in_loop(int32_t) @ 0x400700
+    //   from 0x400724..0x400729: catch (std::runtime_error) #1
+
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
 

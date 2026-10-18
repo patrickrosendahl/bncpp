@@ -67,6 +67,9 @@
 
 // make_fn<neg_obj()::$_0>(neg_obj()::$_0) @ 0x4008a8
 {
+    // exception table (LSDA 0x402d94): 1 of 3 call sites have a landing pad
+    //   0x4008c0..0x4008c4 -> 0x4008d8 sub_4008d8: cleanup
+
     struct FnImpl<neg_obj()::$_0>* result;
     int64_t x1;
     result = operator new(0x10);
@@ -76,6 +79,9 @@
 
 // sub_4008d8 @ 0x4008d8
 {
+    // landing pad of make_fn<neg_obj()::$_0>(neg_obj()::$_0) @ 0x4008a8
+    //   from 0x4008c0..0x4008c4: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     operator delete(arg2);
@@ -90,6 +96,9 @@
 
 // make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0) @ 0x40092c
 {
+    // exception table (LSDA 0x402da4): 1 of 3 call sites have a landing pad
+    //   0x40095c..0x400960 -> 0x400974 sub_400974: cleanup
+
     struct FnImpl<add_obj(int32_t)::$_0>* result = operator new(0x10);
     FnImpl<add_obj(int32_t)::$_0>::FnImpl(result, (uint64_t)arg1);
     return result;
@@ -97,6 +106,9 @@
 
 // sub_400974 @ 0x400974
 {
+    // landing pad of make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0) @ 0x40092c
+    //   from 0x40095c..0x400960: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     operator delete(arg2);
@@ -112,6 +124,9 @@
 
 // make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0) @ 0x4009d0
 {
+    // exception table (LSDA 0x402db4): 1 of 3 call sites have a landing pad
+    //   0x4009f8..0x4009fc -> 0x400a10 sub_400a10: cleanup
+
     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* result = operator new(0x10);
     FnImpl<clamp_obj(int32_t, int32_t)::$_0>::FnImpl(result, arg1);
     return result;
@@ -119,6 +134,9 @@
 
 // sub_400a10 @ 0x400a10
 {
+    // landing pad of make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0) @ 0x4009d0
+    //   from 0x4009f8..0x4009fc: cleanup
+
     int32_t x1;
     int32_t arg_14 = x1;
     operator delete(arg2);
@@ -267,12 +285,20 @@
 
 // try_fail(int32_t) @ 0x400e3c
 {
+    // exception table (LSDA 0x402dc4): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400e50..0x400e54 -> 0x400e5c sub_400e5c: catch (Err) #1
+    //   0x400e94..0x400e9c (in sub_400e5c) -> 0x400eb0 sub_400eb0: cleanup
+    //   0x400ebc..0x400ec0 (in sub_400eb0) -> 0x400ef0 sub_400ef0: catch (...) #2
+
     fail(arg1);
     /* no return */
 }
 
 // sub_400e5c @ 0x400e5c
 {
+    // landing pad of try_fail(int32_t) @ 0x400e3c
+    //   from 0x400e50..0x400e54: catch (Err) #1
+
     if (arg2 != 1)
     {
         __Unwind_Resume(arg1);
@@ -287,6 +313,9 @@
 
 // sub_400eb0 @ 0x400eb0
 {
+    // landing pad of try_fail(int32_t) @ 0x400e3c
+    //   from 0x400e94..0x400e9c (in sub_400e5c): cleanup
+
     int32_t x1;
     int32_t arg_14 = x1;
     ___cxa_end_catch();
@@ -301,6 +330,9 @@
 
 // sub_400ef0 @ 0x400ef0
 {
+    // landing pad of try_fail(int32_t) @ 0x400e3c
+    //   from 0x400ebc..0x400ec0 (in sub_400eb0): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -673,6 +705,9 @@
 
 // std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401948
 {
+    // exception table (LSDA 0x402df0): 1 of 3 call sites have a landing pad
+    //   0x401970..0x401978 -> 0x40198c sub_40198c: cleanup
+
     struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* result =
         operator new(0x10);
     std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](result,
@@ -682,6 +717,9 @@
 
 // sub_40198c @ 0x40198c
 {
+    // landing pad of std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401948
+    //   from 0x401970..0x401978: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);
@@ -878,6 +916,9 @@
 
 // std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401f14
 {
+    // exception table (LSDA 0x402e00): 1 of 3 call sites have a landing pad
+    //   0x401f3c..0x401f44 -> 0x401f58 sub_401f58: cleanup
+
     struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* result =
         operator new(0x10);
     std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
@@ -887,6 +928,9 @@
 
 // sub_401f58 @ 0x401f58
 {
+    // landing pad of std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401f14
+    //   from 0x401f3c..0x401f44: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);
@@ -1044,6 +1088,9 @@
 
 // std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x4023c8
 {
+    // exception table (LSDA 0x402e10): 1 of 3 call sites have a landing pad
+    //   0x4023f0..0x4023f8 -> 0x40240c sub_40240c: cleanup
+
     struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
             *
         result = operator new(0x18);
@@ -1054,6 +1101,9 @@
 
 // sub_40240c @ 0x40240c
 {
+    // landing pad of std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x4023c8
+    //   from 0x4023f0..0x4023f8: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);

@@ -1,5 +1,9 @@
 // string_temporary(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400a54): 2 of 4 call sites have a landing pad
+    //   0x40061d..0x400633 -> 0x400659 sub_400659: cleanup
+    //   0x400635..0x400642 -> 0x400667 sub_400667: cleanup
+
     int64_t var_10 = arg1;
     char var_15 = 0;
     std::string::string[abi:ne200100]<0>(arg1, "value ");
@@ -14,6 +18,9 @@
 
 // sub_400659 @ 0x400659
 {
+    // landing pad of string_temporary(int32_t) @ 0x4005f0
+    //   from 0x40061d..0x400633: cleanup
+
     *(uint64_t*)((char*)arg5 - 0x30) = arg4;
     *(uint32_t*)((char*)arg5 - 0x34) = arg3;
     std::string::~string(*(uint64_t*)((char*)arg5 - 0x48));
@@ -23,6 +30,9 @@
 
 // sub_400667 @ 0x400667
 {
+    // landing pad of string_temporary(int32_t) @ 0x4005f0
+    //   from 0x400635..0x400642: cleanup
+
     *(uint64_t*)((char*)arg5 - 0x30) = arg4;
     *(uint32_t*)((char*)arg5 - 0x34) = arg3;
     std::string::~string((char*)arg5 - 0x28);

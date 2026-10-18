@@ -483,12 +483,20 @@
 
 // try_fail(int32_t) @ 0x400cc8
 {
+    // exception table (LSDA 0x400e08): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400cd8..0x400cdc -> 0x400ce0 sub_400ce0: catch (Err) #1
+    //   0x400cf4..0x400cf8 (in sub_400ce0) -> 0x400d1c sub_400d1c: cleanup
+    //   0x400d20..0x400d24 (in sub_400d1c) -> 0x400d2c sub_400d2c: catch (...) #2
+
     fail(arg1);
     /* no return */
 }
 
 // sub_400ce0 @ 0x400ce0
 {
+    // landing pad of try_fail(int32_t) @ 0x400cc8
+    //   from 0x400cd8..0x400cdc: catch (Err) #1
+
     if (arg2 != 1)
         /* tailcall */
         return sub_400d24(arg1);
@@ -500,6 +508,9 @@
 
 // sub_400d1c @ 0x400d1c
 {
+    // landing pad of try_fail(int32_t) @ 0x400cc8
+    //   from 0x400cf4..0x400cf8 (in sub_400ce0): cleanup
+
     ___cxa_end_catch();
     struct _Unwind_Exception* entry_x0;
     /* tailcall */
@@ -514,6 +525,9 @@
 
 // sub_400d2c @ 0x400d2c
 {
+    // landing pad of try_fail(int32_t) @ 0x400cc8
+    //   from 0x400d20..0x400d24 (in sub_400d1c): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

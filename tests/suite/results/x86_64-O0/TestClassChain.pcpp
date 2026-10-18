@@ -9,6 +9,9 @@
 
 // make_worker() @ 0x4006e0
 {
+    // exception table (LSDA 0x400bac): 1 of 3 call sites have a landing pad
+    //   0x4006fc..0x400701 -> 0x40070d sub_40070d: cleanup
+
     struct Worker* result = operator new(0x30);
     Worker::Worker(result);
     return result;
@@ -16,6 +19,9 @@
 
 // sub_40070d @ 0x40070d
 {
+    // landing pad of make_worker() @ 0x4006e0
+    //   from 0x4006fc..0x400701: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
     *(uint64_t*)((char*)arg5 - 8) = arg4;
     *(uint32_t*)((char*)arg5 - 0xc) = arg3;
@@ -31,6 +37,9 @@
 
 // make_driver() @ 0x400750
 {
+    // exception table (LSDA 0x400bbc): 1 of 3 call sites have a landing pad
+    //   0x40076c..0x400771 -> 0x40077d sub_40077d: cleanup
+
     struct Driver* result = operator new(0x38);
     Driver::Driver(result);
     return result;
@@ -38,6 +47,9 @@
 
 // sub_40077d @ 0x40077d
 {
+    // landing pad of make_driver() @ 0x400750
+    //   from 0x40076c..0x400771: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
     *(uint64_t*)((char*)arg5 - 8) = arg4;
     *(uint32_t*)((char*)arg5 - 0xc) = arg3;
@@ -53,6 +65,9 @@
 
 // make_group() @ 0x4007c0
 {
+    // exception table (LSDA 0x400bcc): 1 of 3 call sites have a landing pad
+    //   0x4007dc..0x4007e1 -> 0x4007ed sub_4007ed: cleanup
+
     struct NoteGroup* result = operator new(0x78);
     NoteGroup::NoteGroup(result);
     return result;
@@ -60,6 +75,9 @@
 
 // sub_4007ed @ 0x4007ed
 {
+    // landing pad of make_group() @ 0x4007c0
+    //   from 0x4007dc..0x4007e1: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x18);
     *(uint64_t*)((char*)arg5 - 8) = arg4;
     *(uint32_t*)((char*)arg5 - 0xc) = arg3;
@@ -112,6 +130,9 @@
 
 // Driver::Driver(struct Driver* this) @ 0x400920
 {
+    // exception table (LSDA 0x400bdc): 1 of 3 call sites have a landing pad
+    //   0x400959..0x40095e -> 0x400966 sub_400966: cleanup
+
     Worker::Worker(this);
     *(uint64_t*)this = &_vtable_for_Driver{for `Worker'};
     *(uint64_t*)((char*)this + 0x30) = 0x3ff0000000000000;
@@ -120,6 +141,9 @@
 
 // sub_400966 @ 0x400966
 {
+    // landing pad of Driver::Driver(struct Driver* this) @ 0x400920
+    //   from 0x400959..0x40095e: cleanup
+
     *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -150,6 +174,9 @@
 
 // NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400a40
 {
+    // exception table (LSDA 0x400bec): 1 of 3 call sites have a landing pad
+    //   0x400a9a..0x400aa3 -> 0x400aab sub_400aab: cleanup
+
     Driver::Driver(this);
     *(uint64_t*)this = &_vtable_for_NoteGroup{for `Worker'};
     void* __offset(NoteGroup, 0x38) var_28 = (char*)this + 0x38;
@@ -166,6 +193,9 @@
 
 // sub_400aab @ 0x400aab
 {
+    // landing pad of NoteGroup::NoteGroup(struct NoteGroup* this) @ 0x400a40
+    //   from 0x400a9a..0x400aa3: cleanup
+
     struct Driver* rdi_1 = *(uint64_t*)((char*)arg5 - 0x30);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;

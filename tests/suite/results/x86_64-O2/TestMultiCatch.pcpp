@@ -1,10 +1,16 @@
 // catch_two_types(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400778): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4005f4..0x4005f9 -> 0x4005fb sub_4005fb: catch (std::runtime_error) #2, catch (int32_t) #1
+
     return may_throw(arg1);
 }
 
 // sub_4005fb @ 0x4005fb
 {
+    // landing pad of catch_two_types(int32_t) @ 0x4005f0
+    //   from 0x4005f4..0x4005f9: catch (std::runtime_error) #2, catch (int32_t) #1
+
     if (arg3 != 2)
     {
         _printf("int: %d\n", (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4));
@@ -27,6 +33,12 @@
 
 // catch_base_and_derived(int32_t) @ 0x400660
 {
+    // exception table (LSDA 0x400794): 4 of 8 call sites have a landing pad; #n = the selector value
+    //   0x400666..0x40066b -> 0x400672 sub_400672: catch (std::invalid_argument) #2, catch (std::exception) #1
+    //   0x400690..0x400698 (in sub_400672) -> 0x4006d0 sub_4006d0: cleanup
+    //   0x4006b5..0x4006bd (in sub_400672) -> 0x4006c6 sub_4006c6: cleanup
+    //   0x4006c9..0x4006d8 (in sub_4006c6) -> 0x4006e0 sub_4006e0: catch (...) #3
+
     may_throw(arg1);
     int64_t entry_rbx;
     int64_t entry_rbp;
@@ -41,6 +53,9 @@
 
 // sub_400672 @ 0x400672
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400660
+    //   from 0x400666..0x40066b: catch (std::invalid_argument) #2, catch (std::exception) #1
+
     if (arg3 != 2)
     {
         if (arg3 != 1)
@@ -63,6 +78,9 @@
 
 // sub_4006c6 @ 0x4006c6
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400660
+    //   from 0x4006b5..0x4006bd (in sub_400672): cleanup
+
     ___cxa_end_catch();
     /* tailcall */
     return sub_4006d8(arg1);
@@ -70,6 +88,9 @@
 
 // sub_4006d0 @ 0x4006d0
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400660
+    //   from 0x400690..0x400698 (in sub_400672): cleanup
+
     ___cxa_end_catch();
     struct _Unwind_Exception* entry_rax;
     /* tailcall */
@@ -84,6 +105,9 @@
 
 // sub_4006e0 @ 0x4006e0
 {
+    // landing pad of catch_base_and_derived(int32_t) @ 0x400660
+    //   from 0x4006c9..0x4006d8 (in sub_4006c6): catch (...) #3
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

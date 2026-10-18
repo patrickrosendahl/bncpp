@@ -10,6 +10,9 @@
 
 // make_worker() @ 0x4006ec
 {
+    // exception table (LSDA 0x400928): 1 of 3 call sites have a landing pad
+    //   0x400720..0x400724 -> 0x400734 sub_400734: cleanup
+
     Worker* result = operator new(0x30);
     *(uint64_t*)result = &data_404030;
     *(uint32_t*)((char*)result + 8) = 0;
@@ -20,6 +23,9 @@
 
 // sub_400734 @ 0x400734
 {
+    // landing pad of make_worker() @ 0x4006ec
+    //   from 0x400720..0x400724: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -27,6 +33,9 @@
 
 // make_driver() @ 0x400748
 {
+    // exception table (LSDA 0x400938): 1 of 3 call sites have a landing pad
+    //   0x40077c..0x4007a0 -> 0x4007b0 sub_4007b0: cleanup
+
     Worker* result = operator new(0x38);
     *(uint64_t*)result = &data_404030;
     *(uint32_t*)((char*)result + 8) = 0;
@@ -40,6 +49,9 @@
 
 // sub_4007b0 @ 0x4007b0
 {
+    // landing pad of make_driver() @ 0x400748
+    //   from 0x40077c..0x4007a0: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -47,6 +59,9 @@
 
 // make_group() @ 0x4007c4
 {
+    // exception table (LSDA 0x400948): 1 of 3 call sites have a landing pad
+    //   0x4007f8..0x400848 -> 0x400858 sub_400858: cleanup
+
     Worker* result = operator new(0x78);
     *(uint64_t*)result = &data_404030;
     *(uint32_t*)((char*)result + 8) = 0;
@@ -63,6 +78,9 @@
 
 // sub_400858 @ 0x400858
 {
+    // landing pad of make_group() @ 0x4007c4
+    //   from 0x4007f8..0x400848: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */

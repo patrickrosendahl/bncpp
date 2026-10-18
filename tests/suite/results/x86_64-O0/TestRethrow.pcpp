@@ -1,10 +1,18 @@
 // rethrow(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400b04): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x4005fe..0x400603 -> 0x40060a sub_40060a: catch (std::exception) #1
+    //   0x40063f..0x400654 (in sub_40060a) -> 0x400656 sub_400656: cleanup
+    //   0x400662..0x400667 (in sub_400656) -> 0x40067d sub_40067d: catch (...) #2
+
     return (uint64_t)may_throw(arg1);
 }
 
 // sub_40060a @ 0x40060a
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x4005fe..0x400603: catch (std::exception) #1
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
 
@@ -22,6 +30,9 @@
 
 // sub_400656 @ 0x400656
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x40063f..0x400654 (in sub_40060a): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
@@ -31,6 +42,9 @@
 
 // sub_40067d @ 0x40067d
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x400662..0x400667 (in sub_400656): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -44,11 +58,20 @@
 
 // throw_other(int32_t) @ 0x4006a0
 {
+    // exception table (LSDA 0x400b2c): 4 of 6 call sites have a landing pad; #n = the selector value
+    //   0x4006ae..0x4006b3 -> 0x4006bd sub_4006bd: catch (int32_t) #1
+    //   0x4006fc..0x400705 (in sub_4006bd) -> 0x400749 sub_400749: cleanup
+    //   0x400707..0x40071b (in sub_4006bd) -> 0x400757 sub_400757: cleanup
+    //   0x40071d..0x400747 (in sub_4006bd) -> 0x400765 sub_400765: cleanup
+
     return (uint64_t)may_throw(arg1);
 }
 
 // sub_4006bd @ 0x4006bd
 {
+    // landing pad of throw_other(int32_t) @ 0x4006a0
+    //   from 0x4006ae..0x4006b3: catch (int32_t) #1
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
 
@@ -72,6 +95,9 @@
 
 // sub_400749 @ 0x400749
 {
+    // landing pad of throw_other(int32_t) @ 0x4006a0
+    //   from 0x4006fc..0x400705 (in sub_4006bd): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     /* tailcall */
@@ -80,6 +106,9 @@
 
 // sub_400757 @ 0x400757
 {
+    // landing pad of throw_other(int32_t) @ 0x4006a0
+    //   from 0x400707..0x40071b (in sub_4006bd): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     /* tailcall */
@@ -88,6 +117,9 @@
 
 // sub_400765 @ 0x400765
 {
+    // landing pad of throw_other(int32_t) @ 0x4006a0
+    //   from 0x40071d..0x400747 (in sub_4006bd): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     std::string::~string((char*)arg5 - 0x30);
@@ -132,6 +164,9 @@
 
 // std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400830
 {
+    // exception table (LSDA 0x400b54): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400850..0x400859 -> 0x4008dd sub_4008dd: catch (...) #1
+
     struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
          var_19;
     std::string& rax_1 = std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(
@@ -151,6 +186,9 @@
 
 // sub_4008dd @ 0x4008dd
 {
+    // landing pad of std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400830
+    //   from 0x400850..0x400859: catch (...) #1
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

@@ -45,6 +45,9 @@
 
 // make_owner() @ 0x400790
 {
+    // exception table (LSDA 0x400b00): 1 of 3 call sites have a landing pad
+    //   0x4007b9..0x4007f2 -> 0x400827 sub_400827: cleanup
+
     struct Owner::VTable** result = operator new(0x28);
     *(uint64_t*)result = &_vtable_for_Owner;
     *(uint128_t*)((char*)result + 0x18) = {0};
@@ -62,6 +65,9 @@
 
 // sub_400827 @ 0x400827
 {
+    // landing pad of make_owner() @ 0x400790
+    //   from 0x4007b9..0x4007f2: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -77,6 +83,9 @@
 
 // make_block() @ 0x400870
 {
+    // exception table (LSDA 0x400b14): 1 of 3 call sites have a landing pad
+    //   0x400884..0x40088e -> 0x4008d1 sub_4008d1: cleanup
+
     struct Block::FastBlock::VTable** result = operator new(0x18);
     struct Engine::VTable** rax = operator new(0x10);
     *(uint64_t*)rax = &_vtable_for_Engine;
@@ -89,6 +98,9 @@
 
 // sub_4008d1 @ 0x4008d1
 {
+    // landing pad of make_block() @ 0x400870
+    //   from 0x400884..0x40088e: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */

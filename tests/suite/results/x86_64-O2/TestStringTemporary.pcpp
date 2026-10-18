@@ -1,5 +1,9 @@
 // string_temporary(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x400700): 2 of 3 call sites have a landing pad
+    //   0x400612..0x400624 -> 0x400686 sub_400686: cleanup
+    //   0x40063d..0x400645 -> 0x400660 sub_400660: cleanup
+
     std::string* result = arg1;
     *(uint8_t*)arg1 = 0xc;
     __builtin_strncpy(arg1 + 1, "value ", 7);
@@ -34,6 +38,9 @@
 
 // sub_400660 @ 0x400660
 {
+    // landing pad of string_temporary(int32_t) @ 0x4005f0
+    //   from 0x40063d..0x400645: cleanup
+
     if (*(uint8_t*)((char*)arg3 - 0x28) & 1)
     {
         operator delete(*(uint64_t*)((char*)arg3 - 0x18));
@@ -58,6 +65,9 @@
 
 // sub_400686 @ 0x400686
 {
+    // landing pad of string_temporary(int32_t) @ 0x4005f0
+    //   from 0x400612..0x400624: cleanup
+
     if (!(*(uint8_t*)arg2 & 1))
     {
         __Unwind_Resume(arg1);

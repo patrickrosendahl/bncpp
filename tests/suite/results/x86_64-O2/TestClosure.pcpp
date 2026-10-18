@@ -474,12 +474,20 @@
 
 // try_fail(int32_t) @ 0x400d70
 {
+    // exception table (LSDA 0x400e48): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400d76..0x400d7b -> 0x400d7d sub_400d7d: catch (Err) #1
+    //   0x400d90..0x400d96 (in sub_400d7d) -> 0x400da8 sub_400da8: cleanup
+    //   0x400dab..0x400db0 (in sub_400da8) -> 0x400db8 sub_400db8: catch (...) #2
+
     fail(arg1);
     /* no return */
 }
 
 // sub_400d7d @ 0x400d7d
 {
+    // landing pad of try_fail(int32_t) @ 0x400d70
+    //   from 0x400d76..0x400d7b: catch (Err) #1
+
     if (arg3 != 1)
     {
         __Unwind_Resume(arg4);
@@ -494,6 +502,9 @@
 
 // sub_400da8 @ 0x400da8
 {
+    // landing pad of try_fail(int32_t) @ 0x400d70
+    //   from 0x400d90..0x400d96 (in sub_400d7d): cleanup
+
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
     /* no return */
@@ -501,6 +512,9 @@
 
 // sub_400db8 @ 0x400db8
 {
+    // landing pad of try_fail(int32_t) @ 0x400d70
+    //   from 0x400dab..0x400db0 (in sub_400da8): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

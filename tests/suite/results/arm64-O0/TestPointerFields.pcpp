@@ -6,6 +6,10 @@
 
 // Owner::Owner(struct Owner* this) @ 0x4006c0
 {
+    // exception table (LSDA 0x4013a4): 2 of 5 call sites have a landing pad
+    //   0x4006fc..0x400700 -> 0x400748 sub_400748: cleanup
+    //   0x400720..0x400724 -> 0x400764 sub_400764: cleanup
+
     *(uint64_t*)this = &data_404030;
     *(uint64_t*)((char*)this + 0x18) = 0;
     *(uint64_t*)((char*)this + 0x20) = 0;
@@ -20,6 +24,9 @@
 
 // sub_400748 @ 0x400748
 {
+    // landing pad of Owner::Owner(struct Owner* this) @ 0x4006c0
+    //   from 0x4006fc..0x400700: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);
@@ -29,6 +36,9 @@
 
 // sub_400764 @ 0x400764
 {
+    // landing pad of Owner::Owner(struct Owner* this) @ 0x4006c0
+    //   from 0x400720..0x400724: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);
@@ -61,6 +71,9 @@
 
 // make_owner() @ 0x400830
 {
+    // exception table (LSDA 0x4013c0): 1 of 3 call sites have a landing pad
+    //   0x400848..0x40084c -> 0x400860 sub_400860: cleanup
+
     struct Owner* result = operator new(0x28);
     Owner::Owner(result);
     return result;
@@ -68,6 +81,9 @@
 
 // sub_400860 @ 0x400860
 {
+    // landing pad of make_owner() @ 0x400830
+    //   from 0x400848..0x40084c: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg4);
@@ -90,6 +106,11 @@
 
 // make_block() @ 0x4008dc
 {
+    // exception table (LSDA 0x4013d0): 3 of 5 call sites have a landing pad
+    //   0x4008f4..0x400900 -> 0x400930 sub_400930: cleanup
+    //   0x400904..0x40090c -> 0x400940 sub_400940: cleanup
+    //   0x400910..0x40091c -> 0x400930 sub_400930: cleanup
+
     struct FastBlock* result = operator new(0x18);
     struct Engine* x0 = operator new(0x10);
     Engine::Engine(x0);
@@ -99,6 +120,10 @@
 
 // sub_400930 @ 0x400930
 {
+    // landing pad of make_block() @ 0x4008dc
+    //   from 0x4008f4..0x400900: cleanup
+    //   from 0x400910..0x40091c: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg4);
@@ -108,6 +133,9 @@
 
 // sub_400940 @ 0x400940
 {
+    // landing pad of make_block() @ 0x4008dc
+    //   from 0x400904..0x40090c: cleanup
+
     *(uint64_t*)((char*)arg3 - 8) = arg1;
     *(uint32_t*)((char*)arg3 - 0xc) = arg2;
     operator delete(arg5);
@@ -250,6 +278,9 @@
 
 // Slot::hold_engine(struct Slot* this) @ 0x400d84
 {
+    // exception table (LSDA 0x4013e8): 1 of 3 call sites have a landing pad
+    //   0x400da8..0x400dac -> 0x400dc8 sub_400dc8: cleanup
+
     struct Engine* result = operator new(0x10);
     Engine::Engine(result);
     *(uint64_t*)((char*)this + 8) = result;
@@ -258,6 +289,9 @@
 
 // sub_400dc8 @ 0x400dc8
 {
+    // landing pad of Slot::hold_engine(struct Slot* this) @ 0x400d84
+    //   from 0x400da8..0x400dac: cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     operator delete(arg4);
@@ -267,6 +301,9 @@
 
 // Slot::hold_child(struct Slot* this, Owner*) @ 0x400dec
 {
+    // exception table (LSDA 0x4013f8): 1 of 3 call sites have a landing pad
+    //   0x400e18..0x400e1c -> 0x400e38 sub_400e38: cleanup
+
     struct Child* result = operator new(0x18);
     Child::Child(result, arg2);
     *(uint64_t*)((char*)this + 8) = result;
@@ -275,6 +312,9 @@
 
 // sub_400e38 @ 0x400e38
 {
+    // landing pad of Slot::hold_child(struct Slot* this, Owner*) @ 0x400dec
+    //   from 0x400e18..0x400e1c: cleanup
+
     int32_t x1;
     int32_t arg_14 = x1;
     operator delete(arg2);

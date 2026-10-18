@@ -14,6 +14,9 @@
 
 // make_worker() @ 0x4006d0
 {
+    // exception table (LSDA 0x400918): 1 of 3 call sites have a landing pad
+    //   0x400704..0x40070c -> 0x400714 sub_400714: cleanup
+
     struct Worker::VTable** result = operator new(0x30);
     *(uint64_t*)result = &_vtable_for_Worker;
     result[1] = 0;
@@ -24,6 +27,9 @@
 
 // sub_400714 @ 0x400714
 {
+    // landing pad of make_worker() @ 0x4006d0
+    //   from 0x400704..0x40070c: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -31,6 +37,9 @@
 
 // make_driver() @ 0x400730
 {
+    // exception table (LSDA 0x400928): 1 of 3 call sites have a landing pad
+    //   0x400764..0x400790 -> 0x400798 sub_400798: cleanup
+
     struct Worker::VTable** result = operator new(0x38);
     *(uint64_t*)result = &_vtable_for_Worker;
     result[1] = 0;
@@ -44,6 +53,9 @@
 
 // sub_400798 @ 0x400798
 {
+    // landing pad of make_driver() @ 0x400730
+    //   from 0x400764..0x400790: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -51,6 +63,9 @@
 
 // make_group() @ 0x4007b0
 {
+    // exception table (LSDA 0x400938): 1 of 3 call sites have a landing pad
+    //   0x4007e4..0x400839 -> 0x400841 sub_400841: cleanup
+
     struct Worker::VTable** result = operator new(0x78);
     *(uint64_t*)result = &_vtable_for_Worker;
     result[1] = 0;
@@ -67,6 +82,9 @@
 
 // sub_400841 @ 0x400841
 {
+    // landing pad of make_group() @ 0x4007b0
+    //   from 0x4007e4..0x400839: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */

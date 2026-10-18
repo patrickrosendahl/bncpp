@@ -9,6 +9,7 @@ from binaryninja import (BraceRequirement, LanguageRepresentationFunction, Langu
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TokenMixin
+from . import eh_comments
 
 P = OperatorPrecedence
 
@@ -36,6 +37,19 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
         tokens.append_open_brace()
         tokens.new_line()
         tokens.increase_indent()
+        self.emit_eh_comments(tokens)
+
+    def emit_eh_comments(self, tokens):
+        """the function's exception table / landing-pad role as comments (bncpp-5)"""
+        try:
+            lines = eh_comments.lines(self.function.view, self.function.start)
+        except Exception as ex:
+            lines = ["[%s could not read the exception tables: %s: %s]" % (self.language_label, type(ex).__name__, ex)]
+        for line in lines:
+            self.note(tokens, "// " + line)
+            tokens.new_line()
+        if lines:
+            tokens.scope_separator()
 
     def perform_end_lines(self, instr, tokens):
         tokens.decrease_indent()

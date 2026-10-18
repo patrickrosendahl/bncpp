@@ -1,5 +1,8 @@
 // may_throw(int32_t) @ 0x400648
 {
+    // exception table (LSDA 0x400a08): 1 of 3 call sites have a landing pad
+    //   0x400674..0x400680 -> 0x40069c sub_40069c: cleanup
+
     if (arg1 > 2)
     {
         struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
@@ -20,6 +23,9 @@
 
 // sub_40069c @ 0x40069c
 {
+    // landing pad of may_throw(int32_t) @ 0x400648
+    //   from 0x400674..0x400680: cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     ___cxa_free_exception(arg2);
@@ -53,12 +59,18 @@
 
 // Guard::~Guard(struct Guard* this) @ 0x4007b8
 {
+    // exception table (LSDA 0x400a1c): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x4007d4..0x4007e8 -> 0x4007fc sub_4007fc: catch (...) #1
+
     struct Guard* this_1 = this;
     _printf("leave %s\n", *(uint64_t*)this);
 }
 
 // sub_4007fc @ 0x4007fc
 {
+    // landing pad of Guard::~Guard(struct Guard* this) @ 0x4007b8
+    //   from 0x4007d4..0x4007e8: catch (...) #1
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -78,6 +90,11 @@
 
 // catch_by_type(int32_t) @ 0x40083c
 {
+    // exception table (LSDA 0x400a2c): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400850..0x400858 -> 0x400868 sub_400868: catch (std::runtime_error) #1
+    //   0x4008a4..0x4008b8 (in sub_400868) -> 0x4008cc sub_4008cc: cleanup
+    //   0x4008d8..0x4008dc (in sub_4008cc) -> 0x4008fc sub_4008fc: catch (...) #2
+
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_14 = may_throw(arg1);
@@ -87,6 +104,9 @@
 
 // sub_400868 @ 0x400868
 {
+    // landing pad of catch_by_type(int32_t) @ 0x40083c
+    //   from 0x400850..0x400858: catch (std::runtime_error) #1
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
 
@@ -105,6 +125,9 @@
 
 // sub_4008cc @ 0x4008cc
 {
+    // landing pad of catch_by_type(int32_t) @ 0x40083c
+    //   from 0x4008a4..0x4008b8 (in sub_400868): cleanup
+
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
@@ -125,6 +148,9 @@
 
 // sub_4008fc @ 0x4008fc
 {
+    // landing pad of catch_by_type(int32_t) @ 0x40083c
+    //   from 0x4008d8..0x4008dc (in sub_4008cc): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }

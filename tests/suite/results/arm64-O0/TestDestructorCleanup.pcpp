@@ -1,5 +1,8 @@
 // cleanup_only(int32_t) @ 0x400600
 {
+    // exception table (LSDA 0x4007b0): 1 of 3 call sites have a landing pad
+    //   0x400624..0x40062c -> 0x400648 sub_400648: cleanup
+
     struct Guard var_20;
     Guard::Guard(&var_20, "cleanup_only");
     int32_t x0_2 = may_throw(arg1);
@@ -9,6 +12,9 @@
 
 // sub_400648 @ 0x400648
 {
+    // landing pad of cleanup_only(int32_t) @ 0x400600
+    //   from 0x400624..0x40062c: cleanup
+
     int32_t x1;
     int32_t arg_4 = x1;
     struct Guard arg_10;
@@ -19,6 +25,10 @@
 
 // two_guards(int32_t) @ 0x400668
 {
+    // exception table (LSDA 0x4007c0): 2 of 4 call sites have a landing pad
+    //   0x40068c..0x4006b0 -> 0x4006fc sub_4006fc: cleanup
+    //   0x4006c0..0x4006c8 -> 0x40070c sub_40070c: cleanup
+
     struct Guard var_20;
     Guard::Guard(&var_20, "a");
     int32_t x0_2 = may_throw(arg1);
@@ -32,6 +42,9 @@
 
 // sub_4006fc @ 0x4006fc
 {
+    // landing pad of two_guards(int32_t) @ 0x400668
+    //   from 0x40068c..0x4006b0: cleanup
+
     int32_t x1;
     int32_t arg_1c = x1;
     Guard::~Guard(arg2 - 0x10);
@@ -41,6 +54,9 @@
 
 // sub_40070c @ 0x40070c
 {
+    // landing pad of two_guards(int32_t) @ 0x400668
+    //   from 0x4006c0..0x4006c8: cleanup
+
     int32_t x1;
     int32_t arg_1c = x1;
     struct Guard arg_10;

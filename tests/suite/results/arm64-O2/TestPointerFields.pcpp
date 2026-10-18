@@ -43,6 +43,9 @@
 
 // make_owner() @ 0x400770
 {
+    // exception table (LSDA 0x400ac8): 1 of 3 call sites have a landing pad
+    //   0x40079c..0x4007cc -> 0x400800 sub_400800: cleanup
+
     void*** result = operator new(0x28);
     *(uint64_t*)result = &data_404030;
     result[3] = 0;
@@ -61,6 +64,9 @@
 
 // sub_400800 @ 0x400800
 {
+    // landing pad of make_owner() @ 0x400770
+    //   from 0x40079c..0x4007cc: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */
@@ -76,6 +82,9 @@
 
 // make_block() @ 0x40083c
 {
+    // exception table (LSDA 0x400adc): 1 of 3 call sites have a landing pad
+    //   0x400854..0x40085c -> 0x4008a0 sub_4008a0: cleanup
+
     void*** result = operator new(0x18);
     void*** x0 = operator new(0x10);
     *(uint64_t*)x0 = &data_4040b8;
@@ -88,6 +97,9 @@
 
 // sub_4008a0 @ 0x4008a0
 {
+    // landing pad of make_block() @ 0x40083c
+    //   from 0x400854..0x40085c: cleanup
+
     operator delete(arg2);
     __Unwind_Resume(arg1);
     /* no return */

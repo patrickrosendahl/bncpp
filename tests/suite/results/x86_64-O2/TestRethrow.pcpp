@@ -1,5 +1,10 @@
 // rethrow(int32_t) @ 0x4005f0
 {
+    // exception table (LSDA 0x40085c): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x4005f6..0x4005fb -> 0x400602 sub_400602: catch (std::exception) #1
+    //   0x40062c..0x400631 (in sub_400602) -> 0x400633 sub_400633: cleanup
+    //   0x400636..0x40063b (in sub_400633) -> 0x400643 sub_400643: catch (...) #2
+
     int64_t rax;
     int64_t var_18 = rax;
     return may_throw(arg1);
@@ -7,6 +12,9 @@
 
 // sub_400602 @ 0x400602
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x4005f6..0x4005fb: catch (std::exception) #1
+
     if (arg3 != 1)
     {
         __Unwind_Resume(arg4);
@@ -21,6 +29,9 @@
 
 // sub_400633 @ 0x400633
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x40062c..0x400631 (in sub_400602): cleanup
+
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
     /* no return */
@@ -28,6 +39,9 @@
 
 // sub_400643 @ 0x400643
 {
+    // landing pad of rethrow(int32_t) @ 0x4005f0
+    //   from 0x400636..0x40063b (in sub_400633): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -41,11 +55,20 @@
 
 // throw_other(int32_t) @ 0x400660
 {
+    // exception table (LSDA 0x400884): 4 of 6 call sites have a landing pad; #n = the selector value
+    //   0x40066d..0x400672 -> 0x40067d sub_40067d: catch (int32_t) #1
+    //   0x4006a1..0x4006ad (in sub_40067d) -> 0x400742 sub_400742: cleanup
+    //   0x4006ad..0x4006bf (in sub_40067d) -> 0x40072e sub_40072e: cleanup
+    //   0x4006df..0x400704 (in sub_40067d) -> 0x400706 sub_400706: cleanup
+
     return may_throw(arg1);
 }
 
 // sub_40067d @ 0x40067d
 {
+    // landing pad of throw_other(int32_t) @ 0x400660
+    //   from 0x40066d..0x400672: catch (int32_t) #1
+
     if (arg3 != 1)
     {
         void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
@@ -70,6 +93,9 @@
 
 // sub_400706 @ 0x400706
 {
+    // landing pad of throw_other(int32_t) @ 0x400660
+    //   from 0x4006df..0x400704 (in sub_40067d): cleanup
+
     if (*(uint8_t*)((char*)arg2 - 0x50) & 1)
         operator delete(*(uint64_t*)((char*)arg2 - 0x40));
 
@@ -87,6 +113,9 @@
 
 // sub_40072e @ 0x40072e
 {
+    // landing pad of throw_other(int32_t) @ 0x400660
+    //   from 0x4006ad..0x4006bf (in sub_40067d): cleanup
+
     if (*(uint8_t*)((char*)arg2 - 0x30) & 1)
         operator delete(*(uint64_t*)((char*)arg2 - 0x20));
 
@@ -99,6 +128,9 @@
 
 // sub_400742 @ 0x400742
 {
+    // landing pad of throw_other(int32_t) @ 0x400660
+    //   from 0x4006a1..0x4006ad (in sub_40067d): cleanup
+
     ___cxa_free_exception();
     ___cxa_end_catch();
     void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;

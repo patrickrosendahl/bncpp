@@ -1,5 +1,10 @@
 // catch_all(int32_t) @ 0x4005f8
 {
+    // exception table (LSDA 0x4007dc): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x40060c..0x400614 -> 0x400624 sub_400624: catch (...) #1
+    //   0x40063c..0x400648 (in sub_400624) -> 0x40065c sub_40065c: cleanup
+    //   0x400668..0x40066c (in sub_40065c) -> 0x40068c sub_40068c: catch (...) #1
+
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_14 = may_throw(arg1);
@@ -9,6 +14,9 @@
 
 // sub_400624 @ 0x400624
 {
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x40060c..0x400614: catch (...) #1
+
     int32_t x1;
     int32_t arg_c = x1;
     ___cxa_begin_catch(arg1);
@@ -21,6 +29,9 @@
 
 // sub_40065c @ 0x40065c
 {
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x40063c..0x400648 (in sub_400624): cleanup
+
     int32_t x1;
     int32_t arg_c = x1;
     ___cxa_end_catch();
@@ -41,6 +52,9 @@
 
 // sub_40068c @ 0x40068c
 {
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x400668..0x40066c (in sub_40065c): catch (...) #1
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -54,6 +68,9 @@
 
 // catch_type_then_all(int32_t) @ 0x4006a0
 {
+    // exception table (LSDA 0x400800): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4006b4..0x4006bc -> 0x4006cc sub_4006cc: catch (int32_t) #2, catch (...) #1
+
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_14 = may_throw(arg1);
@@ -63,6 +80,9 @@
 
 // sub_4006cc @ 0x4006cc
 {
+    // landing pad of catch_type_then_all(int32_t) @ 0x4006a0
+    //   from 0x4006b4..0x4006bc: catch (int32_t) #2, catch (...) #1
+
     if (arg2 == 2)
     {
         *(uint32_t*)((char*)arg3 - 4) = *(uint32_t*)___cxa_begin_catch(arg1);

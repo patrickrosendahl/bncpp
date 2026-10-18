@@ -67,6 +67,9 @@
 
 // make_fn<neg_obj()::$_0>(neg_obj()::$_0) @ 0x400860
 {
+    // exception table (LSDA 0x402858): 1 of 3 call sites have a landing pad
+    //   0x40087c..0x400881 -> 0x40088d sub_40088d: cleanup
+
     struct FnImpl<neg_obj()::$_0>* result = operator new(0x10);
     FnImpl<neg_obj()::$_0>::FnImpl(result, result);
     return result;
@@ -74,6 +77,9 @@
 
 // sub_40088d @ 0x40088d
 {
+    // landing pad of make_fn<neg_obj()::$_0>(neg_obj()::$_0) @ 0x400860
+    //   from 0x40087c..0x400881: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -90,6 +96,9 @@
 
 // make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0) @ 0x4008d0
 {
+    // exception table (LSDA 0x402868): 1 of 3 call sites have a landing pad
+    //   0x4008f8..0x4008fd -> 0x400909 sub_400909: cleanup
+
     struct FnImpl<add_obj(int32_t)::$_0>* result = operator new(0x10);
     int32_t entry_rdi;
     int32_t var_10 = entry_rdi;
@@ -99,6 +108,9 @@
 
 // sub_400909 @ 0x400909
 {
+    // landing pad of make_fn<add_obj(int32_t)::$_0>(add_obj(int32_t)::$_0) @ 0x4008d0
+    //   from 0x4008f8..0x4008fd: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -115,6 +127,9 @@
 
 // make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0) @ 0x400960
 {
+    // exception table (LSDA 0x402878): 1 of 3 call sites have a landing pad
+    //   0x40098c..0x400991 -> 0x40099d sub_40099d: cleanup
+
     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>* result = operator new(0x10);
     int64_t rdi;
     int64_t var_18 = rdi;
@@ -124,6 +139,9 @@
 
 // sub_40099d @ 0x40099d
 {
+    // landing pad of make_fn<clamp_obj(int32_t, int32_t)::$_0>(clamp_obj(int32_t, int32_t)::$_0) @ 0x400960
+    //   from 0x40098c..0x400991: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x28);
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
@@ -264,12 +282,20 @@
 
 // try_fail(int32_t) @ 0x400d00
 {
+    // exception table (LSDA 0x402888): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400d0e..0x400d13 -> 0x400d17 sub_400d17: catch (Err) #1
+    //   0x400d47..0x400d49 (in sub_400d17) -> 0x400d5e sub_400d5e: cleanup
+    //   0x400d6a..0x400d6f (in sub_400d5e) -> 0x400d91 sub_400d91: catch (...) #2
+
     fail(arg1);
     /* no return */
 }
 
 // sub_400d17 @ 0x400d17
 {
+    // landing pad of try_fail(int32_t) @ 0x400d00
+    //   from 0x400d0e..0x400d13: catch (Err) #1
+
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
 
@@ -289,6 +315,9 @@
 
 // sub_400d5e @ 0x400d5e
 {
+    // landing pad of try_fail(int32_t) @ 0x400d00
+    //   from 0x400d47..0x400d49 (in sub_400d17): cleanup
+
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
     ___cxa_end_catch();
@@ -303,6 +332,9 @@
 
 // sub_400d91 @ 0x400d91
 {
+    // landing pad of try_fail(int32_t) @ 0x400d00
+    //   from 0x400d6a..0x400d6f (in sub_400d5e): catch (...) #2
+
     ___clang_call_terminate(arg1);
     /* no return */
 }
@@ -672,6 +704,9 @@
 
 // std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x4016e0
 {
+    // exception table (LSDA 0x4028b4): 1 of 3 call sites have a landing pad
+    //   0x401710..0x401715 -> 0x401721 sub_401721: cleanup
+
     struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* result =
         operator new(0x10);
     std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](result,
@@ -681,6 +716,9 @@
 
 // sub_401721 @ 0x401721
 {
+    // landing pad of std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x4016e0
+    //   from 0x401710..0x401715: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -856,6 +894,9 @@
 
 // std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401b80
 {
+    // exception table (LSDA 0x4028c4): 1 of 3 call sites have a landing pad
+    //   0x401bb0..0x401bb5 -> 0x401bc1 sub_401bc1: cleanup
+
     struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* result =
         operator new(0x10);
     std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
@@ -865,6 +906,9 @@
 
 // sub_401bc1 @ 0x401bc1
 {
+    // landing pad of std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401b80
+    //   from 0x401bb0..0x401bb5: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -1025,6 +1069,9 @@
 
 // std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401fc0
 {
+    // exception table (LSDA 0x4028d4): 1 of 3 call sites have a landing pad
+    //   0x401ff0..0x401ff5 -> 0x402001 sub_402001: cleanup
+
     struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>
             *
         result = operator new(0x18);
@@ -1035,6 +1082,9 @@
 
 // sub_402001 @ 0x402001
 {
+    // landing pad of std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401fc0
+    //   from 0x401ff0..0x401ff5: cleanup
+
     void* rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
