@@ -8,6 +8,7 @@ join the names from the kernel symbols file, run the lazy matcher against the xn
 
   python3 -I tests/ref_kernel_linemap.py [--limit N] [--skip N] [--out MAP.json] [--quiet]
                                          [--holdout] [--no-anchors] [--no-propagate] [--only kp|pl]
+                                         [--no-exclude]
 Defaults read .scratch/linemap/kernel/kernel.features.jsonl and sample/kernel/… symbols against the xnu tree;
 --out writes the matched functions' line map (bncpp-37 format).
 """
@@ -25,6 +26,9 @@ from shared.srcindex import SourceTree  # noqa: E402
 FEATS = os.path.join(REPO, ".scratch", "linemap", "kernel", "kernel.features.jsonl")
 SYMBOLS = os.path.join(REPO, "sample", "kernel", "kernelcache.iphone10.symbols.txt")
 XNU = os.path.join(REPO, "sample", "kernel", "xnu-8796.141.3")
+# not in an arm64 kernel (bncpp-80): x86 code, and the user-space / build-host trees
+XNU_ARM64_EXCLUDE = ("*/i386/*", "*/x86_64/*", "*-x86_64.c", "tests/*", "tools/*", "libsyscall/*", "libkdd/*",
+                     "SETUP/*", "makedefs/*")
 KERNEL_START = 0xfffffff0071b4000      # __TEXT_EXEC: the kernel proper (xnu); below it: prelinked kexts
 
 
@@ -135,7 +139,7 @@ def agrees(name, sfunc):
 
 
 def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, holdout=False, anchors=True,
-        prop=True, only=None):
+        prop=True, only=None, exclude=XNU_ARM64_EXCLUDE):
     """phases: (1) named functions -> their source function by name (the seeds); (2) the rest by anchors
     (file-line / string / rare const; the slow part, --no-anchors skips it); (3) call-graph propagation from the
     matched pairs; (4) scores. --holdout seeds with half of the names and scores the other half: how well
@@ -146,7 +150,8 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
     seed_symbols = symbols
     if holdout:
         seed_symbols = {a: n for a, n in symbols.items() if not held_out(a)}
-    tree = SourceTree(xnu)
+    tree = SourceTree(xnu, exclude=exclude)
+    print("source files: %d (%d excluded)" % (len(tree.paths), tree.excluded))
     index = linematch.FileIndex(tree)
     t0 = time.time()
     names = linematch.NameIndex(tree)
@@ -298,6 +303,7 @@ if __name__ == "__main__":
     ap.add_argument("--no-anchors", action="store_true", help="skip the anchor match of unnamed functions")
     ap.add_argument("--no-propagate", action="store_true")
     ap.add_argument("--only", choices=("kp", "pl"), help="kernel proper / prelinked functions only")
+    ap.add_argument("--no-exclude", action="store_true", help="keep the x86 and user-space source files")
     args = ap.parse_args()
     run(args.feats, args.symbols, args.xnu, args.out, args.limit, args.skip, args.quiet, args.holdout,
-        not args.no_anchors, not args.no_propagate, args.only)
+        not args.no_anchors, not args.no_propagate, args.only, () if args.no_exclude else XNU_ARM64_EXCLUDE)

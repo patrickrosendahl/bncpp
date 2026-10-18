@@ -13,6 +13,7 @@ is not code of the function it sits in); #if branches are all read (the binary h
   idx = index_tree(root, exts)      -> {path: SourceFile}   (lazy per file through SourceTree)
 Pure Python, no Binary Ninja import.
 """
+import fnmatch
 import os
 import re
 
@@ -384,14 +385,22 @@ SOURCE_EXTS = (".c", ".cc", ".cpp", ".cxx", ".m", ".mm", ".h", ".hpp", ".s")
 class SourceTree:
     """the files of a source tree, indexed on first use; inverted indexes for the anchors over the files indexed"""
 
-    def __init__(self, root, exts=(".c", ".cc", ".cpp", ".cxx", ".m", ".mm")):
+    def __init__(self, root, exts=(".c", ".cc", ".cpp", ".cxx", ".m", ".mm"), exclude=()):
+        """exclude: fnmatch patterns on the path relative to the root ('*' crosses '/'), for files that cannot be
+        in the binary (other architectures, user-space tools): their tables and strings attract anchors"""
         self.root = os.path.abspath(root)
         self.paths = []
+        self.excluded = 0
         for d, dirs, files in os.walk(self.root):
             dirs[:] = sorted(x for x in dirs if not x.startswith("."))
             for f in sorted(files):
                 if f.endswith(exts):
-                    self.paths.append(os.path.join(d, f))
+                    path = os.path.join(d, f)
+                    rel = os.path.relpath(path, self.root)
+                    if any(fnmatch.fnmatchcase(rel, pat) for pat in exclude):
+                        self.excluded += 1
+                        continue
+                    self.paths.append(path)
         self._files = {}
 
     def file(self, path):
