@@ -9,8 +9,10 @@ cache (shared/bncache.py), section "callgraph".
 
 Addresses only: names change (renames), addresses do not. A function created or deleted since the cache was
 written is missing or stale -- delete the cache file to rebuild.
+A function whose analysis BN skipped (too large / too slow) lists no call sites; its edges are read from its basic
+blocks' instructions instead: direct calls, and jumps to another function's start (tail calls) -- v2.
 """
-VERSION = 1
+VERSION = 2
 
 
 def build(bv, limit=None, task=None):
@@ -23,6 +25,9 @@ def build(bv, limit=None, task=None):
                 return None
             if i % 1000 == 0:
                 task.progress = "call graph: %d / %d functions" % (i, len(funcs))
+        if f.analysis_skipped:
+            edges += _scan(bv, f)
+            continue
         for cs in f.call_sites:
             targets = bv.get_callees(cs.address, f)
             if targets:
@@ -30,6 +35,25 @@ def build(bv, limit=None, task=None):
             else:
                 edges.append((f.start, cs.address, None))
     return edges
+
+
+def _scan(bv, f):
+    """the edges of a function BN skipped, from its blocks' instruction info (no IL is built)"""
+    from binaryninja import BranchType
+    out = []
+    for bb in f.basic_blocks:
+        a = bb.start
+        while a < bb.end:
+            info = bv.arch.get_instruction_info(bv.read(a, bv.arch.max_instr_length), a)
+            if info is None or not info.length:
+                break
+            for b in info.branches:
+                if b.type == BranchType.CallDestination or (
+                        b.type == BranchType.UnconditionalBranch and b.target != f.start and
+                        bv.get_function_at(b.target) is not None):
+                    out.append((f.start, a, b.target))
+            a += info.length
+    return out
 
 
 def edges(bv, cache):
