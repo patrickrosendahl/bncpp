@@ -75,7 +75,17 @@
     // exception table (LSDA 0x40086c): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400774..0x400779 -> 0x40077b sub_40077b: catch (std::runtime_error) #1
 
-    return may_throw(arg1);
+    try
+    {
+        return may_throw(arg1);
+    }
+    catch (std::runtime_error)
+    {
+        void* rax = ___cxa_begin_catch(arg1);
+        _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
+        ___cxa_end_catch();
+        return 0xffffffff;
+    }
 }
 
 // sub_40077b @ 0x40077b

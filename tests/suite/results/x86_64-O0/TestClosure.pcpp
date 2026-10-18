@@ -287,7 +287,21 @@
     //   0x400d47..0x400d49 (in sub_400d17) -> 0x400d5e sub_400d5e: cleanup
     //   0x400d6a..0x400d6f (in sub_400d5e) -> 0x400d91 sub_400d91: catch (...) #2
 
-    fail(arg1);
+    try
+    {
+        fail(arg1);
+    }
+    catch (Err)
+    {
+        *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
+        *(uint64_t*)((char*)arg5 - 0x30) =
+            (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))();
+        *(uint64_t*)((char*)arg5 - 8) = *(uint64_t*)((char*)arg5 - 0x30);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400d7e(arg5);
+    }
     /* no return */
 }
 

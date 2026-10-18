@@ -290,7 +290,18 @@
     //   0x400e94..0x400e9c (in sub_400e5c) -> 0x400eb0 sub_400eb0: cleanup
     //   0x400ebc..0x400ec0 (in sub_400eb0) -> 0x400ef0 sub_400ef0: catch (...) #2
 
-    fail(arg1);
+    try
+    {
+        fail(arg1);
+    }
+    catch (Err)
+    {
+        *(uint64_t*)((char*)arg3 - 8) =
+            (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400ed8(arg3);
+    }
     /* no return */
 }
 

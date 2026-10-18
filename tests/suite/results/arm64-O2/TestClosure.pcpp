@@ -488,7 +488,16 @@
     //   0x400cf4..0x400cf8 (in sub_400ce0) -> 0x400d1c sub_400d1c: cleanup
     //   0x400d20..0x400d24 (in sub_400d1c) -> 0x400d2c sub_400d2c: catch (...) #2
 
-    fail(arg1);
+    try
+    {
+        fail(arg1);
+    }
+    catch (Err)
+    {
+        int64_t result = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+        ___cxa_end_catch();
+        return result;
+    }
     /* no return */
 }
 

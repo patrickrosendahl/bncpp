@@ -57,20 +57,26 @@ def clauses_text(cs):
     return ", ".join(clause_text(c) for c in cs.clauses) if cs.clauses else "cleanup"
 
 
+def _containing(bv, addr):
+    """the function containing addr whose start is nearest below it (BN lists them in no fixed order)"""
+    funcs = [f for f in bv.get_functions_containing(addr) if f.start <= addr]
+    return max(funcs, key=lambda f: f.start) if funcs else None
+
+
 def _name(bv, addr):
     f = bv.get_function_at(addr)
     if f is not None:
         return f.symbol.full_name
-    inside = bv.get_functions_containing(addr)
-    return "(inside %s)" % inside[0].symbol.full_name if inside else "(in no function)"
+    inside = _containing(bv, addr)
+    return "(inside %s)" % inside.symbol.full_name if inside else "(in no function)"
 
 
 def _where(bv, cs, owner):
     """' (in f)' when the call site is not in the function at owner (a handler BN split off, a shared tail)"""
-    funcs = bv.get_functions_containing(cs.start)
-    if not funcs or any(f.start == owner for f in funcs):
+    if any(f.start == owner for f in bv.get_functions_containing(cs.start)):
         return ""
-    return " (in %s)" % funcs[0].symbol.full_name
+    f = _containing(bv, cs.start)
+    return " (in %s)" % f.symbol.full_name if f else ""
 
 
 def lines(bv, start):

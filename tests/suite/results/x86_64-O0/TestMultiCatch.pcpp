@@ -8,7 +8,31 @@
 
     int64_t rbp;
     int64_t var_8 = rbp;
-    int32_t var_c = may_throw(arg1);
+    try
+    {
+        int32_t var_c = may_throw(arg1);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4006cc(arg5);
+    }
+    catch (int32_t)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint32_t*)((char*)arg5 - 0x18) =
+            *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("int: %d\n", (uint64_t)*(uint32_t*)((char*)arg5 - 0x18));
+        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4006cc(arg5);
+    }
     /* tailcall */
     return sub_4006cc(&var_8, var_8);
 }
@@ -107,7 +131,30 @@
 
     int64_t rbp;
     int64_t var_8 = rbp;
-    int32_t var_c = may_throw(arg1);
+    try
+    {
+        int32_t var_c = may_throw(arg1);
+    }
+    catch (std::invalid_argument)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4007d8(arg5);
+    }
+    catch (std::exception)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4007d8(arg5);
+    }
     /* tailcall */
     return sub_4007d8(&var_8, var_8);
 }

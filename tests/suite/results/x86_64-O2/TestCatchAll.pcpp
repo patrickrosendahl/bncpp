@@ -5,7 +5,18 @@
     //   0x40060a..0x400616 (in sub_400602) -> 0x400622 sub_400622: cleanup
     //   0x400625..0x40062a (in sub_400622) -> 0x400632 sub_400632: catch (...) #1
 
-    may_throw(arg1);
+    try
+    {
+        may_throw(arg1);
+    }
+    catch (...)
+    {
+        ___cxa_begin_catch(arg1);
+        log_line("something");
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4005fb();
+    }
     int64_t entry_rbx;
     int64_t entry_rbp;
     /* tailcall */
@@ -60,7 +71,25 @@
     // exception table (LSDA 0x40072c): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400656..0x40065b -> 0x400662 sub_400662: catch (int32_t) #2, catch (...) #1
 
-    may_throw(arg1);
+    try
+    {
+        may_throw(arg1);
+    }
+    catch (int32_t)
+    {
+        void* rax = ___cxa_begin_catch(arg4);
+        *(uint32_t*)rax;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_40065b();
+    }
+    catch (...)
+    {
+        void* rax = ___cxa_begin_catch(arg4);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_40065b();
+    }
     int64_t entry_rbx;
     int64_t entry_rbp;
     /* tailcall */

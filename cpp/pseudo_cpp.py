@@ -3,13 +3,19 @@
 Seed: every statement is rendered by Binary Ninja's built-in Pseudo C (BASE_LANGUAGE), so the view is a
 pass-through. C++ rendering (try/catch from exception tables, readability passes) replaces that statement
 by statement; anything it cannot render still falls back to emit_error (HLIL as a comment).
+
+try/catch (bncpp-6, planned in cpp/eh_render.py): in a function with try regions the root block is printed
+statement by statement, the statements of a region wrapped in `try { }` and followed by one `catch (T) { }` per
+clause with the handler's code from the landing-pad function. The plan is made before anything is emitted; if
+it fails, the function is printed as Pseudo C prints it.
 """
-from binaryninja import (BraceRequirement, LanguageRepresentationFunction, LanguageRepresentationFunctionType,
-                         OperatorPrecedence)
+from binaryninja import (BraceRequirement, LanguageRepresentationFunction,
+                         LanguageRepresentationFunctionType, OperatorPrecedence, log_warn)
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TokenMixin
-from . import eh_comments
+from . import eh_comments, eh_render
+from ..shared import regions as _regions
 
 P = OperatorPrecedence
 
@@ -60,14 +66,120 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
     def perform_get_expr_text(self, instr, tokens, settings, precedence=P.TopLevelOperatorPrecedence,
                               statement=False):
         try:
-            self.emit_base(instr, tokens, settings, precedence, statement)
+            items = self.try_plan(instr) if statement else None
+        except Exception as ex:
+            log_warn("%s: try/catch plan failed at %#x: %r" % (self.language_label, instr.address, ex))
+            items = None
+        try:
+            if items:
+                self.emit_items(items, tokens)
+            else:
+                self.emit_base(instr, tokens, settings, precedence, statement)
         except Exception as ex:
             self.emit_error(instr, ex, tokens)
+
+    # --- try/catch (bncpp-6) -------------------------------------------------------------------------------
+
+    def try_plan(self, instr):
+        """the root block as [("stmt", s) | ("try", Region, items, handlers)], or None without a placed region"""
+        hlil = self.function.hlil
+        if hlil is None or hlil.root is None or instr.expr_index != hlil.root.expr_index:
+            return None
+        regions = eh_render.regions(self.function)
+        if not regions:
+            return None
+        items = self.plan_stmts(eh_render.body(instr), regions)  # a one-statement function's root is that statement
+        return items if any(it[0] == "try" for it in items) else None
+
+    def plan_stmts(self, stmts, regions):
+        pcs = [eh_render.call_addrs(s) or None for s in stmts]
+        by_range = {(r.start, r.end): r for r in regions}
+        runs = {i: (i, j, by_range[(g[0], g[1])])
+                for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in regions])}
+        items, k = [], 0
+        while k < len(stmts):
+            if k not in runs:
+                items.append(("stmt", stmts[k]))
+                k += 1
+                continue
+            i, j, r = runs[k]
+            inner = [x for x in regions if x is not r and r.start <= x.start and x.end <= r.end]
+            items.append(("try", r, self.plan_stmts(stmts[i:j + 1], inner), self.plan_handlers(r)))
+            k = j + 1
+        return items
+
+    def plan_handlers(self, region):
+        """per clause (Clause, pad function | None, [statement], note | None)"""
+        bv = self.function.view
+        out, shown = [], set()
+        for clause, pad in region.clauses:
+            pf = bv.get_function_at(pad)
+            if pf is None:
+                out.append((clause, None, [], "landing pad %#x is in no function (command: Create landing-pad "
+                                                "functions)" % pad))
+                continue
+            on_pad = max(sum(c.kind == c.CATCH for c in cs.clauses) for cs in region.sites if cs.landing_pad == pad)
+            stmts = eh_render.specialize(pf, clause.type_index, on_pad)
+            if stmts is not None:
+                out.append((clause, pf, stmts, None))
+            elif pad in shown:
+                out.append((clause, pf, [], "selector #%d: the landing pad above" % clause.type_index))
+            else:
+                shown.add(pad)
+                out.append((clause, pf, list(eh_render.body(pf.hlil.root)) if pf.hlil is not None else [],
+                            "the whole landing pad %s: its dispatch on the selector was not found"
+                            % pf.symbol.full_name))
+        return out
+
+    def emit_items(self, items, tokens):
+        for it in items:
+            if it[0] == "stmt":
+                self.emit_base(it[1], tokens, None, P.TopLevelOperatorPrecedence, True)
+            else:
+                self.emit_try(it, tokens)
+
+    def emit_try(self, item, tokens):
+        _, _region, items, handlers = item
+        self.kw(tokens, "try")
+        self.open_block(tokens)
+        self.emit_items(items, tokens)
+        self.close_block(tokens)
+        for clause, pf, stmts, note in handlers:
+            self.kw(tokens, "catch")
+            self.txt(tokens, " ")
+            tokens.append_open_paren()
+            self.type_tok(tokens, eh_comments.type_name(clause.type))
+            tokens.append_close_paren()
+            self.open_block(tokens)
+            if note:
+                self.note(tokens, "// " + note)
+                tokens.new_line()
+            if stmts:
+                lr = pf.language_representation(BASE_LANGUAGE)
+                for s in stmts:
+                    self.emit_lines(lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True), tokens, True)
+            self.close_block(tokens)
+
+    def open_block(self, tokens):
+        """a brace on its own line, as Pseudo C sets an if's (the emitter's scopes print none here)"""
+        tokens.new_line()
+        tokens.append_open_brace()
+        tokens.new_line()
+        tokens.increase_indent()
+
+    def close_block(self, tokens):
+        tokens.decrease_indent()
+        tokens.append_close_brace()
+        tokens.new_line()
+
+    # --- the built-in language -----------------------------------------------------------------------------
 
     def emit_base(self, instr, tokens, settings, precedence, statement):
         """instr as the built-in language prints it"""
         # BN passes settings with no option set here; handing them on drops Pseudo C's type casts
-        lines = self.base().get_expr_text(instr, None, precedence, statement)
+        self.emit_lines(self.base().get_expr_text(instr, None, precedence, statement), tokens, statement)
+
+    def emit_lines(self, lines, tokens, statement):
         for i, line in enumerate(lines):
             if i:
                 tokens.new_line()

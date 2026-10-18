@@ -5,7 +5,18 @@
     //   0x40063f..0x400654 (in sub_40060a) -> 0x400656 sub_400656: cleanup
     //   0x400662..0x400667 (in sub_400656) -> 0x40067d sub_40067d: catch (...) #2
 
-    return (uint64_t)may_throw(arg1);
+    try
+    {
+        return (uint64_t)may_throw(arg1);
+    }
+    catch (std::exception)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("rethrowing %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        ___cxa_rethrow();
+        /* no return */
+    }
 }
 
 // sub_40060a @ 0x40060a
@@ -64,7 +75,26 @@
     //   0x400707..0x40071b (in sub_4006bd) -> 0x400757 sub_400757: cleanup
     //   0x40071d..0x400747 (in sub_4006bd) -> 0x400765 sub_400765: cleanup
 
-    return (uint64_t)may_throw(arg1);
+    try
+    {
+        return (uint64_t)may_throw(arg1);
+    }
+    catch (int32_t)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint32_t*)((char*)arg5 - 0x18) =
+            *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        *(uint8_t*)((char*)arg5 - 0x49) = 1;
+        *(uint64_t*)((char*)arg5 - 0x58) = ___cxa_allocate_exception(0x10);
+        std::to_string((char*)arg5 - 0x48, *(uint32_t*)((char*)arg5 - 0x18));
+        std::operator+[abi:ne200100]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
+        std::runtime_error::runtime_error(*(uint64_t*)((char*)arg5 - 0x58), (char*)arg5 - 0x30);
+        void* thrown_exception = *(uint64_t*)((char*)arg5 - 0x58);
+        *(uint8_t*)((char*)arg5 - 0x49) = 0;
+        ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
+            std::runtime_error::~runtime_error);
+        /* no return */
+    }
 }
 
 // sub_4006bd @ 0x4006bd

@@ -3,13 +3,24 @@
     // exception table (LSDA 0x40078c): 3 of 6 call sites have a landing pad; #n = the selector value
     //   0x400624..0x400634 -> 0x400678 sub_400678: catch (std::runtime_error) #1, cleanup, cleanup
     //   0x400634..0x40063c -> 0x400664 sub_400664: catch (std::runtime_error) #1, cleanup, cleanup
-    //   0x4006ac..0x4006b0 (in sub_400664) -> 0x4006b8 sub_4006b8: cleanup
+    //   0x4006ac..0x4006b0 (in sub_400678) -> 0x4006b8 sub_4006b8: cleanup
 
     struct Guard var_28;
     Guard::Guard(&var_28, "outer");
     struct Guard var_30;
-    Guard::Guard(&var_30, "inner");
-    int64_t x0_3 = may_throw(arg1);
+    try
+    {
+        Guard::Guard(&var_30, "inner");
+        int64_t x0_3 = may_throw(arg1);
+    }
+    catch (std::runtime_error)
+    {
+        int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+        _printf("caught %s\n");
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400648(0xfffffffc);
+    }
     Guard::~Guard(&var_30);
     int64_t entry_x19;
     int64_t entry_x20;
@@ -71,7 +82,7 @@
 // sub_4006b8 @ 0x4006b8
 {
     // landing pad of cleanup_and_catch(int32_t) @ 0x400600
-    //   from 0x4006ac..0x4006b0 (in sub_400664): cleanup
+    //   from 0x4006ac..0x4006b0 (in sub_400678): cleanup
 
     struct Guard arg_18;
     Guard::~Guard(&arg_18);

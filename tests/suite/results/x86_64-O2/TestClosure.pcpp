@@ -479,7 +479,17 @@
     //   0x400d90..0x400d96 (in sub_400d7d) -> 0x400da8 sub_400da8: cleanup
     //   0x400dab..0x400db0 (in sub_400da8) -> 0x400db8 sub_400db8: catch (...) #2
 
-    fail(arg1);
+    try
+    {
+        fail(arg1);
+    }
+    catch (Err)
+    {
+        void* rax = ___cxa_begin_catch(arg4);
+        int64_t result = (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax);
+        ___cxa_end_catch();
+        return result;
+    }
     /* no return */
 }
 

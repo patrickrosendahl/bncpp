@@ -4,7 +4,27 @@
     //   0x4005f7..0x4005fc -> 0x400601 sub_400601: catch (int32_t) #2, catch (std::runtime_error) #1
     //   0x40062a..0x400631 (in sub_400601) -> 0x40063c sub_40063c: catch (std::runtime_error) #1, cleanup, cleanup
 
-    may_throw(arg1);
+    try
+    {
+        may_throw(arg1);
+    }
+    catch (int32_t)
+    {
+        int32_t rbx_1 = *(uint32_t*)___cxa_begin_catch(arg4);
+        _printf("inner int %d\n", (uint64_t)rbx_1);
+        may_throw(rbx_1 + 0xa);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4005fc();
+    }
+    catch (std::runtime_error)
+    {
+        void* rax_4 = ___cxa_begin_catch(arg4);
+        _printf("outer %s\n", (*(uint64_t*)(*(uint64_t*)rax_4 + 0x10))(rax_4));
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4005fc();
+    }
     int64_t entry_rbp;
     int64_t entry_r14;
     /* tailcall */
@@ -71,19 +91,35 @@
 
     int64_t rax;
     int64_t var_28 = rax;
-
     if (arg1 <= 0)
         return 0;
-
     int32_t rbx = 0;
     int32_t r15_1 = 0;
-
-    do
+    try
     {
-        rbx += may_throw(r15_1);
-        r15_1 += 1;
-    } while (arg1 != r15_1);
+        do
+        {
+            rbx += may_throw(r15_1);
+            r15_1 += 1;
+        } while (arg1 != r15_1);
+    }
+    catch (std::runtime_error)
+    {
+        ___cxa_begin_catch(arg4);
+        ___cxa_end_catch();
+        int32_t rax = -1;
+        while (true)
+        {
+            arg5 += rax;
+            arg7 += 1;
 
+            if (arg6 == arg7)
+                break;
+
+            rax = may_throw(arg7);
+        }
+        return (uint64_t)arg5;
+    }
     return (uint64_t)rbx;
 }
 

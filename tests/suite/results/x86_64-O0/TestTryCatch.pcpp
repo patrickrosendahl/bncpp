@@ -97,7 +97,20 @@
 
     int64_t rbp;
     int64_t var_8 = rbp;
-    int32_t var_c = may_throw(arg1);
+    try
+    {
+        int32_t var_c = may_throw(arg1);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400888(arg5);
+    }
     /* tailcall */
     return sub_400888(&var_8, var_8);
 }

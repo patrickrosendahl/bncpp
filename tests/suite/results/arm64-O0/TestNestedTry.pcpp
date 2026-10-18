@@ -8,7 +8,34 @@
 
     int64_t fp;
     int64_t var_10 = fp;
-    int32_t var_14 = may_throw(arg1);
+    try
+    {
+        int32_t var_14 = may_throw(arg1);
+    }
+    catch (int32_t)
+    {
+        *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+        uint64_t arg_0;
+        int32_t x8_3 = *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+        arg_0 = (uint64_t)x8_3;
+        _printf("inner int %d\n");
+        *(uint32_t*)((char*)arg3 - 4) = may_throw(x8_3 + 0xa);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400714(arg3);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+        uint64_t arg_0;
+        arg_0 = (*
+            (uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10)) + 0x10))();
+        _printf("outer %s\n");
+        *(uint32_t*)((char*)arg3 - 4) = 0xfffffffb;
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400714(arg3);
+    }
     /* tailcall */
     return sub_400714(&var_10, var_10);
 }
@@ -113,10 +140,28 @@
     //   0x400774..0x40077c -> 0x400794 sub_400794: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
+    try
+    {
+        for (int32_t i = 0; i < arg1; i += 1)
+            var_18 += may_throw(i);
+    }
+    catch (std::runtime_error)
+    {
+        void* arg_8 = ___cxa_begin_catch(arg1);
+        *(uint32_t*)((char*)arg3 - 8) -= 1;
+        ___cxa_end_catch();
+        while (true)
+        {
+            *(uint32_t*)((char*)arg3 - 0xc) += 1;
 
-    for (int32_t i = 0; i < arg1; i += 1)
-        var_18 += may_throw(i);
+            if (*(uint32_t*)((char*)arg3 - 0xc) >= *(uint32_t*)((char*)arg3 - 4))
+                break;
 
+            int32_t x0_5 = may_throw(*(uint32_t*)((char*)arg3 - 0xc));
+            *(uint32_t*)((char*)arg3 - 8) += x0_5;
+        }
+        return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
+    }
     return (uint64_t)var_18;
 }
 

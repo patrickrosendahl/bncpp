@@ -12,8 +12,17 @@
     struct Guard var_18;
     Guard::Guard(&var_18, "outer");
     struct Guard var_20;
-    Guard::Guard(&var_20, "inner");
-    int32_t var_c = may_throw(arg1);
+    try
+    {
+        Guard::Guard(&var_20, "inner");
+        int32_t var_c = may_throw(arg1);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg5 - 0x20) = arg4;
+        /* tailcall */
+        return sub_400668(arg5);
+    }
     int32_t var_30 = 1;
     Guard::~Guard(&var_20);
     /* tailcall */

@@ -3,12 +3,35 @@
     // exception table (LSDA 0x400808): 4 of 8 call sites have a landing pad; #n = the selector value
     //   0x4005fe..0x400603 -> 0x400613 sub_400613: catch (int32_t) #2, catch (std::runtime_error) #1
     //   0x40063c..0x400657 (in sub_400613) -> 0x400669 sub_400669: catch (std::runtime_error) #1, cleanup, cleanup
-    //   0x4006a3..0x4006b1 (in sub_400613) -> 0x4006c1 sub_4006c1: cleanup
+    //   0x4006a3..0x4006b1 (in sub_400669) -> 0x4006c1 sub_4006c1: cleanup
     //   0x4006cd..0x4006d2 (in sub_4006c1) -> 0x4006e8 sub_4006e8: catch (...) #3
 
     int64_t rbp;
     int64_t var_8 = rbp;
-    int32_t var_c = may_throw(arg1);
+    try
+    {
+        int32_t var_c = may_throw(arg1);
+    }
+    catch (int32_t)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint32_t*)((char*)arg5 - 0x18) =
+            *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("inner int %d\n", (uint64_t)*(uint32_t*)((char*)arg5 - 0x18));
+        *(uint32_t*)((char*)arg5 - 0x28) = may_throw(*(uint32_t*)((char*)arg5 - 0x18) + 0xa);
+        *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x28);
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_4006d6(arg5);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+        _printf("outer %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        /* tailcall */
+        return sub_4006b3(arg5);
+    }
     /* tailcall */
     return sub_4006d6(&var_8, var_8);
 }
@@ -73,7 +96,7 @@
 // sub_4006c1 @ 0x4006c1
 {
     // landing pad of nested_try(int32_t) @ 0x4005f0
-    //   from 0x4006a3..0x4006b1 (in sub_400613): cleanup
+    //   from 0x4006a3..0x4006b1 (in sub_400669): cleanup
 
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
@@ -116,10 +139,29 @@
     //   0x400724..0x400729 -> 0x400739 sub_400739: catch (std::runtime_error) #1
 
     int32_t var_10 = 0;
+    try
+    {
+        for (int32_t i = 0; i < arg1; i += 1)
+            var_10 += may_throw(i);
+    }
+    catch (std::runtime_error)
+    {
+        *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+        *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
+        *(uint32_t*)((char*)arg5 - 8) -= 1;
+        ___cxa_end_catch();
+        while (true)
+        {
+            *(uint32_t*)((char*)arg5 - 0xc) += 1;
 
-    for (int32_t i = 0; i < arg1; i += 1)
-        var_10 += may_throw(i);
+            if (*(uint32_t*)((char*)arg5 - 0xc) >= *(uint32_t*)((char*)arg5 - 4))
+                break;
 
+            *(uint32_t*)((char*)arg5 - 0x2c) = may_throw(*(uint32_t*)((char*)arg5 - 0xc));
+            *(uint32_t*)((char*)arg5 - 8) += *(uint32_t*)((char*)arg5 - 0x2c);
+        }
+        return (uint64_t)*(uint32_t*)((char*)arg5 - 8);
+    }
     return (uint64_t)var_10;
 }
 
