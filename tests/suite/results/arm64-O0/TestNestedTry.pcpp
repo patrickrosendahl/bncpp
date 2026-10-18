@@ -134,25 +134,17 @@
     //   0x400774..0x40077c -> 0x400794 sub_400794: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
-    try
+
+    for (int32_t i = 0; i < arg1; i += 1)
     {
-        for (int32_t i = 0; i < arg1; i += 1)
-            var_18 += may_throw(i);
-    }
-    catch (std::runtime_error& e)
-    {
-        *(uint32_t*)((char*)arg3 - 8) -= 1;
-        while (true)
+        try
         {
-            *(uint32_t*)((char*)arg3 - 0xc) += 1;
-
-            if (*(uint32_t*)((char*)arg3 - 0xc) >= *(uint32_t*)((char*)arg3 - 4))
-                break;
-
-            int32_t x0_5 = may_throw(*(uint32_t*)((char*)arg3 - 0xc));
-            *(uint32_t*)((char*)arg3 - 8) += x0_5;
+            var_18 += may_throw(i);
         }
-        return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
+        catch (std::runtime_error& e)
+        {
+            *(uint32_t*)((char*)arg3 - 8) -= 1;
+        }
     }
     return (uint64_t)var_18;
 }

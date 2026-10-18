@@ -17,6 +17,8 @@ in a return / tail call / no-return are dead for n, copies of the selector (a -O
 or into a variable it then tests) are left out. Joins, nested tests and the no-match path (resume unwinding)
 fall out of that. A pad serving several clauses without any test on the selector is not split (None).
 """
+import re as _re
+
 from binaryninja import HighLevelILOperation, VariableSourceType
 
 from ..shared.hlil import walk
@@ -32,6 +34,7 @@ _TERMINATORS = (Op.HLIL_RET, Op.HLIL_TAILCALL, Op.HLIL_NORET, Op.HLIL_UNREACHABL
 # a call in a try is never a tail call (it needs its landing pad): tail calls are no evidence of a region
 _CALLS = (Op.HLIL_CALL, Op.HLIL_CALL_SSA)
 _WRAPS = (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART)
+LOOPS = (Op.HLIL_WHILE, Op.HLIL_DO_WHILE, Op.HLIL_FOR)
 
 
 class Region:
@@ -173,19 +176,43 @@ class _Holder:
         return lambda n: (n == k) == eq
 
 
-def specialize(pad_func, n, clauses_on_pad):
-    """the statements of pad_func's handler for selector value n: [HLIL statement], or None where the pad
-    serves several clauses but has no test on the selector (or no HLIL)"""
-    hlil = pad_func.hlil
+class Handler:
+    """a clause's handler code: stmts (the live statements) and cont, the address where it goes on in the owner's
+    own code (None: it returns, tail-calls or does not return)"""
+
+    def __init__(self, stmts, cont):
+        self.stmts, self.cont = stmts, cont
+
+
+def specialize(pad_func, n, clauses_on_pad, owner=None):
+    """pad_func's handler for selector value n (a Handler), or None where the pad serves several clauses but has
+    no test on the selector (or no HLIL). With owner, the handler ends where the pad's code runs on into a basic
+    block of owner: BN follows the jump back from the catch body into the owner and copies the owner's code from
+    there (the rest of a loop around the try) into the pad function -- that is the code after the try. A tail
+    call into code that still dispatches or catches (a cleanup pad jumping to the shared dispatch, a catch body
+    BN split off) is followed (bncpp-64)."""
+    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG)), 0)
+    if r is None:
+        return None
+    stmts, cont, tests = r
+    if not tests and clauses_on_pad > 1:
+        return None
+    return Handler(stmts, cont)
+
+
+def _specialize(func, n, owner, sel, depth):
+    """(live statements, continuation | None, selector tests resolved) of func with the selector known to sel"""
+    hlil = func.hlil
     if hlil is None or hlil.root is None:
         return None
-    sel = _Holder(param_vars(pad_func, SELECTOR_REG))
-    out = []
-    tests = [0]
+    out, cont, tests = [], [], [0]
 
     def visit(stmts):
-        """append the live statements; True if the path ended (return, tail call, no return)"""
+        """append the live statements; True if the path ended (return, tail call, no return, the owner's code)"""
         for s in stmts:
+            if owner is not None and owner.get_basic_block_at(s.address) is not None:
+                cont.append(s.address)
+                return True
             if sel.copy(s):
                 continue
             if s.operation == Op.HLIL_IF:
@@ -195,6 +222,13 @@ def specialize(pad_func, n, clauses_on_pad):
                     if visit(body(s.true if t(n) else s.false)):
                         return True
                     continue
+            if s.operation == Op.HLIL_TAILCALL and depth < 3:
+                f = _follow(func, s, n, owner, sel, depth)
+                if f is not None:
+                    out.extend(f[0])
+                    cont.extend([f[1]] if f[1] is not None else [])
+                    tests[0] += f[2]
+                    return True
             if s.operation != Op.HLIL_NOP:  # Pseudo C leaves them out of a block too
                 out.append(s)
             if s.operation in _TERMINATORS:
@@ -202,9 +236,35 @@ def specialize(pad_func, n, clauses_on_pad):
         return False
 
     visit(body(hlil.root))
-    if not tests[0] and clauses_on_pad > 1:
+    return out, (cont[0] if cont else None), tests[0]
+
+
+def _follow(func, call, n, owner, sel, depth):
+    """_specialize of the function a handler tail-calls, if it is handler code: it tests the selector or calls
+    begin/end_catch. The selector's holders carry over by argument position (a -O0 pad passes its frame pointer:
+    the slot `(char*)arg5 - 0x24` is `(char*)arg1 - 0x24` in the callee)"""
+    if call.dest.operation != Op.HLIL_CONST_PTR:
         return None
-    return out
+    target = func.view.get_function_at(call.dest.constant)
+    if target is None or target.start == func.start or (owner is not None and target.start == owner.start):
+        return None
+    params = list(target.parameter_vars)
+    seeded = _Holder(param_vars(target, SELECTOR_REG))
+    rename = {}
+    for i, arg in enumerate(call.params):
+        arg = _strip(arg)
+        if arg.operation == Op.HLIL_VAR and i < len(params):
+            rename[arg.var.name] = params[i].name
+            if arg.var in sel.vars:
+                seeded.vars.add(params[i])
+    for m in sel.mem:
+        seeded.mem.add(_re.sub(r"\b\w+\b", lambda w: rename.get(w.group(0), w.group(0)), m))
+    r = _specialize(target, n, owner, seeded, depth + 1)
+    if r is None:
+        return None
+    if r[2] or any(callee(i) in (_BEGIN, _END) for st in r[0] for i in walk(st)):
+        return r
+    return None
 
 
 # --- EH plumbing in a catch body (bncpp-7) ------------------------------------------------------------------------
@@ -282,3 +342,20 @@ def plumbing(pad_func, stmts, type_name):
             i.operation == Op.HLIL_VAR and i.var == s.dest for o in out if o is not s for i in walk(o))]
         out = [s for s in out if all(s is not u for u in unused)]
     return Plumbing(out, rethrow, names)
+
+
+def loop_for(stmts, region, cont):
+    """the index of the loop in stmts the region's try sits inside (bncpp-64), or None: every call of the block in
+    the region's range is in that loop, and so is the handler's continuation -- after the catch, the loop goes on"""
+    if cont is None:
+        return None
+    inside = [a for s in stmts for a in call_addrs(s) if region.start <= a < region.end]
+    if not inside:
+        return None
+    for k, s in enumerate(stmts):
+        if s.operation not in LOOPS:
+            continue
+        addrs = [i.address for i in walk(s)]
+        if min(addrs) <= cont <= max(addrs) and set(inside) <= set(call_addrs(s)):
+            return k
+    return None

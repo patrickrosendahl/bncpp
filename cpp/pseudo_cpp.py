@@ -16,6 +16,7 @@ from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render
 from ..shared import regions as _regions
+from ..shared.hlil import walk
 
 P = OperatorPrecedence
 _DEREF_CAST = __import__("re").compile(r"^\*\s*\([\w:<> ]+\*\)$")  # '*(uint32_t*)' before a begin_catch
@@ -82,72 +83,154 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
     # --- try/catch (bncpp-6) -------------------------------------------------------------------------------
 
     def try_plan(self, instr):
-        """the root block as [("stmt", s) | ("try", Region, items, handlers)], or None without a placed region"""
+        """the root block as plan items (plan_list), or None without a placed region"""
         hlil = self.function.hlil
         if hlil is None or hlil.root is None or instr.expr_index != hlil.root.expr_index:
             return None
         regions = eh_render.regions(self.function)
         if not regions:
             return None
-        items = self.plan_stmts(eh_render.body(instr), regions)  # a one-statement function's root is that statement
-        return items if any(it[0] == "try" for it in items) else None
+        self._handlers = {id(r): self.plan_handlers(r) for r in regions}
+        self._in_loop = set()  # regions placed inside a loop (their handlers end at the continuation)
+        items = self.plan_block(instr, regions)  # a one-statement function's root is that statement
+        return items if _has_try(items) else None
 
-    def plan_stmts(self, stmts, regions):
-        pcs = [eh_render.call_addrs(s) or None for s in stmts]
-        by_range = {(r.start, r.end): r for r in regions}
+    def stmt_lines(self, block):
+        """(statements of block, per statement Pseudo C's lines of it as [(tokens, instr index)]); a blank line goes
+        with the statement before it, as Pseudo C prints the whole block"""
+        stmts = eh_render.body(block)
+        owner_of = {}
+        for k, st in enumerate(stmts):
+            for i in walk(st):
+                owner_of.setdefault(i.instr_index, k)
+        groups, cur = [[] for _ in stmts], 0
+        for line in self.base().get_expr_text(block, None, P.TopLevelOperatorPrecedence, True):
+            idx = line.il_instruction.instr_index if line.il_instruction is not None else None
+            cur = max(cur, owner_of.get(idx, cur))
+            groups[cur].append((list(line.tokens), idx))
+        return stmts, groups
+
+    def plan_block(self, block, regions):
+        stmts, groups = self.stmt_lines(block)
+        return self.plan_list(stmts, groups, regions)
+
+    def plan_list(self, stmts, groups, regions):
+        """[("stmt", lines) | ("loop", header, items, trailer) | ("try", items, handlers, blank after)]"""
+        loops, rest = {}, []
+        for r in regions:
+            k = eh_render.loop_for(stmts, r, self.cont(r))
+            if k is not None:
+                loops.setdefault(k, []).append(r)
+                self._in_loop.add(id(r))
+            else:
+                rest.append(r)
+        pcs = [eh_render.call_addrs(st) or None for st in stmts]
+        by_range = {(r.start, r.end): r for r in rest}
         runs = {i: (i, j, by_range[(g[0], g[1])])
-                for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in regions])}
+                for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in rest])}
         items, k = [], 0
         while k < len(stmts):
             if k not in runs:
-                items.append(("stmt", stmts[k]))
+                items.append(self.plan_stmt(stmts[k], groups[k], loops.get(k)))
                 k += 1
                 continue
             i, j, r = runs[k]
             inner = [x for x in regions if x is not r and r.start <= x.start and x.end <= r.end]
-            items.append(("try", r, self.plan_stmts(stmts[i:j + 1], inner), self.plan_handlers(r)))
+            sub = groups[i:j + 1]
+            last = list(sub[-1])
+            blank = False
+            while last and not last[-1][0]:  # the blank line after the run goes after the catch
+                last.pop()
+                blank = True
+            handlers = [(c, pf, pl[0 if id(r) in self._in_loop else 1] if isinstance(pl, tuple) else pl, note, cont)
+                        for c, pf, pl, note, cont in self._handlers[id(r)]]
+            items.append(("try", self.plan_list(stmts[i:j + 1], sub[:-1] + [last], inner), handlers, blank))
             k = j + 1
         return items
 
+    def plan_stmt(self, st, lines, loop_regions):
+        if not loop_regions:
+            return ("stmt", lines)
+        inner = {i.instr_index for b in eh_render.body(st.body) for i in walk(b)}
+        at = [n for n, (_t, idx) in enumerate(lines) if idx in inner]
+        if not at:
+            return ("stmt", lines)
+        header = [l for l in lines[:at[0]] if _text(l) != "{"]
+        trailer = lines[at[-1] + 1:]
+        if trailer and _text(trailer[0]) == "}":
+            trailer = trailer[1:]  # the closing brace is printed with the body
+            closes = False
+        else:
+            closes = bool(trailer) and _text(trailer[0]).startswith("}")  # do { } while (c);
+        return ("loop", header, self.plan_block(st.body, loop_regions), trailer, closes)
+
+    def cont(self, region):
+        """where the region's handlers go on in this function's own code (the first clause's that does)"""
+        return next((h[4] for h in self._handlers[id(region)] if h[4] is not None), None)
+
     def plan_handlers(self, region):
-        """per clause (Clause, pad function | None, eh_render.Plumbing | None, note | None); no Plumbing: the
-        statements are shown as they are (the whole pad), in Plumbing-less form [statement]"""
+        """per clause (Clause, pad function | None, plumbing, note | None, continuation | None); plumbing: an
+        eh_render.Plumbing, or (cut at the continuation, whole) when the handler goes on in this function"""
         bv = self.function.view
         out, shown = [], set()
         for clause, pad in region.clauses:
             pf = bv.get_function_at(pad)
             if pf is None:
                 out.append((clause, None, None, "landing pad %#x is in no function (command: Create landing-pad "
-                                                "functions)" % pad))
+                                                "functions)" % pad, None))
                 continue
             on_pad = max(sum(c.kind == c.CATCH for c in cs.clauses) for cs in region.sites if cs.landing_pad == pad)
-            stmts = eh_render.specialize(pf, clause.type_index, on_pad)
-            if stmts is not None:
-                out.append((clause, pf, eh_render.plumbing(pf, stmts, eh_comments.type_name(clause.type)), None))
+            h = eh_render.specialize(pf, clause.type_index, on_pad, self.function)
+            if h is not None:
+                # in a loop the handler ends where it goes on in the loop; elsewhere the pad's copy of the owner's
+                # code after it stays (the owner may print nothing after the try: a return folded into it)
+                cut = eh_render.plumbing(pf, h.stmts, eh_comments.type_name(clause.type))
+                if h.cont is not None:
+                    full = eh_render.specialize(pf, clause.type_index, on_pad)
+                    cut = (cut, eh_render.plumbing(pf, full.stmts, eh_comments.type_name(clause.type)))
+                out.append((clause, pf, cut, None, h.cont))
             elif pad in shown:
-                out.append((clause, pf, None, "selector #%d: the landing pad above" % clause.type_index))
+                out.append((clause, pf, None, "selector #%d: the landing pad above" % clause.type_index, None))
             else:
                 shown.add(pad)
                 whole = list(eh_render.body(pf.hlil.root)) if pf.hlil is not None else []
                 out.append((clause, pf, eh_render.Plumbing(whole, set(), {}),
                             "the whole landing pad %s: its dispatch on the selector was not found"
-                            % pf.symbol.full_name))
+                            % pf.symbol.full_name, None))
         return out
 
     def emit_items(self, items, tokens):
         for it in items:
             if it[0] == "stmt":
-                self.emit_base(it[1], tokens, None, P.TopLevelOperatorPrecedence, True)
+                self.emit_token_lines([t for t, _ in it[1]], tokens, True)
+            elif it[0] == "loop":
+                self.emit_loop(it, tokens)
             else:
                 self.emit_try(it, tokens)
 
+    def emit_loop(self, item, tokens):
+        """a loop printed around its body's plan: Pseudo C's header and trailer lines, braces always (bncpp-64)"""
+        _, header, items, trailer, closes = item
+        if header:
+            self.emit_token_lines([t for t, _ in header], tokens, True)
+        tokens.append_open_brace()
+        tokens.new_line()
+        tokens.increase_indent()
+        self.emit_items(items, tokens)
+        tokens.decrease_indent()
+        if not closes:
+            tokens.append_close_brace()
+            tokens.new_line()
+        if trailer:
+            self.emit_token_lines([t for t, _ in trailer], tokens, True)
+
     def emit_try(self, item, tokens):
-        _, _region, items, handlers = item
+        _, items, handlers, blank = item
         self.kw(tokens, "try")
         self.open_block(tokens)
         self.emit_items(items, tokens)
         self.close_block(tokens)
-        for clause, pf, plumb, note in handlers:
+        for clause, pf, plumb, note, _cont in handlers:
             type_name = eh_comments.type_name(clause.type)
             var = eh_render.catch_var(type_name) if plumb is not None and not note else None
             self.kw(tokens, "catch")
@@ -162,8 +245,10 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
                 self.note(tokens, "// " + note)
                 tokens.new_line()
             if plumb is not None and plumb.stmts:
-                lr = pf.language_representation(BASE_LANGUAGE)
+                lrs = {}
                 for s in plumb.stmts:
+                    f = s.function.source_function  # the pad, or a function its handler tail-calls (bncpp-64)
+                    lr = lrs.get(f.start) or lrs.setdefault(f.start, f.language_representation(BASE_LANGUAGE))
                     if s.expr_index in plumb.rethrow:
                         self.kw(tokens, "throw")
                         tokens.append_semicolon()
@@ -176,6 +261,8 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
                         lines = [list(l.tokens) for l in lines]
                     self.emit_token_lines(lines, tokens, True)
             self.close_block(tokens)
+        if blank:
+            tokens.scope_separator()
 
     def catch_tokens(self, toks, names, var):
         """a catch body line with the exception object named (bncpp-7): a variable that held its address or value
@@ -244,6 +331,14 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
             tokens.append(line)
         if statement:
             tokens.new_line()
+
+
+def _text(line):
+    return "".join(t.text for t in line[0]).strip()
+
+
+def _has_try(items):
+    return any(it[0] == "try" or (it[0] == "loop" and _has_try(it[2])) for it in items)
 
 
 class PseudoCppFunctionType(LanguageRepresentationFunctionType):

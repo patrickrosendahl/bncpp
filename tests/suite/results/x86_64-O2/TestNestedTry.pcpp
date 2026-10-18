@@ -87,33 +87,26 @@
 
     int64_t rax;
     int64_t var_28 = rax;
+
     if (arg1 <= 0)
         return 0;
+
     int32_t rbx = 0;
     int32_t r15_1 = 0;
-    try
+
+    do
     {
-        do
+        try
         {
             rbx += may_throw(r15_1);
-            r15_1 += 1;
-        } while (arg1 != r15_1);
-    }
-    catch (std::runtime_error& e)
-    {
-        int32_t rax = -1;
-        while (true)
-        {
-            arg5 += rax;
-            arg7 += 1;
-
-            if (arg6 == arg7)
-                break;
-
-            rax = may_throw(arg7);
         }
-        return (uint64_t)arg5;
-    }
+        catch (std::runtime_error& e)
+        {
+            int32_t rax = -1;
+        }
+        r15_1 += 1;
+    } while (arg1 != r15_1);
+
     return (uint64_t)rbx;
 }
 

@@ -19,8 +19,12 @@
     }
     catch (std::runtime_error& e)
     {
+        *(uint64_t*)((char*)arg1 - 0x30) = &e;
+        _printf("caught %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg1 - 0x30) + 0x10))());
+        *(uint32_t*)((char*)arg1 - 4) = 0xfffffffc;
+        *(uint32_t*)((char*)arg1 - 0x28) = 1;
         /* tailcall */
-        return sub_400668(arg5);
+        return j_sub_4006db(arg1);
     }
     int32_t var_30 = 1;
     Guard::~Guard(&var_20);
