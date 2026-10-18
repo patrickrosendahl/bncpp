@@ -2,6 +2,7 @@
 #   bnrun --bndb DB --timeout 600 tests/bn_landing_pads.py                 # dry run: review file only
 #   bnrun --bndb DB --timeout 600 --env APPLY=1 tests/bn_landing_pads.py   # create them (in RAM), then save PATH
 #   bnrun --bndb DB --timeout 600 --env APPLY=noreturn tests/bn_landing_pads.py   # only bncpp-52's marks, recount
+#   … --env APPLY=1 --env PADS=0:2000 …   # create only that slice of the pads still to create (bncpp-54: chunks)
 # bncpp-4: a user function at every LSDA landing pad that no function starts at (cpp/landing_pads.py), so the
 # handler code is in a view. Review: .scratch/eh/<binary>.pads.review, one line per pad:
 #   create|keep  pad  owner  clauses  [now: in no function | inside <function>]
@@ -66,8 +67,15 @@ for _p in _all:
     _review.append("%s %#x  owner %s  %s   [now: %s]" % ("create" if _now != "function here" else "keep  ",
                                                          _p.addr, _fname(_p.owner), _p.kinds, _now))
 if _apply:
-    _made = _lp.create(bv, _todo)
+    _chunk = _todo
+    if _env.get("PADS"):  # a slice of the pads to create, by index into the todo list: short runs (bncpp-54)
+        _a, _b = (int(x) if x else None for x in _env["PADS"].split(":"))
+        _chunk = _todo[_a:_b]
+    _t1 = time.time()
+    _made = _lp.create(bv, _chunk)
     _counts["created"] = sum(1 for p in _made if bv.get_function_at(p.addr) is not None)
+    _counts["create + analysis s"] = int(time.time() - _t1)
+    _counts["functions now"] = len(bv.functions)
 _rv = os.path.join(REPO, ".scratch/eh/%s.pads.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w", encoding="utf-8") as _fh:

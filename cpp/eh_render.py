@@ -54,12 +54,29 @@ def _in(func, addr):
     return any(f.start == func.start for f in func.view.get_functions_containing(addr))
 
 
-def is_terminate_guard(bv, pad):
-    f = bv.get_function_at(pad)
-    if f is None:
-        return False
-    return any("terminate" in (bv.get_function_at(t).name if bv.get_function_at(t) else "")
-               for site in f.call_sites for t in bv.get_callees(site.address, f, site.arch))
+def is_terminate_guard(bv, pad, guards=()):
+    """the pad's straight-line code calls a terminate helper (a function named *terminate*, or one of guards):
+    destructors may run first (clang's guard after a cleanup); followed through unconditional jumps, stopped by a
+    return or a conditional branch. Reads instructions: needs no function at the pad"""
+    from binaryninja import BranchType
+    a = pad
+    for _ in range(64):
+        info = bv.arch.get_instruction_info(bv.read(a, bv.arch.max_instr_length), a)
+        if info is None or not info.length:
+            return False
+        nxt = a + info.length
+        for b in info.branches:
+            if b.type == BranchType.CallDestination:
+                f = bv.get_function_at(b.target)
+                if b.target in guards or (f is not None and "terminate" in f.name):
+                    return True
+            elif b.type == BranchType.UnconditionalBranch:
+                nxt = b.target
+            elif b.type in (BranchType.TrueBranch, BranchType.FalseBranch, BranchType.FunctionReturn,
+                            BranchType.IndirectBranch):
+                return False
+        a = nxt
+    return False
 
 
 def regions(func):

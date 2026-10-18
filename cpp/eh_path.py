@@ -116,28 +116,8 @@ class Trace:
         return info is not None and not any(b.type == BranchType.CallDestination for b in info.branches)
 
     def is_guard(self, pad):
-        """the pad's straight-line code calls a terminate helper (destructors may run first: clang's guard after a
-        cleanup); followed through unconditional jumps, stopped by a return or a conditional branch. Needs no
-        function at the pad"""
-        from binaryninja import BranchType
-        bv, a = self.bv, pad
-        for _ in range(64):
-            info = bv.arch.get_instruction_info(bv.read(a, bv.arch.max_instr_length), a)
-            if info is None or not info.length:
-                return False
-            nxt = a + info.length
-            for b in info.branches:
-                if b.type == BranchType.CallDestination:
-                    f = bv.get_function_at(b.target)
-                    if b.target in self.guards or (f is not None and "terminate" in f.name):
-                        return True
-                elif b.type == BranchType.UnconditionalBranch:
-                    nxt = b.target
-                elif b.type in (BranchType.TrueBranch, BranchType.FalseBranch, BranchType.FunctionReturn,
-                                BranchType.IndirectBranch):
-                    return False
-            a = nxt
-        return False
+        from .eh_render import is_terminate_guard
+        return is_terminate_guard(self.bv, pad, self.guards)
 
     def decide(self, owner, site):
         """(kind, call site entry | None, clause | None) for an exception leaving the call at site"""
