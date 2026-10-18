@@ -7,7 +7,8 @@
 #            (a type BN cannot parse keeps the name untyped, a bad offset skips the line: review 'note:' lines),
 #            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only),
 #            --env NOCACHE=1 (step 1 always anew, no cache file: the suite, tests/bn_dump.py),
-#            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4),
+#            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4;
+#            stopped at N: the line 'not settled after N rounds: X(0x..) ...'),
 #            --env TRACE=L1,L2 (print these structs' shape every round: a struct that does not settle, bncpp-58)
 # Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
 # the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
@@ -787,6 +788,12 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
         bv.update_analysis_and_wait()
 _count("rounds", _round)
 _count("stable", 1 if _changed == 0 or not _apply else 0)
+# bncpp-60: an APPLY that stopped at the round limit says so (tests/bn_dump.py writes it into .fields, suite.py check
+# gates on it): the structs that still changed in the last round
+_unsettled = None
+if _apply and _changed != 0:
+    _unsettled = "not settled after %d rounds: %s" % (_round, " ".join("%s(%#x)" % (x[0], x[1]) for x in _diff) or (
+        "structs changed %d" % _changed if _changed else "only one round"))
 for _k, _v in _final_counts.items():
     _count(_k, _v)
 for _line, _what in _param_review.values():
@@ -797,5 +804,7 @@ os.makedirs(os.path.dirname(_rv), exist_ok=True)
 with open(_rv, "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_review) + "\n\n" + "\n".join(_fields.format_layouts(_lays)) + "\n")
 print("review -> %s" % _rv)
+if _unsettled:
+    print(_unsettled)
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(
     "%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))

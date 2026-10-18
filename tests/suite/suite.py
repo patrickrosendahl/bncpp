@@ -16,7 +16,8 @@ change improves the output, review the diff and accept it as the new reference.
 
 check (bncpp-8, shared/compare.py): per function, every call and string literal of its Pseudo C (.pc: the HLIL as
 BN prints it) must still be in its Pseudo Cpp, plus flaw counters (temporaries, gotos, exception plumbing, render
-errors, a catch clause in the LSDA but no try, ...); exit 1 if a total exceeds its gate (GATES, or --max K=V).
+errors, a catch clause in the LSDA but no try, ...) and the class APPLYs in .fields that stopped at the round
+limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --max K=V).
 
 Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view), .lsda (the decoded
 exception tables, cpp/lsda.py on cpp/bnimage.py) and .classes (the class scan, cpp/rtti.py, with the names
@@ -211,7 +212,7 @@ MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_get_exception_p
 CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+(?: const)?\s*[&*]?\s*(\w+)\)"
 # gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report
 GATES = {"lost_calls": 0, "lost_strings": 0, "render_errors": 0, "unbalanced": 0, "truncated": 0,
-         "leaked_catch_var": 0, "missing": 0}
+         "leaked_catch_var": 0, "missing": 0, "unsettled": 0}
 _FUNC = re.compile(r"^// .* @ (0x[0-9a-f]+)$")  # keyed by the address (overloads share a name)
 
 
@@ -262,6 +263,14 @@ def check(names, maxes, worst, show):
                              "lost_calls", "lost_strings", "stmts", "ref_stmts"]
     total = C.totals(rows, keys)
     total["missing"] = missing
+    total["unsettled"] = 0  # bncpp-60: a class APPLY in the .fields dump that stopped at the round limit
+    for arch, opt in VARIANTS:
+        for t in names:
+            path = os.path.join(OUT, variant_name(arch, opt), t + ".fields")
+            for line in open(path).read().splitlines() if os.path.exists(path) else ():
+                if line.startswith("not settled after "):
+                    print("%-10s %-26s %s" % (variant_name(arch, opt), t, line))
+                    total["unsettled"] += 1
     print("TOTAL", " ".join("%s=%d" % kv for kv in total.items()))
     flaws = ("lost_calls", "lost_strings", "render_errors", "unbalanced", "truncated", "leaked_catch_var",
              "plumbing", "dead_code", "gotos", "missing_try", "temps")

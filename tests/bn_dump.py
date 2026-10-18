@@ -83,6 +83,7 @@ def _dump_fields(bv, binary):
             exec(compile(fh.read(), path, "exec"), g)
     lines = ["%s %d" % kv for kv in sorted(g["_counts"].items()) if not kv[0].startswith("s ")]  # no timings
     params = [line for line, _what in sorted(g["_param_review"].values())]  # bncpp-28
+    lines += [g["_unsettled"]] if g.get("_unsettled") else []  # bncpp-60: suite.py check gates on it
     return lines + [""] + g["_fields"].format_layouts(g["_lays"]) + ([""] + params if params else [])
 
 
