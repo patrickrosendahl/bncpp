@@ -117,12 +117,43 @@ def _feat_eq(kind, a, b):
     return a == b
 
 
-def match_function(bf, tree, want_file=None, index=None):
+RARE_NUM_FILES = 4     # a constant in at most this many tree files counts as evidence for the function choice
+
+
+def _anchors_in(sf, sfunc, rare, fl_hits, index=None):
+    """the anchors a binary function's features give inside one source function, and their score. A constant
+    found in many tree files (small ints, common masks) still pins a line inside the chosen function but hardly
+    counts for the choice: on the kernelcache const-only picks were wrong (bncpp-36)"""
+    anchors, score, strong = [], 0.0, False
+    for sa, line in fl_hits:
+        if sfunc.first <= line <= sfunc.last:
+            anchors.append((sa, line, "file-line"))
+            score += 3.0
+            strong = True
+    for a, k, v in rare:
+        lines = _source_lines_for(None, sf, sfunc, k, v)
+        if len(lines) == 1:
+            anchors.append((a, lines[0], {"str": "string", "num": "const", "call": "call"}[k]))
+            if k == "num":
+                score += 0.7 if index is not None and index.num_files(v) <= RARE_NUM_FILES else 0.05
+            else:
+                score += {"str": 1.0, "call": 0.5}[k]
+                strong = strong or k == "str"
+        elif lines:
+            score += 0.1
+    return anchors, score, strong
+
+
+def match_function(bf, tree, want_file=None, index=None, taken=None):
     """pick the source function for a binary function; returns (SourceFile, SourceFunction, anchors) or None.
     anchors: [(addr, line, kind)] with kind file-line / string / const / call. index: a FileIndex over the tree
-    (pass one when matching many functions -- without it every call builds its own)"""
+    (pass one when matching many functions -- without it every call builds its own). A pick needs a string or
+    file-line anchor, or a score of rare constants worth two strings. taken: {(path, first line)} of source
+    functions another binary function already is (by name); a pick that is taken or declared inline is lifted to
+    the caller that inlined it (lift_inlined)"""
     feats = bf["features"]
     fls = _file_line_anchors(feats)
+    index = index or FileIndex(tree)
     # 1. a file:line anchor decides the file and gives a line inside the function
     cand_files = {}
     for sa, fn, line in fls:
@@ -134,27 +165,201 @@ def match_function(bf, tree, want_file=None, index=None):
     # 2. score source functions: shared rare features + any file-line hits inside them
     rare = _rare(feats)
     best = None
-    files_to_try = cand_files or (index or FileIndex(tree)).files(rare)
-    for p, fl_hits in (cand_files.items() if cand_files else [(p, []) for p in files_to_try]):
+    for p, fl_hits in (cand_files.items() if cand_files else [(p, []) for p in index.files(rare)]):
         sf = tree.file(p)
         for sfunc in sf.functions:
-            anchors, score = [], 0.0
-            for sa, line in fl_hits:
-                if sfunc.first <= line <= sfunc.last:
-                    anchors.append((sa, line, "file-line"))
-                    score += 3.0
-            for a, k, v in rare:
-                lines = _source_lines_for(tree, sf, sfunc, k, v)
-                if len(lines) == 1:
-                    anchors.append((a, lines[0], {"str": "string", "num": "const", "call": "call"}[k]))
-                    score += {"str": 1.0, "num": 0.7, "call": 0.5}[k]
-                elif lines:
-                    score += 0.1
-            if anchors and (best is None or score > best[0]):
+            anchors, score, strong = _anchors_in(sf, sfunc, rare, fl_hits, index)
+            if anchors and (strong or score >= 2.0) and (best is None or score > best[0]):
                 best = (score, sf, sfunc, anchors)
     if best is None:
         return None
-    return best[1], best[2], _dedupe_anchors(best[3])
+    sf, sfunc, anchors = best[1], best[2], best[3]
+    if sfunc.inline or taken and (sf.path, sfunc.first) in taken:
+        lifted = lift_inlined(sf, sfunc, anchors, rare, index, taken)
+        if lifted is None:
+            return None
+        sfunc, anchors = lifted
+    return sf, sfunc, _dedupe_anchors(anchors)
+
+
+def lift_inlined(sf, sfunc, anchors, rare, index=None, taken=None, depth=2):
+    """the caller a binary function really is when its anchors point into an inlined callee (bncpp-36: file-line
+    anchors of xnu's *_inline helpers named the helper, not the function): the same file's functions that call
+    it, scored by their own anchors; the callee's anchors move to the call line (the code is the callee's, inlined
+    there). An inline caller lifts once more (depth). None when no caller or a tie"""
+    best, tie = None, False
+    for c in sf.functions:
+        if c is sfunc:
+            continue
+        sites = [ln for ln, k, v in sf.features(c) if k == "call" and v == sfunc.name]
+        if not sites:
+            continue
+        own, score, _ = _anchors_in(sf, c, rare, [], index)
+        moved = [(a, sites[0], k) for a, _, k in anchors]
+        cand = (score, c, own + moved)
+        if c.inline and depth > 1:
+            up = lift_inlined(sf, c, own + moved, rare, index, taken, depth - 1)
+            if up is None:
+                continue
+            cand = (score, up[0], up[1])
+        if taken and (sf.path, cand[1].first) in taken:
+            continue
+        if best is None or cand[0] > best[0]:
+            best, tie = cand, False
+        elif cand[0] == best[0]:
+            tie = True
+    if best is None or tie:
+        return None
+    return best[1], best[2]
+
+
+class NameIndex:
+    """the tree's source functions by qualified and by plain name (bncpp-36: a symbol name is stronger evidence
+    than any anchor)"""
+
+    def __init__(self, tree):
+        self.by_qual, self.by_plain = {}, {}
+        for sf in tree.all():
+            for f in sf.functions:
+                self.by_qual.setdefault(f.qualname, []).append(f)
+                self.by_plain.setdefault(f.name, []).append(f)
+
+    def lookup(self, name):
+        """the source functions a binary name can be: the qualified name, else the plain one"""
+        return self.by_qual.get(name) or self.by_plain.get(name.split("::")[-1], [])
+
+
+def match_named(bf, name, names, tree, index=None):
+    """the source function of a binary function with a known name: (SourceFile, SourceFunction, anchors) or
+    None. Several candidates (a static function in several files, #if variants) are told apart by the anchors;
+    a tie stays unmatched"""
+    cands = names.lookup(name)
+    if not cands:
+        return None
+    feats = bf["features"]
+    rare = _rare(feats)
+    fls = _file_line_anchors(feats)
+    scored = []
+    for sfunc in cands:
+        sf = tree.file(sfunc.file)
+        hits = [(sa, line) for sa, fn, line in fls if sf.path in tree.by_suffix(fn)]
+        anchors, score, _ = _anchors_in(sf, sfunc, rare, hits, index)
+        scored.append((score, sf, sfunc, anchors))
+    scored.sort(key=lambda x: -x[0])
+    if len(scored) > 1 and scored[0][0] == scored[1][0]:
+        return None
+    return scored[0][1], scored[0][2], _dedupe_anchors(scored[0][3])
+
+
+# -- call-graph propagation (bncpp-36 point 2): a matched pair's calls name its unknown callees
+
+def _src_calls(sf, sfunc, defined):
+    """the plain names a source function calls, in line order, restricted to functions the tree defines"""
+    return [v for _, k, v in sf.features(sfunc) if k == "call" and v in defined]
+
+
+def _bin_calls(bf):
+    """the calls of a binary function, in feature (structured HLIL) order: (target, None) for a direct call,
+    (None, name) for a named one without a known target (an import, a builtin)"""
+    out = []
+    for _, k, v in bf["features"]:
+        if k == "bl" and v is not None:
+            out.append((v, None))
+        elif k == "call" and (not out or out[-1] != (None, v)):
+            out.append((None, v))
+    return out
+
+
+def align_calls(targets, names, known, taken, cap=400):
+    """a monotone alignment (max-weight common subsequence) of a binary function's call targets against its
+    source function's call names: a known target pairs only with its own name (3), an unknown one with any name
+    not known elsewhere (1). targets: [(target, name)] (_bin_calls). Returns [(target, name, tight)] for the unknown
+    targets; tight = the pair is the
+    only one between two known pairs (or the sequence ends) on both sides"""
+    b = [(t, name or known.get(t)) for t, name in targets]
+    sset = set(names)
+    b = [(t, n) for t, n in b if n is None or n in sset]   # a known callee the source does not call: inlined away
+    if not b or not names or len(b) > cap or len(names) > cap:
+        return []
+    n, m = len(b), len(names)
+    NEG = -1
+    w = [[0] * m for _ in range(n)]
+    for i, (t, kn) in enumerate(b):
+        for j, s in enumerate(names):
+            w[i][j] = 3 if kn == s else (1 if kn is None and s not in taken else NEG)
+    dp = [[0] * (m + 1) for _ in range(n + 1)]
+    for i in range(n - 1, -1, -1):
+        row, nxt, wi = dp[i], dp[i + 1], w[i]
+        for j in range(m - 1, -1, -1):
+            best = nxt[j] if nxt[j] > row[j + 1] else row[j + 1]
+            if wi[j] > 0 and nxt[j + 1] + wi[j] > best:
+                best = nxt[j + 1] + wi[j]
+            row[j] = best
+    pairs, i, j = [], 0, 0
+    while i < n and j < m:
+        if w[i][j] > 0 and dp[i][j] == dp[i + 1][j + 1] + w[i][j]:
+            pairs.append((i, j))
+            i, j = i + 1, j + 1
+        elif dp[i][j] == dp[i + 1][j]:
+            i += 1
+        else:
+            j += 1
+    out = []
+    fixed = [(-1, -1)] + [(i, j) for i, j in pairs if b[i][1] is not None] + [(n, m)]
+    for i, j in pairs:
+        if b[i][1] is not None or b[i][0] is None:
+            continue
+        prev = max(f for f in fixed if f[0] < i)
+        nxt = min(f for f in fixed if f[0] > i)
+        out.append((b[i][0], names[j], nxt[0] - prev[0] == 2 and nxt[1] - prev[1] == 2))
+    return out
+
+
+def propagate(bin_funcs, pairs, names, tree, rounds=20, min_votes=2):
+    """name the unknown callees of matched pairs from their source calls, until nothing changes.
+    bin_funcs: {start: bf}; pairs: {start: (SourceFile, SourceFunction, anchors)} (the seeds -- named or
+    anchored), extended in place. A target is accepted with min_votes agreeing votes and twice the runner-up,
+    or one tight vote (the only call between two known ones on both sides) without a rival. Returns
+    {start: (round, votes)} of the propagated pairs"""
+    defined = set(names.by_plain)
+    known = {a: p[1].name for a, p in pairs.items()}
+    calls = {}
+    out = {}
+    for rnd in range(1, rounds + 1):
+        votes = {}
+        taken = set(known.values())
+        for a, (sf, sfunc, _) in pairs.items():
+            bf = bin_funcs.get(a)
+            if bf is None:
+                continue
+            key = (sf.path, sfunc.first)
+            if key not in calls:
+                calls[key] = _src_calls(sf, sfunc, defined)
+            for t, name, tight in align_calls(_bin_calls(bf), calls[key], known, taken):
+                if t in known or t not in bin_funcs:
+                    continue
+                v = votes.setdefault(t, {})
+                c = v.setdefault(name, [0, 0])
+                c[0] += 1
+                c[1] += tight
+        added = 0
+        for t, v in votes.items():
+            ranked = sorted(v.items(), key=lambda x: -x[1][0])
+            (name, (nv, nt)), rival = ranked[0], (ranked[1][1][0] if len(ranked) > 1 else 0)
+            if not (nv >= min_votes and nv >= 2 * rival or nt >= 1 and rival == 0):
+                continue
+            if name in known.values():
+                continue
+            res = match_named(bin_funcs[t], name, names, tree)
+            if res is None:
+                continue
+            pairs[t] = res
+            known[t] = name
+            out[t] = (rnd, nv)
+            added += 1
+        if not added:
+            break
+    return out
 
 
 _WORD = re.compile(r"\w{4,}")
@@ -173,12 +378,15 @@ class FileIndex:
         self._exact = {}      # value -> [paths]
         self._words = {}      # word -> set(paths)
         self._cache = {}      # binary string -> [paths]
+        self._nums = {}       # int constant -> number of files carrying it
 
     def _build(self):
         for p in self.tree.paths:
             sf = self.tree.file(p)
             texts = sorted({v for feats in sf.lines.values() for k, v in feats if k in ("str", "text")})
             self._texts[p] = texts
+            for v in {v for feats in sf.lines.values() for k, v in feats if k == "num"}:
+                self._nums[v] = self._nums.get(v, 0) + 1
             for t in texts:
                 self._exact.setdefault(t, []).append(p)
                 for w in set(_WORD.findall(t)):
@@ -202,6 +410,12 @@ class FileIndex:
         out.sort()
         self._cache[s] = out
         return out
+
+    def num_files(self, v):
+        """in how many tree files a constant appears"""
+        if not self._texts:
+            self._build()
+        return self._nums.get(v, 0)
 
     def files(self, rare):
         """files that carry at least one of the rare strings (the cheap filter before scoring every function)"""

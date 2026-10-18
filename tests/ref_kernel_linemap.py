@@ -7,6 +7,7 @@ join the names from the kernel symbols file, run the lazy matcher against the xn
   - the share of binary functions matched at all, and the source functions / files hit
 
   python3 -I tests/ref_kernel_linemap.py [--limit N] [--skip N] [--out MAP.json] [--quiet]
+                                         [--holdout] [--no-anchors] [--no-propagate] [--only kp|pl]
 Defaults read .scratch/linemap/kernel/kernel.features.jsonl and sample/kernel/… symbols against the xnu tree;
 --out writes the matched functions' line map (bncpp-37 format).
 """
@@ -66,11 +67,20 @@ def name_of(addr, symbols, demangled):
     return demangled.get(n, n)
 
 
-def bin_funcs(feats_path, symbols, demangled, limit=None, skip=0):
-    """the dump's records as matcher input: {"start", "end", "name", "features"} with int addresses; a bl whose
-    target carries a symbol becomes a call feature (named callees are anchors); __builtin_ names also match the
-    plain source name"""
-    stats = {"recs": 0, "nohlil": 0, "skipped": 0, "errors": 0, "bl_named": 0, "builtin": 0}
+def bin_funcs(feats_path, symbols, demangled, limit=None, skip=0, all_symbols=None):
+    """the dump's records as matcher input: {"start", "end", "name", "features"} with int addresses.
+    Calls: the view names the functions the kernel session named, so a call to one shows as call '_name' (or a
+    demangled signature), not as a bl -- it is turned back into a bl to the symbol's address (the call graph),
+    with the call feature only where `symbols` (the seeds) carries the name: held-out names must not leak through
+    their callers. all_symbols: every known {addr: name} for that reverse lookup (default: symbols). A bl whose
+    target carries a seed symbol also becomes a call feature; Mach-O's leading _ is dropped; __builtin_ names
+    also match the plain source name"""
+    all_symbols = symbols if all_symbols is None else all_symbols
+    by_name = {}
+    for a, n in all_symbols.items():
+        for key in {n, demangled.get(n, n)}:
+            by_name[key] = None if key in by_name and by_name[key] != a else a   # an overload: ambiguous
+    stats = {"recs": 0, "nohlil": 0, "skipped": 0, "errors": 0, "bl_named": 0, "builtin": 0, "call_to_bl": 0}
     with open(feats_path, encoding="utf-8") as fh:
         for line in fh:
             stats["recs"] += 1
@@ -88,51 +98,97 @@ def bin_funcs(feats_path, symbols, demangled, limit=None, skip=0):
             feats = []
             for stmt in r.get("stmts", ()):
                 for a, k, v in stmt[3]:
+                    a = int(a, 16)
+                    if k == "call":
+                        key = v.split("(")[0] if "(" in v else (v[1:] if v.startswith("_") else v)
+                        t = by_name.get(key)
+                        if t is not None:
+                            k, v = "bl", "%#x" % t
+                            stats["call_to_bl"] += 1
+                        else:
+                            feats.append((a, "call", key))
+                            if key.startswith("__builtin_") and len(key) > 10:  # the source shows the plain name
+                                feats.append((a, "call", key[len("__builtin_"):]))
+                                stats["builtin"] += 1
+                            continue
                     if k == "bl":
-                        if v:
-                            n = name_of(int(v, 16), symbols, demangled)
-                            if n is not None:
-                                feats.append((int(a, 16), "call", n))
-                                stats["bl_named"] += 1
-                            else:
-                                feats.append((int(a, 16), "bl", None))
-                    elif k == "call":
-                        feats.append((int(a, 16), "call", v))
-                        if v.startswith("__builtin_") and len(v) > 10:  # the plain name is what the source shows
-                            feats.append((int(a, 16), "call", v[len("__builtin_"):]))
-                            stats["builtin"] += 1
+                        t = int(v, 16) if v else None
+                        feats.append((a, "bl", t))      # the call graph (propagation)
+                        n = name_of(t, symbols, demangled) if t is not None else None
+                        if n is not None:
+                            feats.append((a, "call", n.split("::")[-1]))
+                            stats["bl_named"] += 1
                     else:
-                        feats.append((int(a, 16), k, v))
+                        feats.append((a, k, v))
             yield {"start": int(r["start"], 16), "end": int(r["end"], 16),
                    "name": name_of(int(r["start"], 16), symbols, demangled), "features": feats}
     yield stats  # sentinel: the caller cannot know the counts before the stream ends
 
 
-def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False):
+def held_out(addr):
+    """the stable half of the named functions kept back from the seeds (--holdout): scored, never used"""
+    return (addr * 2654435761 >> 7) & 1 == 1
+
+
+def agrees(name, sfunc):
+    return sfunc.qualname == name or ("(" not in name and sfunc.qualname.split("::")[-1] == name.split("::")[-1])
+
+
+def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, holdout=False, anchors=True,
+        prop=True, only=None):
+    """phases: (1) named functions -> their source function by name (the seeds); (2) the rest by anchors
+    (file-line / string / rare const; the slow part, --no-anchors skips it); (3) call-graph propagation from the
+    matched pairs; (4) scores. --holdout seeds with half of the names and scores the other half: how well
+    anchors + propagation name a function nobody named"""
     symbols = read_symbols(symbols_path)
     demangled = demangle(set(symbols.values()))
+    truth = {}
+    seed_symbols = symbols
+    if holdout:
+        seed_symbols = {a: n for a, n in symbols.items() if not held_out(a)}
     tree = SourceTree(xnu)
     index = linematch.FileIndex(tree)
-    m = LineMap({"name": "kernelcache.iphone10.dec"}, {"name": "xnu-8796.141.3", "root": xnu})
-    tot = Counter(dict.fromkeys(
-        ("recs", "nohlil", "skipped", "errors", "bl_named", "builtin", "functions", "matched", "unmatched",
-         "anchors", "anchor_file-line", "anchor_string", "anchor_const", "anchor_call", "fl_functions",
-         "fl_anchors", "fl_files_found", "fl_files_missing", "fl_lines_in_file", "outside_tree",
-         "kernel_proper", "prelinked", "kp_matched", "pl_matched", "named", "named_matched", "named_agree",
-         "named_differ"), 0))
     t0 = time.time()
-    unmatched_named = []
-    hit_source = set()
-    hit_files = Counter()
-    for bf in bin_funcs(feats, symbols, demangled, limit, skip):
+    names = linematch.NameIndex(tree)
+    m = LineMap({"name": "kernelcache.iphone10.dec"}, {"name": "xnu-8796.141.3", "root": xnu})
+    tot = Counter()
+    funcs = {}
+    for bf in bin_funcs(feats, seed_symbols, demangled, limit, skip, symbols):
         if "recs" in bf:
             tot.update(bf)
             continue
+        if only == "kp" and bf["start"] < KERNEL_START or only == "pl" and bf["start"] >= KERNEL_START:
+            continue
+        funcs[bf["start"]] = bf
+        n = name_of(bf["start"], symbols, demangled)
+        if n is not None:
+            truth[bf["start"]] = n
+    if not quiet:
+        print("read %d functions, tree %d source functions, %.1f s" % (len(funcs), sum(map(len, names.by_qual.values())),
+                                                                        time.time() - t0), flush=True)
+    pairs, how = {}, {}
+    outside = set()
+    # 1. names
+    for a, bf in funcs.items():
         tot["functions"] += 1
-        tot["kernel_proper" if bf["start"] >= KERNEL_START else "prelinked"] += 1
-        if not quiet and tot["functions"] % 5000 == 0:
-            print("  … %7d functions, %d matched, %.1f s" % (tot["functions"], tot["matched"],
-                                                             time.time() - t0), flush=True)
+        tot["kernel_proper" if a >= KERNEL_START else "prelinked"] += 1
+        if bf["name"] is None:
+            continue
+        tot["seeds"] += 1
+        res = linematch.match_named(bf, bf["name"], names, tree, index)
+        if res is None:
+            tot["seed_unresolved"] += 1
+            continue
+        pairs[a], how[a] = res, "name"
+    tot["seed_matched"] = len(pairs)
+    if not quiet:
+        print("names: %d seeds, %d resolved to a source function, %.1f s" % (tot["seeds"], len(pairs),
+                                                                            time.time() - t0), flush=True)
+    # 2. anchors
+    taken = {(sf.path, sfunc.first) for sf, sfunc, _ in pairs.values()}
+    for a, bf in funcs.items():
+        if a in pairs:
+            continue
         fls = linematch._file_line_anchors(bf["features"])
         if fls:
             tot["fl_functions"] += 1
@@ -142,72 +198,90 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False):
                 paths = tree.by_suffix(fn)
                 if paths:
                     tot["fl_files_found"] += 1
-                    if line <= tree.file(paths[0]).nlines:
-                        tot["fl_lines_in_file"] += 1
+                    tot["fl_lines_in_file"] += line <= tree.file(paths[0]).nlines
                     in_tree += 1
                 else:
                     tot["fl_files_missing"] += 1
             if not in_tree:
                 # prelinked kext code (sources are their own projects, not xnu): the anchors are still true
                 # addr -> file:line rows, but matching the function against xnu files would be noise
-                tot["outside_tree"] += 1
+                outside.add(a)
                 for addr, fn, line in fls:
                     m.add(shared_row(addr, min(addr + 4, bf["end"]), fn, line))
                 continue
-        if bf["name"] is not None:
-            tot["named"] += 1
-        res = linematch.match_function(bf, tree, index=index)
-        if res is None:
-            tot["unmatched"] += 1
-            if bf["name"] and len(unmatched_named) < 12:
-                unmatched_named.append((bf["name"], "%#x" % bf["start"],
-                                        "fl" if fls else ("str" if any(k == "str" for _, k, _ in bf["features"])
-                                                         else "none")))
+        if not anchors:
             continue
-        sf, sfunc, anchors = res
-        tot["matched"] += 1
-        tot["kp_matched" if bf["start"] >= KERNEL_START else "pl_matched"] += 1
-        tot["anchors"] += len(anchors)
-        for _, _, kind in anchors:
+        res = linematch.match_function(bf, tree, index=index, taken=taken)
+        if res is not None:
+            pairs[a], how[a] = res, "anchors"
+        tot["anchor_tried"] += 1
+        if not quiet and tot["anchor_tried"] % 10000 == 0:
+            print("  … anchors %7d tried, %d matched, %.1f s" % (tot["anchor_tried"],
+                                                                 sum(1 for h in how.values() if h == "anchors"),
+                                                                 time.time() - t0), flush=True)
+    tot["outside_tree"] = len(outside)
+    # 3. propagation
+    if prop:
+        got = linematch.propagate(funcs, pairs, names, tree)
+        for a in got:
+            how[a] = "calls"
+        tot["prop_rounds"] = max((r for r, _ in got.values()), default=0)
+    # 4. rows + scores
+    hit_source, hit_files = set(), Counter()
+    sample = []
+    for a, (sf, sfunc, anc) in pairs.items():
+        h = how[a]
+        tot["matched_" + h] += 1
+        tot["kp_matched" if a >= KERNEL_START else "pl_matched"] += 1
+        for _, _, kind in anc:
             tot["anchor_" + kind] += 1
         hit_source.add((sf.path, sfunc.qualname))
         hit_files[sf.path] += 1
-        if bf["name"] is not None:
-            tot["named_matched"] += 1
-            n = bf["name"]
-            agree = (sfunc.qualname == n) or ("(" not in n and sfunc.qualname.split("::")[-1] == n.split("::")[-1])
-            tot["named_agree" if agree else "named_differ"] += 1
-            if not agree and len(unmatched_named) < 12:
-                unmatched_named.append((bf["name"], "%#x" % bf["start"], "-> %s" % sfunc.qualname))
-        for r in linematch.rows_for_function(bf, sf, sfunc, anchors):
+        for r in linematch.rows_for_function(funcs[a], sf, sfunc, anc):
             m.add(r)
         m.functions.append(linematch.Function(
-            sfunc.qualname, bf["start"], bf["end"], sf.path, sfunc.first, sfunc.last,
-            linematch.CONF["file-line"] if any(k == "file-line" for _, _, k in anchors)
-            else linematch.CONF["string"] if anchors else linematch.CONF["function"],
-            "%d anchors" % len(anchors)))
+            sfunc.qualname, a, funcs[a]["end"], sf.path, sfunc.first, sfunc.last,
+            0.9 if h == "name" else linematch.CONF["file-line"] if any(k == "file-line" for _, _, k in anc)
+            else linematch.CONF["string"] if anc else linematch.CONF["function"],
+            "%s, %d anchors" % (h, len(anc))))
+        n = truth.get(a)
+        if n is not None and h != "name":
+            ok = agrees(n, sfunc)
+            tot["%s_%s" % (h, "agree" if ok else "differ")] += 1
+            if not ok and len(sample) < 16:
+                sample.append((n, "%#x" % a, "%s -> %s" % (h, sfunc.qualname)))
+    # what was there to find: named, not a seed, with the name in the tree
+    for a, n in truth.items():
+        if funcs[a]["name"] is None and names.lookup(n):
+            tot["findable"] += 1
+            tot["found"] += a in pairs
     if out:
         m.save(out)
     if not quiet:
-        print("records %(recs)d (%(nohlil)d without HLIL, %(skipped)d skipped, %(errors)d errors)"
-              % dict(tot))
-        print("functions %(functions)d (kernel proper %(kernel_proper)d, prelinked %(prelinked)d):"
-              " matched %(matched)d (kp %(kp_matched)d / pl %(pl_matched)d), unmatched %(unmatched)d,"
-              " outside the tree %(outside_tree)d" % dict(tot))
-        print("anchors: %(anchors)d (file-line %(anchor_file-line)d, string %(anchor_string)d,"
-              " const %(anchor_const)d, call %(anchor_call)d)" % dict(tot))
+        print("%.1f s" % (time.time() - t0))
+        print("records %(recs)d (%(nohlil)d without HLIL, %(skipped)d skipped, %(errors)d errors)" % tot)
+        print("functions %(functions)d (kernel proper %(kernel_proper)d, prelinked %(prelinked)d);"
+              " outside the tree %(outside_tree)d" % tot)
+        print("matched: by name %(matched_name)d / anchors %(matched_anchors)d / calls %(matched_calls)d"
+              " (kp %(kp_matched)d / pl %(pl_matched)d; %(prop_rounds)d propagation rounds)" % tot)
+        print("anchors: file-line %(anchor_file-line)d, string %(anchor_string)d, const %(anchor_const)d,"
+              " call %(anchor_call)d" % tot)
         print("file:line anchors: %(fl_functions)d functions, %(fl_anchors)d anchors: file in the tree"
-              " %(fl_files_found)d / missing %(fl_files_missing)d, line inside the file %(fl_lines_in_file)d"
-              % dict(tot))
-        print("named: %(named)d functions carry a symbol; of those matched %(named_matched)d:"
-              " name agrees %(named_agree)d / differs %(named_differ)d" % dict(tot))
-        print("source functions hit: %d in %d files; top:" % (len(hit_source), len(hit_files)))
-        for p, n in hit_files.most_common(8):
-            print("  %4d  %s" % (n, os.path.relpath(p, xnu)))
-        if unmatched_named:
-            print("named but unmatched / disagreeing (sample):")
-            for n, a, note in unmatched_named:
-                print("  %-40s %s  %s" % (n, a, note))
+              " %(fl_files_found)d / missing %(fl_files_missing)d, line inside the file %(fl_lines_in_file)d" % tot)
+        print("named %d: seeds %d (resolved %d, unresolved %d)%s" % (
+            len(truth), tot["seeds"], tot["seed_matched"], tot["seed_unresolved"],
+            ", held out %d" % (len(truth) - tot["seeds"]) if holdout else ""))
+        print("vs the names: anchors agree %(anchors_agree)d / differ %(anchors_differ)d;"
+              " calls agree %(calls_agree)d / differ %(calls_differ)d" % tot)
+        if holdout:
+            print("held out with the name in the tree: %(findable)d, found %(found)d" % tot)
+        print("source functions hit: %d in %d files" % (len(hit_source), len(hit_files)))
+        for p, k in hit_files.most_common(5):
+            print("  %4d  %s" % (k, os.path.relpath(p, xnu)))
+        if sample:
+            print("disagreeing (sample):")
+            for n, a, note in sample:
+                print("  %-40s %s  %s" % (n[:40], a, note))
     return tot
 
 
@@ -220,5 +294,10 @@ if __name__ == "__main__":
     ap.add_argument("--limit", type=int)
     ap.add_argument("--skip", type=int, default=0)
     ap.add_argument("--quiet", action="store_true")
+    ap.add_argument("--holdout", action="store_true", help="seed with half of the names, score the other half")
+    ap.add_argument("--no-anchors", action="store_true", help="skip the anchor match of unnamed functions")
+    ap.add_argument("--no-propagate", action="store_true")
+    ap.add_argument("--only", choices=("kp", "pl"), help="kernel proper / prelinked functions only")
     args = ap.parse_args()
-    run(args.feats, args.symbols, args.xnu, args.out, args.limit, args.skip, args.quiet)
+    run(args.feats, args.symbols, args.xnu, args.out, args.limit, args.skip, args.quiet, args.holdout,
+        not args.no_anchors, not args.no_propagate, args.only)
