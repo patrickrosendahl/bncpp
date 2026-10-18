@@ -13,6 +13,10 @@ ___cxa_begin_catch; call std::terminate'). Where std::terminate's import name is
 returns and runs the guards one after another into one function. The helper is recognised by its body (callees:
 ___cxa_begin_catch and exactly one other), and it and its terminate callee get a __noreturn user type -- before
 the pads are created, so the guards become pads of their own.
+
+Padded calls (bncpp-62): an imported function whose call sites are mostly the last instruction before alignment
+padding and the next function -- nothing after the call, so it cannot return (SynthV: two hashed imports,
+libc++'s throw helpers; BN ran their callers on into the pad behind them). Marked __noreturn the same way.
 """
 from . import lsda as _lsda
 from .bnimage import BNImage
@@ -86,14 +90,49 @@ def terminate_helpers(bv):
     return out
 
 
+def _padded(bv, addr):
+    """the call at addr is followed only by padding (nop / int3, under 16 bytes) and then a function start"""
+    a = addr + bv.get_instruction_length(addr)
+    end = a + 16
+    while a < end and bv.get_function_at(a) is None:
+        n = bv.get_instruction_length(a)
+        if not n or (bv.get_disassembly(a) or "").split(" ", 1)[0] not in ("nop", "int3"):
+            return False
+        a += n
+    return bv.get_function_at(a) is not None
+
+
+def padded_calls(bv, min_sites=3):
+    """[(f, padded, calls)]: the imported functions BN lets return that more than half of their call sites (at
+    least min_sites) call last, before padding and the next function. A returning import is far below that
+    (SynthV: operator delete 4 of 15,788 -- after a pad BN split off, not padding); the noreturn ones it misses
+    are near 1 (a hashed throw helper 403 of 429, the rest calls inside larger blocks)."""
+    from binaryninja import BranchType, SymbolType
+    imported = (SymbolType.ImportedFunctionSymbol, SymbolType.ImportAddressSymbol, SymbolType.ExternalSymbol)
+
+    def is_call(a):  # from the instruction, not the IL (that would lift every caller: minutes on SynthV)
+        info = bv.arch.get_instruction_info(bv.read(a, bv.arch.max_instr_length), a)
+        return info is not None and any(b.type == BranchType.CallDestination for b in info.branches)
+
+    out = []
+    for f in bv.functions:
+        if f.symbol.type not in imported or not f.can_return.value:
+            continue
+        calls = [r for r in bv.get_code_refs(f.start) if r.function is not None and is_call(r.address)]
+        padded = sum(1 for r in calls if _padded(bv, r.address))
+        if padded >= min_sites and 2 * padded > len(calls):
+            out.append((f, padded, len(calls)))
+    return out
+
+
 def noreturn_todo(bv, protected=None):
-    """the functions of terminate_helpers BN still lets return, unless protected(f) (default: a user type)"""
+    """the functions of terminate_helpers and padded_calls BN still lets return, unless protected(f) (default: a
+    user type)"""
     protected = protected or (lambda f: f.has_user_type)
     todo = []
-    for pair in terminate_helpers(bv):
-        for f in pair:
-            if f.can_return.value and not protected(f) and f not in todo:
-                todo.append(f)
+    for f in [f for pair in terminate_helpers(bv) for f in pair] + [f for f, _, _ in padded_calls(bv)]:
+        if f.can_return.value and not protected(f) and f not in todo:
+            todo.append(f)
     return todo
 
 

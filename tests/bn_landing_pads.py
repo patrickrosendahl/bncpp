@@ -5,7 +5,8 @@
 # bncpp-4: a user function at every LSDA landing pad that no function starts at (cpp/landing_pads.py), so the
 # handler code is in a view. Review: .scratch/eh/<binary>.pads.review, one line per pad:
 #   create|keep  pad  owner  clauses  [now: in no function | inside <function>]
-# bncpp-52, first: 'terminate helper' lines and 'noreturn' lines for the helpers / terminate callees APPLY marks
+# bncpp-52, first: 'terminate helper' lines, 'padded calls' lines (bncpp-62: imports called last before padding)
+# and 'noreturn' lines for the helpers / terminate callees / padded imports APPLY marks
 # __noreturn (never over a user type; --env BASELINE=F as bn_class_types.py: only over a type BN inferred).
 import importlib, os, time
 import binaryninja as _bn
@@ -45,12 +46,14 @@ def _protected(f):
 _marks = _lp.noreturn_todo(bv, _protected)
 _head = ["terminate helper %#x %s -> %s %#x  [can_return: %s / %s]" % (
     h.start, h.name, t.name, t.start, h.can_return.value, t.can_return.value) for h, t in _helpers]
+_padded = _lp.padded_calls(bv)
+_head += ["padded calls %#x %s  [%d of %d call sites]" % (f.start, f.name, n, m) for f, n, m in _padded]
 _head += ["noreturn %#x %s   [now: %s]" % (f.start, f.name, f.type) for f in _marks]
 if _mark:
     _lp.mark_noreturn(bv, _marks)
 _all = _lp.pads(bv)
 _todo = [p for p in _all if bv.get_function_at(p.addr) is None]
-_counts = {"terminate helpers": len(_helpers), "to mark noreturn": len(_marks),
+_counts = {"terminate helpers": len(_helpers), "padded imports": len(_padded), "to mark noreturn": len(_marks),
            "pads": len(_all), "pads with a function": len(_all) - len(_todo), "to create": len(_todo),
            "in no function": 0, "inside another function": 0}
 _review = []
