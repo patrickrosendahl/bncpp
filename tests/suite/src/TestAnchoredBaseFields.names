@@ -1,0 +1,4 @@
+# NAMES for the .fields dump (tests/bn_dump.py passes tests/suite/src/<TestX>.names to bn_class_fields.py): a name
+# for Sink's total gives the anchored base a member past its vptr in round 1, so its struct is wider than 8 from
+# round 2 on ('kept') -- the history SynthV's dnni::vwWWw had from earlier applies (bncpp-58/59)
+Sink 0x10 total long

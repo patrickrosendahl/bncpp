@@ -1,0 +1,25 @@
+classes sized 1
+ctors/dtors 0
+fields 3
+fields named (override) 1
+functions scanned 2
+params with direct callers 0
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 2
+ptr stores 0
+rounds 3
+stable 1
+structs 3
+structs with a base 1
+
+struct Logger  (0x30 bytes, from new)  base Head @ 0x0  base Sink @ 0x18
+     0x0 vptr                     struct Logger::VTable*  [vptr]
+struct Head  (0x8 bytes, from vptr)
+     0x0 vptr                     struct Head::VTable*  [vptr]
+struct Sink  (0x18 bytes, from derived)
+     0x0 vptr                     struct Sink::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+     0xc field_c                  int32_t  [access]
+    0x10 total                    int64_t  [override]

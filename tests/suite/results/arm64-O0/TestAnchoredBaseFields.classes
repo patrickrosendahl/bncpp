@@ -1,0 +1,45 @@
+typeinfo 0x404068  vmi   mangled 6Logger
+  base 0x4040a0 4Head  offset_flags 0x2
+  base 0x4040b0 4Sink  offset_flags 0x1802
+  vtable 0x404020  offset_to_top 0  4 slots
+    [0] 0x400610 Logger::~Logger(struct Logger* this)
+    [1] 0x40063c Logger::~Logger(struct Logger* this)
+    [2] 0x40066c Logger::id(struct Logger* this) const
+    [3] 0x400680 Logger::put(struct Logger* this, int32_t)
+  vtable 0x404050  offset_to_top -24  3 slots
+    [0] 0x4006bc non-virtual_thunk_to_Logger::~Logger()
+    [1] 0x4006d8 non-virtual_thunk_to_Logger::~Logger()
+    [2] 0x4006f0 non-virtual_thunk_to_Logger::put(int32_t)
+typeinfo 0x4040a0  class mangled 4Head
+  vtable 0x4040d0  offset_to_top 0  3 slots
+    [0] 0x400710 Head::~Head(struct Head* this)
+    [1] 0x400724 Head::~Head(struct Head* this)
+    [2] pure
+typeinfo 0x4040b0  class mangled 4Sink
+  vtable 0x4040f8  offset_to_top 0  3 slots
+    [0] 0x400730 Sink::~Sink(struct Sink* this)
+    [1] 0x400744 Sink::~Sink(struct Sink* this)
+    [2] pure
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400610 Logger::~Logger   [now: Logger::~Logger(struct Logger* this)]
+R 0x40063c Logger::~Logger [deleting]   [now: Logger::~Logger(struct Logger* this)]
+R 0x40066c Logger::vfunc2   [now: Logger::id(struct Logger* this) const]
+R 0x400680 Logger::vfunc3   [now: Logger::put(struct Logger* this, int32_t)]
+C 0x4006bc thunk for Logger's Sink at +24 -> 0x400610
+R 0x4006bc Logger::~Logger [thunk]   [now: non-virtual_thunk_to_Logger::~Logger()]
+C 0x4006d8 thunk for Logger's Sink at +24 -> 0x40063c
+R 0x4006d8 Logger::~Logger [deleting] [thunk]   [now: non-virtual_thunk_to_Logger::~Logger()]
+C 0x4006f0 thunk for Logger's Sink at +24 -> 0x400680
+R 0x4006f0 Logger::vfunc3 [thunk]   [now: non-virtual_thunk_to_Logger::put(int32_t)]
+R 0x400710 Head::~Head   [now: Head::~Head(struct Head* this)]
+R 0x400724 Head::~Head [deleting]   [now: Head::~Head(struct Head* this)]
+R 0x400730 Sink::vfunc0   [now: Sink::~Sink(struct Sink* this)]
+R 0x400744 Sink::vfunc1   [now: Sink::~Sink(struct Sink* this)]
+D 0x404010 vtable_for_Logger   [now: _vtable_for_Logger]
+D 0x404040 vtable_for_Logger_at_24
+D 0x404068 typeinfo_for_Logger
+D 0x4040a0 typeinfo_for_Head
+D 0x4040b0 typeinfo_for_Sink
+D 0x4040c0 vtable_for_Head   [now: _vtable_for_Head]
+D 0x4040e8 vtable_for_Sink   [now: _vtable_for_Sink]

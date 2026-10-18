@@ -13,7 +13,8 @@
 #          the names cpp/rtti_names.py gives (checked)
 #   .fields   the class structs after the whole class pipeline with APPLY in this throwaway view
 #          (tests/bn_class_apply.py, bn_class_types.py, bn_class_fields.py NOCACHE=1): counts, then the layouts
-#          (cpp/rtti_fields.py; checked). Runs last: it changes the view's names and types
+#          (cpp/rtti_fields.py; checked), with NAMES=tests/suite/src/<TestX>.names where that exists. Runs last: it
+#          changes the view's names and types
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import glob, importlib, os
 import binaryninja as _bn
@@ -67,12 +68,16 @@ def _dump_classes(bv):
     return lines
 
 
-def _dump_fields(bv):
+def _dump_fields(bv, binary):
     if not _rtti.scan(_bnimage.BNImage(bv)):
         return ["no typeinfo"]
+    env = {"APPLY": "1", "NOCACHE": "1"}
+    names = os.path.join(REPO, "tests/suite/src", os.path.splitext(os.path.basename(binary))[0] + ".names")
+    if os.path.exists(names):  # field names like another session's schema (bncpp-59)
+        env["NAMES"] = names
     g = {}
     for script in ("bn_class_apply.py", "bn_class_types.py", "bn_class_fields.py"):
-        g = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": {"APPLY": "1", "NOCACHE": "1"}}
+        g = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": dict(env)}
         path = os.path.join(REPO, "tests", script)
         with open(path, encoding="utf-8") as fh:
             exec(compile(fh.read(), path, "exec"), g)
@@ -105,7 +110,7 @@ for _path in _bins:
         if "classes" in _kinds:
             _texts["classes"] = _dump_classes(_bv)
         if "fields" in _kinds:  # last: changes the view
-            _texts["fields"] = _dump_fields(_bv)
+            _texts["fields"] = _dump_fields(_bv, _path)
         _dir = os.path.join(_out, _variant)
         os.makedirs(_dir, exist_ok=True)
         _base = os.path.splitext(os.path.basename(_path))[0]

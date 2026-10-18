@@ -1,0 +1,55 @@
+// make_logger() @ 0x4004c8
+{
+    void*** result;
+    int128_t v0;
+    result = operator new(0x30);
+    *(uint128_t*)((char*)result + 8) = data_400590;
+    result[4] = -0x100000000;
+    result[5] = 0;
+    *(uint64_t*)result = &data_404020;
+    result[3] = &data_404050;
+    return result;
+}
+
+// logger_state(Logger*) @ 0x400510
+{
+    return *(uint64_t*)((char*)arg1 + 0x28) + *(uint32_t*)((char*)arg1 + 0x20) * 0x64
+        + *(uint32_t*)((char*)arg1 + 0x24);
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x400528
+{
+    return;
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x40052c
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Logger::id(struct Logger* this) const @ 0x400530
+{
+    return 7;
+}
+
+// Logger::put(struct Logger* this, int32_t) @ 0x400538
+{
+    *(uint32_t*)((char*)this + 0x20) += 1;
+    *(uint32_t*)((char*)this + 0x24) = arg2;
+    *(uint64_t*)((char*)this + 0x28) += (int64_t)arg2;
+}
+
+// non-virtual_thunk_to_Logger::~Logger() @ 0x400554
+{
+    /* tailcall */
+    return operator delete(arg1 - 0x18);
+}
+
+// non-virtual_thunk_to_Logger::put(int32_t) @ 0x40055c
+{
+    *(uint32_t*)((char*)arg1 + 8) += 1;
+    *(uint32_t*)((char*)arg1 + 0xc) = arg2;
+    *(uint64_t*)((char*)arg1 + 0x10) += (int64_t)arg2;
+}
+

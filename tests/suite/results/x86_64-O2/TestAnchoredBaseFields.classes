@@ -1,0 +1,29 @@
+typeinfo 0x401068  vmi   mangled 6Logger  bind __ZTI6Logger
+  base 0x4010a0 4Head  offset_flags 0x2
+  base 0x4010b0 4Sink  offset_flags 0x1802
+  vtable 0x401020  offset_to_top 0  4 slots
+    [0] 0x400530 Logger::~Logger(struct Logger* this)
+    [1] 0x400540 Logger::~Logger(struct Logger* this)
+    [2] 0x400550 Logger::id(struct Logger* this) const
+    [3] 0x400560 Logger::put(struct Logger* this, int32_t)
+  vtable 0x401050  offset_to_top -24  3 slots
+    [0] 0x400530 Logger::~Logger(struct Logger* this)
+    [1] 0x400580 non-virtual_thunk_to_Logger::~Logger()
+    [2] 0x400590 non-virtual_thunk_to_Logger::put(int32_t)
+typeinfo 0x4010a0  class mangled 4Head  bind __ZTI4Head
+typeinfo 0x4010b0  class mangled 4Sink  bind __ZTI4Sink
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400530 Logger::~Logger   [now: Logger::~Logger(struct Logger* this)]
+R 0x400540 Logger::~Logger [deleting]   [now: Logger::~Logger(struct Logger* this)]
+R 0x400550 Logger::vfunc2   [now: Logger::id(struct Logger* this) const]
+R 0x400560 Logger::vfunc3   [now: Logger::put(struct Logger* this, int32_t)]
+C 0x400580 thunk for Logger's Sink at +24
+R 0x400580 Logger::vfunc1_at_24 [thunk]   [now: non-virtual_thunk_to_Logger::~Logger()]
+C 0x400590 thunk for Logger's Sink at +24
+R 0x400590 Logger::vfunc2_at_24 [thunk]   [now: non-virtual_thunk_to_Logger::put(int32_t)]
+D 0x401010 vtable_for_Logger   [now: _vtable_for_Logger]
+D 0x401040 vtable_for_Logger_at_24
+D 0x401068 typeinfo_for_Logger   [now: _typeinfo_for_Logger]
+D 0x4010a0 typeinfo_for_Head   [now: _typeinfo_for_Head]
+D 0x4010b0 typeinfo_for_Sink   [now: _typeinfo_for_Sink]

@@ -1,0 +1,60 @@
+// make_logger() @ 0x4004c0
+{
+    struct Head::Logger::VTable** result = operator new(0x30);
+    result[1] = 1;
+    result[2] = 2;
+    result[4] = 0;
+    *(uint32_t*)((char*)result + 0x24) = 0xffffffff;
+    result[5] = 0;
+    *(uint64_t*)result = &_vtable_for_Logger{for `Head'};
+    result[3] = &_vtable_for_Logger{for `Sink'};
+    return result;
+}
+
+// logger_state(Logger*) @ 0x400510
+{
+    return (int64_t)*(uint32_t*)((char*)arg1 + 0x24)
+            + (int64_t)*(uint32_t*)((char*)arg1 + 0x20) * 0x64
+        + *(uint64_t*)((char*)arg1 + 0x28);
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x400530
+{
+    return;
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x400540
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Logger::id(struct Logger* this) const @ 0x400550
+{
+    return 7;
+}
+
+// Logger::put(struct Logger* this, int32_t) @ 0x400560
+{
+    *(uint32_t*)((char*)this + 0x20) += 1;
+    *(uint32_t*)((char*)this + 0x24) = arg2;
+    int64_t result = (int64_t)arg2;
+    *(uint64_t*)((char*)this + 0x28) += result;
+    return result;
+}
+
+// non-virtual_thunk_to_Logger::~Logger() @ 0x400580
+{
+    /* tailcall */
+    return operator delete((char*)arg1 - 0x18);
+}
+
+// non-virtual_thunk_to_Logger::put(int32_t) @ 0x400590
+{
+    *(uint32_t*)((char*)arg1 + 8) += 1;
+    *(uint32_t*)((char*)arg1 + 0xc) = arg2;
+    int64_t result = (int64_t)arg2;
+    *(uint64_t*)((char*)arg1 + 0x10) += result;
+    return result;
+}
+

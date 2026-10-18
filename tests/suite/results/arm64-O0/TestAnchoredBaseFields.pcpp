@@ -1,0 +1,125 @@
+// make_logger() @ 0x4004c8
+{
+    struct Logger* result = operator new(0x30);
+    Logger::Logger(result);
+    return result;
+}
+
+// Logger::Logger(struct Logger* this) @ 0x4004f4
+{
+    struct Logger* this_1 = this;
+    Logger::Logger(this);
+}
+
+// logger_state(Logger*) @ 0x400520
+{
+    return *(uint64_t*)((char*)arg1 + 0x28) + (int64_t)(*(uint32_t*)((char*)arg1 + 0x20) * 0x64)
+        + (int64_t)*(uint32_t*)((char*)arg1 + 0x24);
+}
+
+// Logger::Logger(struct Logger* this) @ 0x400558
+{
+    Head::Head(this);
+    Sink::Sink((char*)this + 0x18);
+    *(uint64_t*)this = &data_404020;
+    *(uint64_t*)((char*)this + 0x18) = &data_404050;
+}
+
+// Head::Head(struct Head* this) @ 0x4005a8
+{
+    *(uint64_t*)this = &data_4040d0;
+    *(uint64_t*)((char*)this + 8) = 1;
+    *(uint64_t*)((char*)this + 0x10) = 2;
+}
+
+// Sink::Sink(struct Sink* this) @ 0x4005dc
+{
+    *(uint64_t*)this = &data_4040f8;
+    *(uint32_t*)((char*)this + 8) = 0;
+    *(uint32_t*)((char*)this + 0xc) = 0xffffffff;
+    *(uint64_t*)((char*)this + 0x10) = 0;
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x400610
+{
+    struct Logger* this_1 = this;
+    Logger::~Logger(this);
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x40063c
+{
+    Logger::~Logger(this);
+    operator delete(this);
+}
+
+// Logger::id(struct Logger* this) const @ 0x40066c
+{
+    struct Logger* this_1 = this;
+    return 7;
+}
+
+// Logger::put(struct Logger* this, int32_t) @ 0x400680
+{
+    *(uint32_t*)((char*)this + 0x20) += 1;
+    *(uint32_t*)((char*)this + 0x24) = arg2;
+    *(uint64_t*)((char*)this + 0x28) += (int64_t)arg2;
+}
+
+// non-virtual_thunk_to_Logger::~Logger() @ 0x4006bc
+{
+    int64_t var_8 = arg1;
+    /* tailcall */
+    return Logger::~Logger(arg1 - 0x18);
+}
+
+// non-virtual_thunk_to_Logger::~Logger() @ 0x4006d8
+{
+    /* tailcall */
+    return Logger::~Logger(arg1 - 0x18);
+}
+
+// non-virtual_thunk_to_Logger::put(int32_t) @ 0x4006f0
+{
+    /* tailcall */
+    return Logger::put(arg1 - 0x18, arg2);
+}
+
+// Head::~Head(struct Head* this) @ 0x400710
+{
+    struct Head* this_1 = this;
+    trap(1);
+}
+
+// Head::~Head(struct Head* this) @ 0x400724
+{
+    struct Head* this_1 = this;
+    trap(1);
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x400730
+{
+    struct Sink* this_1 = this;
+    trap(1);
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x400744
+{
+    struct Sink* this_1 = this;
+    trap(1);
+}
+
+// Logger::~Logger(struct Logger* this) @ 0x400750
+{
+    return;
+}
+
+// Sink::~Sink(struct Sink* this) @ 0x400788
+{
+    return;
+}
+
+// Head::~Head(struct Head* this) @ 0x40079c
+{
+    return;
+}
+

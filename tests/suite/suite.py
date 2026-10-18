@@ -63,6 +63,7 @@ TESTS = [
     "TestPointerFields",         # fields holding object pointers: typed Y* from the stores (.fields, bncpp-34)
     "TestNoVtableBase",          # bases without a vtable in the image, anchored by the RTTI base lists (bncpp-31)
     "TestClosure",               # lambdas in std::function / a function object vs same-shaped classes (bncpp-23)
+    "TestAnchoredBaseFields",    # polymorphic anchored base with fields as the second base (bncpp-58/59)
 ]
 
 # tests built differently from src/TestX.cpp with -undefined dynamic_lookup: name -> (source, link flags, hash
