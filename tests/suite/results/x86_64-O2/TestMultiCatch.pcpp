@@ -7,17 +7,14 @@
     {
         return may_throw(arg1);
     }
-    catch (std::runtime_error)
+    catch (std::runtime_error& e)
     {
-        void* rax = ___cxa_begin_catch(arg4);
-        _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
-        ___cxa_end_catch();
+        _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         return 0xffffffff;
     }
-    catch (int32_t)
+    catch (int32_t e)
     {
-        _printf("int: %d\n", (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4));
-        ___cxa_end_catch();
+        _printf("int: %d\n", (uint64_t)e);
         return 0xfffffffe;
     }
 }
@@ -59,19 +56,15 @@
     {
         may_throw(arg1);
     }
-    catch (std::invalid_argument)
+    catch (std::invalid_argument& e)
     {
-        void* rax = ___cxa_begin_catch(arg4);
-        log_line((*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
-        ___cxa_end_catch();
+        log_line((*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         /* tailcall */
         return sub_40066b();
     }
-    catch (std::exception)
+    catch (std::exception& e)
     {
-        void* rax_2 = ___cxa_begin_catch(arg4);
-        log_line((*(uint64_t*)(*(uint64_t*)rax_2 + 0x10))(rax_2));
-        ___cxa_end_catch();
+        log_line((*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         /* tailcall */
         return sub_40066b();
     }

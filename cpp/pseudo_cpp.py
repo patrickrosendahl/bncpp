@@ -13,11 +13,12 @@ from binaryninja import (BraceRequirement, LanguageRepresentationFunction,
                          LanguageRepresentationFunctionType, OperatorPrecedence, log_warn)
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
-from ..shared.tokens import TokenMixin
+from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render
 from ..shared import regions as _regions
 
 P = OperatorPrecedence
+_DEREF_CAST = __import__("re").compile(r"^\*\s*\([\w:<> ]+\*\)$")  # '*(uint32_t*)' before a begin_catch
 
 
 class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
@@ -109,24 +110,26 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
         return items
 
     def plan_handlers(self, region):
-        """per clause (Clause, pad function | None, [statement], note | None)"""
+        """per clause (Clause, pad function | None, eh_render.Plumbing | None, note | None); no Plumbing: the
+        statements are shown as they are (the whole pad), in Plumbing-less form [statement]"""
         bv = self.function.view
         out, shown = [], set()
         for clause, pad in region.clauses:
             pf = bv.get_function_at(pad)
             if pf is None:
-                out.append((clause, None, [], "landing pad %#x is in no function (command: Create landing-pad "
+                out.append((clause, None, None, "landing pad %#x is in no function (command: Create landing-pad "
                                                 "functions)" % pad))
                 continue
             on_pad = max(sum(c.kind == c.CATCH for c in cs.clauses) for cs in region.sites if cs.landing_pad == pad)
             stmts = eh_render.specialize(pf, clause.type_index, on_pad)
             if stmts is not None:
-                out.append((clause, pf, stmts, None))
+                out.append((clause, pf, eh_render.plumbing(pf, stmts, eh_comments.type_name(clause.type)), None))
             elif pad in shown:
-                out.append((clause, pf, [], "selector #%d: the landing pad above" % clause.type_index))
+                out.append((clause, pf, None, "selector #%d: the landing pad above" % clause.type_index))
             else:
                 shown.add(pad)
-                out.append((clause, pf, list(eh_render.body(pf.hlil.root)) if pf.hlil is not None else [],
+                whole = list(eh_render.body(pf.hlil.root)) if pf.hlil is not None else []
+                out.append((clause, pf, eh_render.Plumbing(whole, set(), {}),
                             "the whole landing pad %s: its dispatch on the selector was not found"
                             % pf.symbol.full_name))
         return out
@@ -144,21 +147,70 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
         self.open_block(tokens)
         self.emit_items(items, tokens)
         self.close_block(tokens)
-        for clause, pf, stmts, note in handlers:
+        for clause, pf, plumb, note in handlers:
+            type_name = eh_comments.type_name(clause.type)
+            var = eh_render.catch_var(type_name) if plumb is not None and not note else None
             self.kw(tokens, "catch")
             self.txt(tokens, " ")
             tokens.append_open_paren()
-            self.type_tok(tokens, eh_comments.type_name(clause.type))
+            self.type_tok(tokens, type_name)
+            if var is not None:
+                self.txt(tokens, "& e" if var == "&e" else " e")
             tokens.append_close_paren()
             self.open_block(tokens)
             if note:
                 self.note(tokens, "// " + note)
                 tokens.new_line()
-            if stmts:
+            if plumb is not None and plumb.stmts:
                 lr = pf.language_representation(BASE_LANGUAGE)
-                for s in stmts:
-                    self.emit_lines(lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True), tokens, True)
+                for s in plumb.stmts:
+                    if s.expr_index in plumb.rethrow:
+                        self.kw(tokens, "throw")
+                        tokens.append_semicolon()
+                        tokens.new_line()
+                        continue
+                    lines = lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True)
+                    if var is not None:
+                        lines = [self.catch_tokens(list(l.tokens), plumb.names, var) for l in lines]
+                    else:
+                        lines = [list(l.tokens) for l in lines]
+                    self.emit_token_lines(lines, tokens, True)
             self.close_block(tokens)
+
+    def catch_tokens(self, toks, names, var):
+        """a catch body line with the exception object named (bncpp-7): a variable that held its address or value
+        prints as '&e' / 'e'; an inline ___cxa_begin_catch(x) as '&e', and '*(T*)___cxa_begin_catch(x)' as 'e'
+        when e is a scalar"""
+        out, i = [], 0
+        while i < len(toks):
+            t = toks[i]
+            if t.type == TT.LocalVariableToken and t.text in names:
+                out.append(tok(TT.TextToken, self.catch_value(out, names[t.text], var)))  # plain text: no variable
+                i += 1
+                continue
+            if t.text.lstrip("_") == "cxa_begin_catch" and i + 1 < len(toks) and toks[i + 1].text.startswith("("):
+                depth, j = 0, i + 1
+                while j < len(toks):
+                    depth += toks[j].text.count("(") - toks[j].text.count(")")
+                    if depth <= 0:
+                        break
+                    j += 1
+                out.append(tok(TT.TextToken, self.catch_value(out, "&e", var)))
+                i = j + 1
+                continue
+            out.append(t)
+            i += 1
+        return out
+
+    @staticmethod
+    def catch_value(out, text, var):
+        """text ('&e' / 'e') for the exception object; '*(T*)&e' -> 'e' for a scalar e (drops the cast from out)"""
+        if var == "e" and text == "&e":
+            for k in range(1, min(len(out), 8) + 1):
+                if _DEREF_CAST.match("".join(x.text for x in out[-k:])):
+                    del out[-k:]
+                    return "e"
+        return text
 
     def open_block(self, tokens):
         """a brace on its own line, as Pseudo C sets an if's (the emitter's scopes print none here)"""
@@ -180,13 +232,16 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
         self.emit_lines(self.base().get_expr_text(instr, None, precedence, statement), tokens, statement)
 
     def emit_lines(self, lines, tokens, statement):
+        self.emit_token_lines([list(line.tokens) for line in lines], tokens, statement)
+
+    def emit_token_lines(self, lines, tokens, statement):
         for i, line in enumerate(lines):
             if i:
                 tokens.new_line()
-            if not line.tokens:
+            if not line:
                 tokens.scope_separator()  # the emitter drops empty lines; this is Pseudo C's blank line
                 continue
-            tokens.append(list(line.tokens))
+            tokens.append(line)
         if statement:
             tokens.new_line()
 

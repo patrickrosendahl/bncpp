@@ -24,7 +24,9 @@ from . import eh_comments
 
 Op = HighLevelILOperation
 
-# the register the personality hands the selector in (__builtin_eh_return_data_regno(1))
+# the registers the personality hands the exception pointer and the selector in
+# (__builtin_eh_return_data_regno(0) / (1))
+EXCEPTION_REG = {"x86_64": "rax", "aarch64": "x0"}
 SELECTOR_REG = {"x86_64": "rdx", "aarch64": "x1"}
 _TERMINATORS = (Op.HLIL_RET, Op.HLIL_TAILCALL, Op.HLIL_NORET, Op.HLIL_UNREACHABLE, Op.HLIL_JUMP)
 # a call in a try is never a tail call (it needs its landing pad): tail calls are no evidence of a region
@@ -117,8 +119,9 @@ def body(instr):
     return list(instr.body) if instr.operation == Op.HLIL_BLOCK else [instr]
 
 
-def selector_vars(func):
-    reg = SELECTOR_REG.get(func.arch.name)
+def param_vars(func, regs):
+    """func's parameter variables in the register regs[arch] (EXCEPTION_REG / SELECTOR_REG)"""
+    reg = regs.get(func.arch.name)
     if reg is None:
         return set()
     return {v for v in func.parameter_vars
@@ -126,8 +129,9 @@ def selector_vars(func):
             and func.arch.get_reg_name(v.storage) == reg}
 
 
-class _Selector:
-    """what holds the selector: variables, and memory slots it was stored to (by address expression text)"""
+class _Holder:
+    """what holds a value the personality passed in (the selector, the exception pointer): variables, and memory
+    slots it was stored to (by address expression text)"""
 
     def __init__(self, vars_):
         self.vars, self.mem = set(vars_), set()
@@ -140,7 +144,7 @@ class _Selector:
         return e.operation == Op.HLIL_DEREF and str(e.src) in self.mem
 
     def copy(self, s):
-        """s copies the selector somewhere: remember where, True"""
+        """s copies the value somewhere: remember where, True"""
         if s.operation == Op.HLIL_VAR_INIT and self.holds(s.src):
             self.vars.add(s.dest)
             return True
@@ -175,7 +179,7 @@ def specialize(pad_func, n, clauses_on_pad):
     hlil = pad_func.hlil
     if hlil is None or hlil.root is None:
         return None
-    sel = _Selector(selector_vars(pad_func))
+    sel = _Holder(param_vars(pad_func, SELECTOR_REG))
     out = []
     tests = [0]
 
@@ -201,3 +205,80 @@ def specialize(pad_func, n, clauses_on_pad):
     if not tests[0] and clauses_on_pad > 1:
         return None
     return out
+
+
+# --- EH plumbing in a catch body (bncpp-7) ------------------------------------------------------------------------
+
+_BEGIN, _END, _RETHROW = "cxa_begin_catch", "cxa_end_catch", "cxa_rethrow"
+_SCALAR = __import__("re").compile(r"^(?:u?int\d+_t|(?:un)?signed\b.*|char\d*_t|wchar_t|char|short|int|long.*|bool|"
+                                   r"float|double|.*\*)$")
+
+
+def callee(e):
+    """the plain name of the function an HLIL_CALL calls ('cxa_begin_catch'), '' if unknown"""
+    if e is None or e.operation not in (Op.HLIL_CALL, Op.HLIL_TAILCALL):
+        return ""
+    return str(e.dest).lstrip("_")
+
+
+def _strip(e):
+    while e.operation in _WRAPS:
+        e = e.src
+    return e
+
+
+def catch_var(type_name):
+    """the catch header's declarator: 'e' for a scalar or pointer type, '&e' for a class (caught by reference);
+    None for catch (...)"""
+    if type_name == "...":
+        return None
+    return "e" if _SCALAR.match(type_name) else "&e"
+
+
+class Plumbing:
+    """what the catch body of one clause hides and renames:
+      stmts     the statements that remain
+      rethrow   expr indexes of `___cxa_rethrow()` statements, printed as `throw;`
+      names     {variable name: text} -- a variable that holds the exception object's address prints as '&e',
+                one that holds a scalar exception's value as 'e'"""
+
+    def __init__(self, stmts, rethrow, names):
+        self.stmts, self.rethrow, self.names = stmts, rethrow, names
+
+
+def plumbing(pad_func, stmts, type_name):
+    """hide the EH plumbing in stmts, the catch body of a clause catching type_name (from specialize):
+    begin/end_catch statements, the exception pointer's copies (a -O0 pad stores it to the stack), the `/* no
+    return */` after a rethrow; `T v = ___cxa_begin_catch(x)` names the catch variable"""
+    exn = _Holder(param_vars(pad_func, EXCEPTION_REG))
+    var = catch_var(type_name)
+    out, rethrow, names = [], set(), {}
+    after_rethrow = False
+    for s in stmts:
+        if after_rethrow and s.operation == Op.HLIL_NORET:
+            continue
+        after_rethrow = False
+        if exn.copy(s):
+            continue
+        name = callee(s)
+        if name in (_BEGIN, _END):
+            continue
+        if name == _RETHROW:
+            rethrow.add(s.expr_index)
+            out.append(s)
+            after_rethrow = True
+            continue
+        if var is not None and s.operation == Op.HLIL_VAR_INIT:
+            src = _strip(s.src)
+            if callee(src) == _BEGIN:  # void* rax = ___cxa_begin_catch(x): the object's address
+                names[s.dest.name] = "&e"
+                continue
+            if var == "e" and src.operation == Op.HLIL_DEREF and callee(_strip(src.src)) == _BEGIN:
+                names[s.dest.name] = "e"  # int32_t v = *(int32_t*)___cxa_begin_catch(x): the value
+                continue
+        out.append(s)
+    if var is None:  # catch (...): `void* x = ___cxa_begin_catch(e)` with x used nowhere else goes too
+        unused = [s for s in out if s.operation == Op.HLIL_VAR_INIT and callee(_strip(s.src)) == _BEGIN and not any(
+            i.operation == Op.HLIL_VAR and i.var == s.dest for o in out if o is not s for i in walk(o))]
+        out = [s for s in out if all(s is not u for u in unused)]
+    return Plumbing(out, rethrow, names)

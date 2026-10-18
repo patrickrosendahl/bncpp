@@ -11,12 +11,10 @@
     {
         return may_throw(arg1);
     }
-    catch (std::exception)
+    catch (std::exception& e)
     {
-        void* rax = ___cxa_begin_catch(arg4);
-        _printf("rethrowing %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
-        ___cxa_rethrow();
-        /* no return */
+        _printf("rethrowing %s\n", (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
+        throw;
     }
 }
 
@@ -75,11 +73,10 @@
     {
         return may_throw(arg1);
     }
-    catch (int32_t)
+    catch (int32_t e)
     {
-        int32_t r14 = *(uint32_t*)___cxa_begin_catch(arg4);
         struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
-        std::to_string((char*)arg5 - 0x30, r14);
+        std::to_string((char*)arg5 - 0x30, e);
         int128_t* rax_1 = std::string::insert((char*)arg5 - 0x30, 0, "int ");
         *(uint64_t*)((char*)arg5 - 0x40) = rax_1[1];
         *(uint128_t*)((char*)arg5 - 0x50) = *(uint128_t*)rax_1;

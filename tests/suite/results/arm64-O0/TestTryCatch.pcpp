@@ -101,15 +101,12 @@
     {
         int32_t var_14 = may_throw(arg1);
     }
-    catch (std::runtime_error)
+    catch (std::runtime_error& e)
     {
-        *(uint64_t*)((char*)arg3 - 0x10) = arg1;
         int64_t arg_0 =
-            (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10))
-                + 0x10))();
+            (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("runtime_error: %s\n");
         *(uint32_t*)((char*)arg3 - 4) = 0xffffffff;
-        ___cxa_end_catch();
         /* tailcall */
         return sub_4008e4(arg3);
     }

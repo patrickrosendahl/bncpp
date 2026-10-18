@@ -15,10 +15,8 @@
     {
         int32_t x1;
         int32_t arg_c = x1;
-        ___cxa_begin_catch(arg1);
         log_line("something");
         *(uint32_t*)((char*)arg2 - 4) = 0xfffffffd;
-        ___cxa_end_catch();
         /* tailcall */
         return sub_400674(arg2);
     }
@@ -91,18 +89,15 @@
     {
         int32_t var_14 = may_throw(arg1);
     }
-    catch (int32_t)
+    catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg3 - 4) = *(uint32_t*)___cxa_begin_catch(arg1);
-        ___cxa_end_catch();
+        *(uint32_t*)((char*)arg3 - 4) = e;
         /* tailcall */
         return sub_400724(arg3);
     }
     catch (...)
     {
-        ___cxa_begin_catch(arg1);
         *(uint32_t*)((char*)arg3 - 4) = 0xfffffffd;
-        ___cxa_end_catch();
         /* tailcall */
         return sub_400724(arg3);
     }

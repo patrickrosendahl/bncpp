@@ -483,11 +483,9 @@
     {
         fail(arg1);
     }
-    catch (Err)
+    catch (Err& e)
     {
-        void* rax = ___cxa_begin_catch(arg4);
-        int64_t result = (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax);
-        ___cxa_end_catch();
+        int64_t result = (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e);
         return result;
     }
     /* no return */

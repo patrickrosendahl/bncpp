@@ -79,11 +79,9 @@
     {
         return may_throw(arg1);
     }
-    catch (std::runtime_error)
+    catch (std::runtime_error& e)
     {
-        void* rax = ___cxa_begin_catch(arg1);
-        _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
-        ___cxa_end_catch();
+        _printf("runtime_error: %s\n", (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         return 0xffffffff;
     }
 }

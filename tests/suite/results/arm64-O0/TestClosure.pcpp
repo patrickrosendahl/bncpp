@@ -294,11 +294,9 @@
     {
         fail(arg1);
     }
-    catch (Err)
+    catch (Err& e)
     {
-        *(uint64_t*)((char*)arg3 - 8) =
-            (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
-        ___cxa_end_catch();
+        *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         /* tailcall */
         return sub_400ed8(arg3);
     }

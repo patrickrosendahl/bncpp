@@ -17,13 +17,12 @@
         Guard::Guard(&var_28, "inner");
         int32_t var_14 = may_throw(arg1);
     }
-    catch (std::runtime_error)
+    catch (std::runtime_error& e)
     {
-        int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+        int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("caught %s\n");
         *(uint32_t*)((char*)arg3 - 4) = 0xfffffffc;
         int32_t arg_18 = 1;
-        ___cxa_end_catch();
         /* tailcall */
         return j_sub_400710(arg3);
     }

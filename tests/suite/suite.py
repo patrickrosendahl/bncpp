@@ -207,7 +207,7 @@ COUNTERS = {
 }
 DISTINCT = ("temps",)
 # calls the try/catch rendering may hide (bncpp-7): not lost when they vanish
-MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_get_exception_ptr|Unwind_Resume|"
+MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|Unwind_Resume|"
                         r"clang_call_terminate)")
 CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+(?: const)?\s*[&*]?\s*(\w+)\)"
 # gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report

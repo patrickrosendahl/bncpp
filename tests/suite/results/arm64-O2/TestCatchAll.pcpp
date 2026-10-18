@@ -11,9 +11,7 @@
     }
     catch (...)
     {
-        ___cxa_begin_catch(arg1);
         log_line("something");
-        ___cxa_end_catch();
         /* tailcall */
         return sub_400608();
     }
@@ -76,18 +74,14 @@
     {
         may_throw(arg1);
     }
-    catch (int32_t)
+    catch (int32_t e)
     {
-        void* x0 = ___cxa_begin_catch(arg1);
-        *(uint32_t*)x0;
-        ___cxa_end_catch();
+        e;
         /* tailcall */
         return sub_400664();
     }
     catch (...)
     {
-        void* x0 = ___cxa_begin_catch(arg1);
-        ___cxa_end_catch();
         /* tailcall */
         return sub_400664();
     }
