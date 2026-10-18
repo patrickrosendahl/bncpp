@@ -2,6 +2,7 @@
 # (tests/bn_class_apply.py, tests/bn_class_types.py):
 #   bnrun --bndb DB --timeout 1800 tests/bn_class_fields.py                     # dry run: plan + review file
 #   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_fields.py       # apply (in RAM), then save PATH
+#   (APPLY refuses while classes have no type from bn_class_types.py; tests/bn_class_pipeline.py runs all three)
 #   options: --env BASELINE=F (as bn_class_types.py), --env NAMES=F (field names: lines 'label offset name [type]'),
 #            (a type BN cannot parse keeps the name untyped, a bad offset skips the line: review 'note:' lines),
 #            --env LIMIT=N (timing: only the first N functions in step 1 and N classes in step 3; dry run only),
@@ -114,6 +115,16 @@ _label_set = set(_labels.values())
 _points = {vt.addr: (a, vt.offset_to_top) for a, t in _types.items() for vt in t.vtables if vt.construction_for is None}
 _new_addrs = set(s.address for n in _OPERATOR_NEW for s in bv.get_symbols_by_name(n))
 _no_vptr = set(a for a, slots in _fields.anchored_bases(_types).items() if slots is None)  # bncpp-31: a field at 0
+# bncpp-55: the class structs come from bn_class_types.py; without them APPLY would type nothing but still give
+# other structs bases on types that do not exist -- refuse before changing anything
+_untyped = sorted(_labels[a] for a in set(a for a, t in _types.items() if any(vt.primary for vt in t.vtables))
+                  | set(_fields.anchored_bases(_types)) if bv.get_type_by_name(QualifiedName([_labels[a]])) is None)
+if _untyped:
+    _count("classes: no type yet (run bn_class_types.py)", len(_untyped))
+    if _apply:
+        raise RuntimeError("APPLY refused: %d classes have no type yet (%s%s); run tests/bn_class_types.py first "
+                           "(or tests/bn_class_pipeline.py)" % (len(_untyped), ", ".join(_untyped[:5]),
+                                                                ", ..." if len(_untyped) > 5 else ""))
 _lap("0 scan")
 
 
@@ -719,9 +730,12 @@ def _plan():
             counts["structs: no type yet (run bn_class_types.py)"] = \
                 counts.get("structs: no type yet (run bn_class_types.py)", 0) + 1
             continue
+        bases = [(b, off) for b, off in lay.bases if b in existing]  # never a base on a type that does not exist
+        if len(bases) < len(lay.bases):
+            counts["bases dropped: no type yet"] = counts.get("bases dropped: no type yet", 0) + len(lay.bases) - len(bases)
         s = StructureBuilder.create()
         s.width = lay.width
-        s.base_structures = [BaseStructure(_ref(lays[b].name), off, lays[b].width) for b, off in lay.bases]
+        s.base_structures = [BaseStructure(_ref(lays[b].name), off, lays[b].width) for b, off in bases]
         for m in lay.members:
             s.add_member_at_offset(m.name, m.type, m.offset, overwrite_existing=False)
         for key, n in (("structs", 1), ("fields", sum(1 for m in lay.members if m.source != "vptr")),
@@ -729,13 +743,13 @@ def _plan():
                        ("pointer fields typed", sum(1 for p in lay.pointers if p[3] == "typed")),
                        ("pointer fields: contradiction", sum(1 for p in lay.pointers if p[3] == "contradiction")),
                        ("pointer fields kept", sum(1 for p in lay.pointers if p[3].startswith("kept"))),
-                       ("structs with a base", 1 if lay.bases else 0)):
+                       ("structs with a base", 1 if bases else 0)):
             counts[key] = counts.get(key, 0) + n
         review.append("apply struct %s %#x (%s)%s: %s" % (
-            lay.name, lay.width, lay.width_from, "".join(" base %s@%#x" % (lays[b].name, o) for b, o in lay.bases),
+            lay.name, lay.width, lay.width_from, "".join(" base %s@%#x" % (lays[b].name, o) for b, o in bases),
             ", ".join("%#x %s" % (m.offset, m.name) for m in lay.members)))
         defs.append((QualifiedName([lay.name]), s))
-        shape.append((lay.name, lay.width, tuple(lay.bases), tuple((m.offset, m.name, str(m.type))
+        shape.append((lay.name, lay.width, tuple(bases), tuple((m.offset, m.name, str(m.type))
                                                                     for m in lay.members)))
     return lays, counts, review, defs, shape, params
 

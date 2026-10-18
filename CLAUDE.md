@@ -38,6 +38,7 @@ python3 -I tests/ref_class_scan.py BIN --compare .scratch/classes/<bin>.bn.class
 $B --bndb DB --timeout 600 [--env APPLY=1] tests/bn_class_apply.py          # names (R:/D:/C: directives)
 $B --bndb DB --timeout 1800 --env BASELINE=F [--env APPLY=1] tests/bn_class_types.py   # structs + 'X* this'
 $B --bndb DB --timeout 1800 --env BASELINE=F [--env NAMES=F] [--env APPLY=1] tests/bn_class_fields.py  # sizes, bases, fields
+$B --bndb DB --timeout 1800 --env BASELINE=F [--env NAMES=F] [--env APPLY=1] tests/bn_class_pipeline.py  # the three in order
 $B --bndb DB --timeout 900 tests/bn_vcall_count.py     # HLIL indirect / named vptr calls (a sample)
 # native part (C++, native/): API checkout /Users/patrick/dev/binaryninja-api on the branch matching the app's
 # Contents/Resources/api_REVISION.txt (bn-<build>); loads only on a BN restart, no dev loads
