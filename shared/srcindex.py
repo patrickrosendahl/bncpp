@@ -26,12 +26,13 @@ _ASSERTY = re.compile(r"^(?:[A-Z][A-Z0-9_]{2,}|assert\w*|panic\w*|\w*_assert\w*|
 
 
 class SourceFunction:
-    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline")
+    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline", "static")
 
-    def __init__(self, name, qualname, file, first, last, body_first, inline=False):
+    def __init__(self, name, qualname, file, first, last, body_first, inline=False, static=False):
         self.name, self.qualname, self.file = name, qualname, file
         self.first, self.last, self.body_first = first, last, body_first
         self.inline = inline     # declared inline: its code may live only inside its callers
+        self.static = static     # file-local (static, not noinline, not a member): the compiler may inline it
 
     def __repr__(self):
         return "<SourceFunction %s %s:%d-%d>" % (self.qualname, os.path.basename(self.file), self.first, self.last)
@@ -180,8 +181,9 @@ def index_text(text, path):
                     func_depth = len(stack)
                     quals = [s[1] for s in stack if s[0] in ("ns", "type") and s[1]]
                     qual = "::".join(quals + [name]) if quals and "::" not in name else name
-                    start, inline = start
-                    cur = SourceFunction(name.split("::")[-1], qual, path, start, ln, ln, inline)
+                    start, inline, static = start
+                    static = static and not any(s[0] == "type" for s in stack)
+                    cur = SourceFunction(name.split("::")[-1], qual, path, start, ln, ln, inline, static)
             stack.append((kind, name))
             i += 1
             continue
@@ -293,10 +295,10 @@ def _classify_brace(toks, i, stack):
                     s -= 1
                 if name.split("::")[-1].startswith("operator"):
                     pass
-                return "func", name, (_decl_start(toks, s), _inline_before(toks, s))
+                return "func", name, (_decl_start(toks, s),) + _specs_before(toks, s)
             if pv == "operator" or (m >= 2 and toks[m - 2][1] == "operator"):
-                return "func", "operator" + (pv if pv != "operator" else ""), (_decl_start(toks, m - 1),
-                                                                              _inline_before(toks, m - 1))
+                return "func", "operator" + (pv if pv != "operator" else ""), ((_decl_start(toks, m - 1),)
+                                                                              + _specs_before(toks, m - 1))
             return "block", None, None
         if k == "id" and v in ("const", "override", "final", "noexcept", "volatile", "try", "mutable",
                                "OS_NOINLINE", "__attribute__"):
@@ -361,17 +363,23 @@ def _decl_start(toks, s):
     return line
 
 
-def _inline_before(toks, s):
-    """a declaration's specifiers before its name say inline (inline, __inline, always_inline,
-    __header_always_inline ...; not noinline): walk back to the previous statement or brace"""
+def _specs_before(toks, s):
+    """(inline, static) from a declaration's specifiers before its name: inline = inline, __inline,
+    always_inline, __header_always_inline ...; static = static and no noinline (OS_NOINLINE,
+    __attribute__((noinline))): walk back to the previous statement or brace"""
     j = s - 1
+    inline = static = noinline = False
     while j >= 0 and s - j < 48 and toks[j][1] not in (";", "{", "}"):
         if toks[j][0] == "id":
             v = toks[j][1].lower()
-            if "inline" in v and "noinline" not in v:
-                return True
+            if "noinline" in v:
+                noinline = True
+            elif "inline" in v:
+                inline = True
+            elif v == "static":
+                static = True
         j -= 1
-    return False
+    return inline and not noinline, static and not noinline
 
 
 def index_file(path):

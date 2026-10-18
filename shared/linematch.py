@@ -144,13 +144,38 @@ def _anchors_in(sf, sfunc, rare, fl_hits, index=None):
     return anchors, score, strong
 
 
+INLINED_STATIC_SITES = 2     # LLVM inlines a static with one or two call sites (bncpp-75: 2 beat 1 held out)
+_TEXT_REFS = {}     # (path, name) -> the name is used other than as a call
+
+
+def inlined_static(sf, sfunc):
+    """a static function the compiler must have inlined (bncpp-75: thread_call_setup_with_options, brecover_data
+    had no binary function): file-local, at most INLINED_STATIC_SITES call sites in its file and its address
+    never taken (every mention of the name is followed by '(' -- a call, a prototype, 'x()' in a comment)"""
+    if not sfunc.static:
+        return False
+    sites = sum(1 for c in sf.functions if c is not sfunc
+                for _, k, v in sf.features(c) if k == "call" and v == sfunc.name)
+    if not 0 < sites <= INLINED_STATIC_SITES:
+        return False
+    key = (sf.path, sfunc.name)
+    if key not in _TEXT_REFS:
+        try:
+            with open(sf.path, encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            text = ""
+        _TEXT_REFS[key] = bool(re.search(r"\b%s\b(?!\s*\()" % re.escape(sfunc.name), text))
+    return not _TEXT_REFS[key]
+
+
 def match_function(bf, tree, want_file=None, index=None, taken=None):
     """pick the source function for a binary function; returns (SourceFile, SourceFunction, anchors) or None.
     anchors: [(addr, line, kind)] with kind file-line / string / const / call. index: a FileIndex over the tree
     (pass one when matching many functions -- without it every call builds its own). A pick needs a string or
     file-line anchor, or a score of rare constants worth two strings. taken: {(path, first line)} of source
-    functions another binary function already is (by name); a pick that is taken or declared inline is lifted to
-    the caller that inlined it (lift_inlined)"""
+    functions another binary function already is (by name); a pick that is taken, declared inline or an
+    inlined_static is lifted to the caller that inlined it (lift_inlined)"""
     feats = bf["features"]
     fls = _file_line_anchors(feats)
     index = index or FileIndex(tree)
@@ -174,7 +199,7 @@ def match_function(bf, tree, want_file=None, index=None, taken=None):
     if best is None:
         return None
     sf, sfunc, anchors = best[1], best[2], best[3]
-    if sfunc.inline or taken and (sf.path, sfunc.first) in taken:
+    if sfunc.inline or taken and (sf.path, sfunc.first) in taken or inlined_static(sf, sfunc):
         lifted = lift_inlined(sf, sfunc, anchors, rare, index, taken)
         if lifted is None:
             return None
@@ -197,7 +222,7 @@ def lift_inlined(sf, sfunc, anchors, rare, index=None, taken=None, depth=2):
         own, score, _ = _anchors_in(sf, c, rare, [], index)
         moved = [(a, sites[0], k) for a, _, k in anchors]
         cand = (score, c, own + moved)
-        if c.inline and depth > 1:
+        if (c.inline or inlined_static(sf, c)) and depth > 1:
             up = lift_inlined(sf, c, own + moved, rare, index, taken, depth - 1)
             if up is None:
                 continue
@@ -409,7 +434,7 @@ def _order_align(gap, cands, sf, rare_of, fls_of, index):
 def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
     """name unmatched binary functions from their matched neighbours: between two consecutive matched functions
     (by address) of one source file in definition order, the functions in between can only be that file's
-    untaken, non-inline source functions defined between the two (_order_align places them). bin_funcs:
+    untaken source functions defined between the two that are not inline / inlined_static (_order_align places them). bin_funcs:
     {start: bf}; pairs extended in place, to a fixpoint. Returns {start: (round, how)}"""
     order = sorted(bin_funcs)
     taken = {(sf.path, sfunc.first) for sf, sfunc, _ in pairs.values()}
@@ -451,7 +476,8 @@ def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
             ia, ib = idx.get(fa.first), idx.get(fb.first)
             if ia is None or ib is None or ib <= ia + 1:
                 continue
-            cands = [f for f in fs[ia + 1:ib] if not f.inline and (sfa.path, f.first) not in taken]
+            cands = [f for f in fs[ia + 1:ib]
+                     if not f.inline and not inlined_static(sfa, f) and (sfa.path, f.first) not in taken]
             if not cands:
                 continue
             gbf = [bin_funcs[g] for g in gap]
