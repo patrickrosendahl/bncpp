@@ -173,7 +173,7 @@ def match_function(bf, tree, want_file=None, index=None, taken=None):
     """pick the source function for a binary function; returns (SourceFile, SourceFunction, anchors) or None.
     anchors: [(addr, line, kind)] with kind file-line / string / const / call. index: a FileIndex over the tree
     (pass one when matching many functions -- without it every call builds its own). A pick needs a string or
-    file-line anchor, or a score of rare constants worth two strings. taken: {(path, first line)} of source
+    file-line anchor, or a score of rare constants worth two strings. taken: {SourceFunction} of source
     functions another binary function already is (by name); a pick that is taken, declared inline or an
     inlined_static is lifted to the caller that inlined it (lift_inlined)"""
     feats = bf["features"]
@@ -199,7 +199,7 @@ def match_function(bf, tree, want_file=None, index=None, taken=None):
     if best is None:
         return None
     sf, sfunc, anchors = best[1], best[2], best[3]
-    if sfunc.inline or taken and (sf.path, sfunc.first) in taken or inlined_static(sf, sfunc):
+    if sfunc.inline or taken and sfunc in taken or inlined_static(sf, sfunc):
         lifted = lift_inlined(sf, sfunc, anchors, rare, index, taken)
         if lifted is None:
             return None
@@ -227,7 +227,7 @@ def lift_inlined(sf, sfunc, anchors, rare, index=None, taken=None, depth=2):
             if up is None:
                 continue
             cand = (score, up[0], up[1])
-        if taken and (sf.path, cand[1].first) in taken:
+        if taken and cand[1] in taken:
             continue
         if best is None or cand[0] > best[0]:
             best, tie = cand, False
@@ -254,11 +254,126 @@ class NameIndex:
         return self.by_qual.get(name) or self.by_plain.get(name.split("::")[-1], [])
 
 
+# -- signatures (bncpp-78): a mangled name fixes the overload; compilation is deterministic, so a candidate whose
+# parameter list cannot produce the binary's signature is not the source of that binary function
+
+_PARAM_TOKEN = re.compile(r"\w+|::|&&|\.\.\.|[^\s\w]")
+_PARAM_QUALS = {"const", "volatile", "struct", "class", "enum", "union", "typename", "restrict", "__restrict",
+                "register", "__unused", "_Nonnull", "_Nullable", "__nonnull", "__nullable"}
+_BUILTIN_TYPES = {"void", "char", "short", "int", "long", "unsigned", "signed", "float", "double", "bool",
+                  "_Bool", "wchar_t", "__int128"}
+_TYPEDEFS = {      # Darwin arm64 integer typedefs -> the words the demangler prints
+    "uint8_t": "unsigned char", "int8_t": "signed char", "u_int8_t": "unsigned char", "UInt8": "unsigned char",
+    "SInt8": "signed char", "Boolean": "unsigned char", "uint16_t": "unsigned short", "int16_t": "short",
+    "u_int16_t": "unsigned short", "UInt16": "unsigned short", "SInt16": "short",
+    "uint32_t": "unsigned int", "int32_t": "int", "u_int32_t": "unsigned int", "UInt32": "unsigned int",
+    "SInt32": "int", "uint": "unsigned int", "u_int": "unsigned int", "IOOptionBits": "unsigned int",
+    "IOReturn": "int", "kern_return_t": "int", "boolean_t": "int", "errno_t": "int",
+    "uint64_t": "unsigned long long", "int64_t": "long long", "u_int64_t": "unsigned long long",
+    "UInt64": "unsigned long long", "SInt64": "long long", "user_addr_t": "unsigned long long",
+    "mach_vm_address_t": "unsigned long long", "mach_vm_size_t": "unsigned long long", "off_t": "long long",
+    "size_t": "unsigned long", "ssize_t": "long", "uintptr_t": "unsigned long", "intptr_t": "long",
+    "vm_size_t": "unsigned long", "vm_offset_t": "unsigned long", "vm_address_t": "unsigned long",
+    "IOByteCount": "unsigned long", "IOVirtualAddress": "unsigned long", "AbsoluteTime": "unsigned long long",
+}
+
+
+def _split_top(s, sep=","):
+    out, depth, cur = [], 0, []
+    for ch in s:
+        if ch in "<([":
+            depth += 1
+        elif ch in ">)]":
+            depth -= 1
+        if ch == sep and depth == 0:
+            out.append("".join(cur))
+            cur = []
+        else:
+            cur.append(ch)
+    out.append("".join(cur))
+    return out
+
+
+def _param_key(p):
+    """(type words, pointer depth, reference) of one parameter as written or demangled; the parameter name and
+    a default argument are dropped. None for what this cannot read (function pointers)"""
+    toks = _PARAM_TOKEN.findall(_split_top(p, "=")[0])
+    if "(" in toks:
+        return None
+    array = "[" in toks      # 'char buf[16]': an array parameter is a pointer
+    if array:
+        toks = toks[:toks.index("[")]
+    toks = [t for t in toks if t not in _PARAM_QUALS]
+    # the name: a trailing identifier after a type (an identifier, '*', '&', '>')
+    if len(toks) >= 2 and re.match(r"\w+$", toks[-1]) and toks[-1] not in _BUILTIN_TYPES \
+            and (re.match(r"\w+$", toks[-2]) or toks[-2] in ("*", "&", "&&", ">")):
+        toks = toks[:-1]
+    if array:
+        toks.append("*")
+    words = []
+    for i, t in enumerate(toks):
+        if re.match(r"\w+$", t) and not (i + 1 < len(toks) and toks[i + 1] == "::"):
+            words.extend(_TYPEDEFS.get(t, t).split())
+        elif t == "...":
+            words.append(t)
+    return tuple(words), toks.count("*"), "&" in toks or "&&" in toks
+
+
+def param_keys(params):
+    """[_param_key] of a parameter list ('' and 'void' are none); None when the list is unknown"""
+    if params is None:
+        return None
+    params = params.strip()
+    if params in ("", "void"):
+        return []
+    return [_param_key(p) for p in _split_top(params)]
+
+
+def _sig_score(bin_keys, src_keys):
+    """how well a source parameter list fits the binary's demangled one: None when the arity differs (a default
+    argument does not make a second binary function), else per parameter 2 for the same type words and 1 for
+    the same pointer / reference shape"""
+    if len(bin_keys) != len(src_keys):
+        return None
+    score = 0
+    for b, s in zip(bin_keys, src_keys):
+        if b is None or s is None:
+            continue
+        if _incompatible(b, s):
+            return None
+        score += 2 * (b[0] == s[0]) + (b[1:] == s[1:])
+    return score
+
+
+def _incompatible(b, s):
+    """two parameter keys no typedef can reconcile: pointers to two different named types (OSString* vs
+    OSSymbol*, char* vs OSSymbol*: the real overload is elsewhere, e.g. inline in a header) unless one of them
+    looks like a typedef (_t, the table), a reference against a non-reference, or a plain integer against a
+    pointer"""
+    if b[2] != s[2] and b[0] and s[0]:
+        return True
+    if b[1] == s[1] >= 1 and len(b[0]) == len(s[0]) == 1 and b[0] != s[0] \
+            and not any(w.endswith("_t") or w in _TYPEDEFS for w in b[0] + s[0]):
+        return True
+    for x, y in ((b, s), (s, b)):
+        if x[1] == 0 and not x[2] and x[0] and set(x[0]) <= _BUILTIN_TYPES and y[1] >= 1:
+            return True
+    return False
+
+
 def match_named(bf, name, names, tree, index=None):
     """the source function of a binary function with a known name: (SourceFile, SourceFunction, anchors) or
-    None. Several candidates (a static function in several files, #if variants) are told apart by the anchors;
-    a tie stays unmatched"""
+    None. Several candidates (overloads, a static function in several files, #if variants): bf["sig"] (the
+    demangled parameter list, if any) keeps those that fit it best, then the anchors decide; a tie stays
+    unmatched"""
     cands = names.lookup(name)
+    if len(cands) > 1 and bf.get("sig") is not None:
+        bk = param_keys(bf["sig"])
+        fits = [(_sig_score(bk, param_keys(f.params)), f) for f in cands if f.params is not None]
+        fits = [(s, f) for s, f in fits if s is not None]
+        if fits:
+            top = max(s for s, _ in fits)
+            cands = [f for s, f in fits if s == top]
     if not cands:
         return None
     feats = bf["features"]
@@ -357,7 +472,7 @@ def propagate(bin_funcs, pairs, names, tree, rounds=20, min_votes=2):
             bf = bin_funcs.get(a)
             if bf is None:
                 continue
-            key = (sf.path, sfunc.first)
+            key = sfunc
             if key not in calls:
                 calls[key] = _src_calls(sf, sfunc, defined)
             for t, name, tight in align_calls(_bin_calls(bf), calls[key], known, taken):
@@ -426,7 +541,8 @@ def _order_align(gap, cands, sf, rare_of, fls_of, index):
     bounds = [(-1, -1)] + [(i, j) for i, j, _, _ in placed] + [(n, m)]
     for (i0, j0), (i1, j1) in zip(bounds, bounds[1:]):
         k = i1 - i0 - 1
-        if 0 < k <= ORDER_MAX_GAP and j1 - j0 - 1 == k:
+        # a macro invocation's functions share one line and are emitted in an order of their own: never by position
+        if 0 < k <= ORDER_MAX_GAP and j1 - j0 - 1 == k and not any(c.macro for c in cands[j0 + 1:j1]):
             out.extend((i0 + d, j0 + d, [], "position") for d in range(1, k + 1))
     return out
 
@@ -437,7 +553,7 @@ def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
     untaken source functions defined between the two that are not inline / inlined_static (_order_align places them). bin_funcs:
     {start: bf}; pairs extended in place, to a fixpoint. Returns {start: (round, how)}"""
     order = sorted(bin_funcs)
-    taken = {(sf.path, sfunc.first) for sf, sfunc, _ in pairs.values()}
+    taken = {sfunc for _, sfunc, _ in pairs.values()}
     defs = {}
     rare_cache, fl_cache = {}, {}
 
@@ -456,7 +572,7 @@ def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
     def def_index(sf):
         if sf.path not in defs:
             fs = sorted(sf.functions, key=lambda f: f.first)
-            defs[sf.path] = (fs, {f.first: k for k, f in enumerate(fs)})
+            defs[sf.path] = (fs, {f: k for k, f in enumerate(fs)})
         return defs[sf.path]
 
     out = {}
@@ -473,18 +589,18 @@ def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
             if sfa.path != sfb.path:
                 continue
             fs, idx = def_index(sfa)
-            ia, ib = idx.get(fa.first), idx.get(fb.first)
+            ia, ib = idx.get(fa), idx.get(fb)
             if ia is None or ib is None or ib <= ia + 1:
                 continue
             cands = [f for f in fs[ia + 1:ib]
-                     if not f.inline and not inlined_static(sfa, f) and (sfa.path, f.first) not in taken]
+                     if not f.inline and not inlined_static(sfa, f) and f not in taken]
             if not cands:
                 continue
             gbf = [bin_funcs[g] for g in gap]
             for i, j, anchors, how in _order_align(gbf, cands, sfa, rare_of, fls_of_for(sfa.path), index):
                 g, c = gap[i], cands[j]
                 pairs[g] = (sfa, c, _dedupe_anchors(anchors))
-                taken.add((sfa.path, c.first))
+                taken.add(c)
                 out[g] = (rnd, how)
                 added += 1
         if not added:

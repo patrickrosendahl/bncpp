@@ -7,7 +7,10 @@ finds the function definitions (name, line range) and, per line, what a binary c
   text    the argument text of a call whose name looks like an assertion / panic macro (ALL_CAPS or assert*),
           whitespace-normalised: #e stringises it into the binary
 No preprocessor, no compiler: xnu does not compile standalone. Preprocessor lines are skipped (a #define body
-is not code of the function it sits in); #if branches are all read (the binary has one of them).
+is not code of the function it sits in); #if branches are all read (the binary has one of them). One exception
+(bncpp-78): a file-scope invocation of a macro that defines functions (xnu's OSDefineMetaClassAndStructors:
+ctors, dtor, getMetaClass, MetaClass::alloc, operator new / delete) is expanded from the tree's headers, and
+its functions sit at the invocation line.
 
   idx = index_file(path)            -> SourceFile: .functions [SourceFunction], .lines {line: [(kind, value)]}
   idx = index_tree(root, exts)      -> {path: SourceFile}   (lazy per file through SourceTree)
@@ -26,13 +29,15 @@ _ASSERTY = re.compile(r"^(?:[A-Z][A-Z0-9_]{2,}|assert\w*|panic\w*|\w*_assert\w*|
 
 
 class SourceFunction:
-    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline", "static")
+    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline", "static", "params", "macro")
 
-    def __init__(self, name, qualname, file, first, last, body_first, inline=False, static=False):
+    def __init__(self, name, qualname, file, first, last, body_first, inline=False, static=False, params=None):
         self.name, self.qualname, self.file = name, qualname, file
         self.first, self.last, self.body_first = first, last, body_first
         self.inline = inline     # declared inline: its code may live only inside its callers
         self.static = static     # file-local (static, not noinline, not a member): the compiler may inline it
+        self.params = params     # the parameter list as written ('const char *key, int n = 0'), None if unknown
+        self.macro = None        # the macro whose invocation defines it (all of them sit at that line)
 
     def __repr__(self):
         return "<SourceFunction %s %s:%d-%d>" % (self.qualname, os.path.basename(self.file), self.first, self.last)
@@ -158,7 +163,7 @@ def _num(v):
         return None
 
 
-def index_text(text, path):
+def index_text(text, path, macros=None):
     sf = SourceFile(path)
     sf.nlines = text.count("\n") + 1
     toks = _tokens(text)
@@ -181,9 +186,9 @@ def index_text(text, path):
                     func_depth = len(stack)
                     quals = [s[1] for s in stack if s[0] in ("ns", "type") and s[1]]
                     qual = "::".join(quals + [name]) if quals and "::" not in name else name
-                    start, inline, static = start
+                    start, inline, static, params = start
                     static = static and not any(s[0] == "type" for s in stack)
-                    cur = SourceFunction(name.split("::")[-1], qual, path, start, ln, ln, inline, static)
+                    cur = SourceFunction(name.split("::")[-1], qual, path, start, ln, ln, inline, static, params)
             stack.append((kind, name))
             i += 1
             continue
@@ -196,6 +201,20 @@ def index_text(text, path):
                 func_depth, cur = None, None
             i += 1
             continue
+        if func_depth is None and k == "id" and macros is not None and v in macros.generating \
+                and i + 1 < n and toks[i + 1][1] == "(" and all(s[0] == "ns" for s in stack) \
+                and macros.defines_functions(v):
+            e = _close_paren(toks, i + 1)
+            if e is not None:
+                quals = [s[1] for s in stack if s[1]]
+                for f in index_text(macros.expand(v, _split_args([t[1] for t in toks[i + 2:e]])), path).functions:
+                    f.first = f.last = f.body_first = ln
+                    f.macro = v
+                    if quals and "::" not in f.qualname:
+                        f.qualname = "::".join(quals + [f.qualname])
+                    sf.functions.append(f)
+                i = e + 1
+                continue
         if func_depth is not None:
             if k == "str":
                 # adjacent literals join ("a" "b"); identifiers between them are macros (PRIu64): kept as a gap
@@ -287,18 +306,27 @@ def _classify_brace(toks, i, stack):
                     j = m - 2
                     continue
                 name, s = pv, m - 1
+                if s >= 1 and toks[s - 1][1] == "~":      # 'X::~X(': the '~' sits between '::' and the name
+                    name = "~" + name
+                    s -= 1
                 while s >= 2 and toks[s - 1][1] == "::" and toks[s - 2][0] == "id":
                     name = toks[s - 2][1] + "::" + name
                     s -= 2
-                if s >= 1 and toks[s - 1][1] == "~":
-                    name = "~" + name
-                    s -= 1
                 if name.split("::")[-1].startswith("operator"):
                     pass
-                return "func", name, (_decl_start(toks, s),) + _specs_before(toks, s)
-            if pv == "operator" or (m >= 2 and toks[m - 2][1] == "operator"):
-                return "func", "operator" + (pv if pv != "operator" else ""), ((_decl_start(toks, m - 1),)
-                                                                              + _specs_before(toks, m - 1))
+                return "func", name, ((_decl_start(toks, s),) + _specs_before(toks, s)
+                                      + (_join([t[1] for t in toks[m + 1:j]]),))
+            o = next((q for q in range(m - 1, max(m - 6, -1), -1) if toks[q][1] == "operator"), None)
+            if o is not None:
+                # 'X::operator new[](…)' / 'operator==(…)': the name as the demangler prints it
+                op = [t[1] for t in toks[o + 1:m]]
+                name = "operator" + (" " if op and re.match(r"\w", op[0]) else "") + "".join(op)
+                s = o
+                while s >= 2 and toks[s - 1][1] == "::" and toks[s - 2][0] == "id":
+                    name = toks[s - 2][1] + "::" + name
+                    s -= 2
+                return "func", name, ((_decl_start(toks, s),) + _specs_before(toks, s)
+                                      + (_join([t[1] for t in toks[m + 1:j]]),))
             return "block", None, None
         if k == "id" and v in ("const", "override", "final", "noexcept", "volatile", "try", "mutable",
                                "OS_NOINLINE", "__attribute__"):
@@ -382,9 +410,135 @@ def _specs_before(toks, s):
     return inline and not noinline, static and not noinline
 
 
-def index_file(path):
+def index_file(path, macros=None):
     with open(path, encoding="utf-8", errors="replace") as fh:
-        return index_text(fh.read(), path)
+        return index_text(fh.read(), path, macros)
+
+
+def _close_paren(toks, o):
+    """the index of the ')' matching the '(' at toks[o], None if unbalanced"""
+    depth = 0
+    for q in range(o, len(toks)):
+        if toks[q][1] == "(":
+            depth += 1
+        elif toks[q][1] == ")":
+            depth -= 1
+            if depth == 0:
+                return q
+    return None
+
+
+def _split_args(vals):
+    """macro argument token lists split at top-level commas"""
+    out, cur, depth = [], [], 0
+    for v in vals:
+        if v in ("(", "[", "{"):
+            depth += 1
+        elif v in (")", "]", "}"):
+            depth -= 1
+        if v == "," and depth == 0:
+            out.append(cur)
+            cur = []
+        else:
+            cur.append(v)
+    out.append(cur)
+    return [] if out == [[]] else out
+
+
+_DEFINE = re.compile(r"^[ \t]*#[ \t]*define[ \t]+(\w+)\(([^)]*)\)(.*)$")
+_MTOKEN = re.compile(r'"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\'|\w+|##|::|\.\.\.|\S')
+
+
+class Macros:
+    """the function-like #define macros of a set of headers (the first definition of a name wins: #if variants
+    define the same functions) and a textual expander for the ones that define functions (bncpp-78)"""
+
+    def __init__(self, paths):
+        self.table = {}
+        for path in paths:
+            try:
+                with open(path, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            if "define" not in text:
+                continue
+            text = re.sub(r"/\*.*?\*/", " ", text.replace("\\\n", " "), flags=re.S)
+            for line in text.split("\n"):
+                m = _DEFINE.match(line)
+                if m and m.group(1) not in self.table:
+                    params = [x.strip() for x in m.group(2).split(",") if x.strip()]
+                    self.table[m.group(1)] = (params, _MTOKEN.findall(m.group(3).split("//")[0]))
+        # generating: a body with a '{' outside a do-while, or one that invokes a generating macro
+        self.generating = {k for k, (_, body) in self.table.items() if "{" in body and "while" not in body}
+        changed = True
+        while changed:
+            changed = False
+            for k, (_, body) in self.table.items():
+                if k not in self.generating and any(t in self.generating for t in body):
+                    self.generating.add(k)
+                    changed = True
+
+    _FUNC_BODY = re.compile(r"\) (?:const |override |noexcept |final )*(?:\{|: \w)")
+
+    def defines_functions(self, name):
+        """the macro's expansion has a function body (') {', ') const {', ') : base(…) {'): decided once per
+        macro with placeholder arguments -- SYSCTL_* / LCK_GRP_DECLARE expand to data only"""
+        if not hasattr(self, "_defines"):
+            self._defines = {}
+        if name not in self._defines:
+            params = self.table[name][0]
+            text = self.expand(name, [["_ARG%d_" % k] for k in range(len(params))])
+            self._defines[name] = bool(self._FUNC_BODY.search(text))
+        return self._defines[name]
+
+    def expand(self, name, args, depth=0):
+        """the text a macro invocation becomes: parameters substituted (#x stringises, a ## b pastes), then
+        generating macros in the result expanded again (to depth 10)"""
+        params, body = self.table[name]
+        if params and params[-1] == "...":
+            fixed = len(params) - 1
+            args = args[:fixed] + [sum(([","] + a for a in args[fixed:]), [])[1:]]
+            params = params[:-1] + ["__VA_ARGS__"]
+        arg = {p: (args[k] if k < len(args) else []) for k, p in enumerate(params)}
+        out, k = [], 0
+        while k < len(body):
+            t = body[k]
+            if t == "#" and k + 1 < len(body) and body[k + 1] in arg:
+                out.append('"%s"' % " ".join(arg[body[k + 1]]).replace('"', '\\"'))
+                k += 2
+                continue
+            if t == "##" and out and k + 1 < len(body):
+                nxt = body[k + 1]
+                rhs = arg.get(nxt, [nxt])
+                out[-1] = out[-1] + (rhs[0] if rhs else "")
+                out.extend(rhs[1:])
+                k += 2
+                continue
+            out.extend(arg.get(t, [t]))
+            k += 1
+        if depth >= 10:
+            return " ".join(out)
+        res, k = [], 0
+        while k < len(out):
+            t = out[k]
+            if t in self.generating and k + 1 < len(out) and out[k + 1] == "(":
+                depth_p, e = 0, None
+                for q in range(k + 1, len(out)):
+                    if out[q] == "(":
+                        depth_p += 1
+                    elif out[q] == ")":
+                        depth_p -= 1
+                        if depth_p == 0:
+                            e = q
+                            break
+                if e is not None:
+                    res.append(self.expand(t, _split_args(out[k + 2:e]), depth + 1))
+                    k = e + 1
+                    continue
+            res.append(t)
+            k += 1
+        return " ".join(res)
 
 
 SOURCE_EXTS = (".c", ".cc", ".cpp", ".cxx", ".m", ".mm", ".h", ".hpp", ".s")
@@ -393,27 +547,37 @@ SOURCE_EXTS = (".c", ".cc", ".cpp", ".cxx", ".m", ".mm", ".h", ".hpp", ".s")
 class SourceTree:
     """the files of a source tree, indexed on first use; inverted indexes for the anchors over the files indexed"""
 
-    def __init__(self, root, exts=(".c", ".cc", ".cpp", ".cxx", ".m", ".mm"), exclude=()):
+    def __init__(self, root, exts=(".c", ".cc", ".cpp", ".cxx", ".m", ".mm"), exclude=(), macros=True):
         """exclude: fnmatch patterns on the path relative to the root ('*' crosses '/'), for files that cannot be
-        in the binary (other architectures, user-space tools): their tables and strings attract anchors"""
+        in the binary (other architectures, user-space tools): their tables and strings attract anchors (and
+        their headers' macros would win over the right ones). macros: expand function-defining macros from the
+        tree's headers (Macros)"""
         self.root = os.path.abspath(root)
         self.paths = []
+        self.headers = []
         self.excluded = 0
         for d, dirs, files in os.walk(self.root):
             dirs[:] = sorted(x for x in dirs if not x.startswith("."))
             for f in sorted(files):
-                if f.endswith(exts):
+                if f.endswith(exts) or f.endswith((".h", ".hpp")):
                     path = os.path.join(d, f)
                     rel = os.path.relpath(path, self.root)
                     if any(fnmatch.fnmatchcase(rel, pat) for pat in exclude):
-                        self.excluded += 1
+                        self.excluded += f.endswith(exts)
                         continue
-                    self.paths.append(path)
+                    (self.paths if f.endswith(exts) else self.headers).append(path)
         self._files = {}
+        self._macros = None if macros else False
+
+    @property
+    def macros(self):
+        if self._macros is None:
+            self._macros = Macros(self.headers)
+        return self._macros or None
 
     def file(self, path):
         if path not in self._files:
-            self._files[path] = index_file(path)
+            self._files[path] = index_file(path, self.macros)
         return self._files[path]
 
     def all(self):

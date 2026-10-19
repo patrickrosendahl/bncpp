@@ -49,8 +49,9 @@ def read_symbols(path):
     return out
 
 
-def demangle(names):
-    """c++filt a batch of Itanium names, if it is available: {mangled: 'OSObject::release'}"""
+def demangle(names, full=False):
+    """c++filt a batch of Itanium names, if it is available: {mangled: 'OSObject::release'}; full: with the
+    parameter list ('OSDictionary::setObject(char const*, OSMetaClassBase const*)')"""
     mangled = [n for n in names if n.startswith("_Z")]
     if not mangled:
         return {}
@@ -58,7 +59,7 @@ def demangle(names):
         p = subprocess.run(["c++filt"], input="\n".join(mangled), capture_output=True, text=True, timeout=60)
         if p.returncode != 0:
             return {}
-        return dict(zip(mangled, [l.split("(")[0] for l in p.stdout.splitlines()]))
+        return dict(zip(mangled, [l if full else l.split("(")[0] for l in p.stdout.splitlines()]))
     except (OSError, subprocess.TimeoutExpired):
         return {}
 
@@ -129,6 +130,14 @@ def bin_funcs(feats_path, symbols, demangled, limit=None, skip=0, all_symbols=No
     yield stats  # sentinel: the caller cannot know the counts before the stream ends
 
 
+def sig_of(addr, symbols, full):
+    """the demangled parameter list of a C++ symbol ('char const*, OSMetaClassBase const*'), None for a C name"""
+    f = full.get(symbols.get(addr))
+    if f is None or "(" not in f:
+        return None
+    return f[f.index("(") + 1:f.rindex(")")]
+
+
 def held_out(addr):
     """the stable half of the named functions kept back from the seeds (--holdout): scored, never used"""
     return (addr * 2654435761 >> 7) & 1 == 1
@@ -147,6 +156,7 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
     and link order name a function nobody named"""
     symbols = read_symbols(symbols_path)
     demangled = demangle(set(symbols.values()))
+    full = demangle(set(symbols.values()), full=True)
     truth = {}
     seed_symbols = symbols
     if holdout:
@@ -166,6 +176,8 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         if only == "kp" and bf["start"] < KERNEL_START or only == "pl" and bf["start"] >= KERNEL_START:
             continue
         funcs[bf["start"]] = bf
+        if bf["name"] is not None:
+            bf["sig"] = sig_of(bf["start"], symbols, full)     # seeds only: a held-out signature would leak
         n = name_of(bf["start"], symbols, demangled)
         if n is not None:
             truth[bf["start"]] = n
@@ -191,7 +203,7 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         print("names: %d seeds, %d resolved to a source function, %.1f s" % (tot["seeds"], len(pairs),
                                                                             time.time() - t0), flush=True)
     # 2. anchors
-    taken = {(sf.path, sfunc.first) for sf, sfunc, _ in pairs.values()}
+    taken = {sfunc for _, sfunc, _ in pairs.values()}
     for a, bf in funcs.items():
         if a in pairs:
             continue
