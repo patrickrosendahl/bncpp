@@ -781,7 +781,9 @@ def rows_for_function(bf, sf, sfunc, anchors):
     between them, the ends extended to the function's address range"""
     rows = []
     path = sf.path
-    a = sorted(anchors)
+    # an anchor outside the function (a feature without a real address, 0x0 in the kernel dump) would make a row
+    # from address 0 up to the function (bncpp-38)
+    a = sorted(x for x in anchors if bf["start"] <= x[0] < bf["end"])
     if not a:
         rows.append(Row(bf["start"], bf["end"], path, sfunc.first, sfunc.last, CONF["function"], "function"))
         return rows
