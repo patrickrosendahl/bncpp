@@ -82,14 +82,15 @@ def is_terminate_guard(bv, pad, guards=()):
 def regions(func):
     """the try regions of func from its LSDA: [Region], outer before inner"""
     bv = func.view
-    table = eh_comments.index(bv).owners.get(func.start)
+    ix = eh_comments.index(bv)
+    table = ix.owners.get(func.start)
     if table is None:
         return []
     sites = [cs for cs in table.call_sites if _in(func, cs.start)]
     chains = []
     for cs in sites:
         chain = [c for c in cs.clauses if c.kind == c.CATCH] if cs.landing_pad is not None else []
-        if len(chain) == 1 and chain[0].type is None and is_terminate_guard(bv, cs.landing_pad):
+        if len(chain) == 1 and chain[0].type is None and is_terminate_guard(bv, cs.landing_pad, ix.guards):
             chain = []
         chains.append(chain)
     out = []

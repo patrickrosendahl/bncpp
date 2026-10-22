@@ -23,6 +23,16 @@ class Index:
             for cs in table.call_sites:
                 if cs.landing_pad is not None:
                     self.pads.setdefault(cs.landing_pad, []).append((start, cs))
+        self._bv, self._guards = bv, None
+
+    @property
+    def guards(self):
+        """the addresses of clang's terminate helpers, named or not (landing_pads.terminate_helpers), for
+        eh_render.is_terminate_guard where nobody named them (bncpp-71); found on first use"""
+        if self._guards is None:
+            from .landing_pads import terminate_helpers
+            self._guards = frozenset(h.start for h, _t in terminate_helpers(self._bv))
+        return self._guards
 
 
 _indexes = {}  # session id -> Index

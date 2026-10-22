@@ -49,12 +49,12 @@ def missing(bv):
 
 
 def _is_call(ref):
-    from binaryninja import LowLevelILOperation
-    try:
-        il = ref.function.get_low_level_il_at(ref.address)
-    except Exception:
-        return False
-    return il is not None and il.operation == LowLevelILOperation.LLIL_CALL
+    """a call instruction at ref, from the instruction (not the IL: a guard's `call` that lands on the next
+    address, the helper right behind the pad, lifts as the get-PC idiom -- x86_64 -O0, bncpp-71)"""
+    from binaryninja import BranchType
+    bv = ref.function.view
+    info = bv.arch.get_instruction_info(bv.read(ref.address, bv.arch.max_instr_length), ref.address)
+    return info is not None and any(b.type == BranchType.CallDestination for b in info.branches)
 
 
 def terminate_helpers(bv):
@@ -77,7 +77,9 @@ def terminate_helpers(bv):
                          for r in sites[:2])
         if len(first) != 1 or first[0] is None or first[0].name.lstrip("_") != "cxa_begin_catch":
             continue
-        if len(second) != 1 or second[0] is None or second[0] == f or second[0].symbol.type not in imported:
+        # the import, and on arm64 also the function BN lets the helper run on into (bncpp-71)
+        second = [g for g in second if g is not None and g != f and g.symbol.type in imported]
+        if len(second) != 1:
             continue
         # std::terminate by name, or a name that says nothing (hashed); an ABI or C++ name that is not terminate
         # returns (SynthV: begin_catch then ___cxa_end_catch in a handler its owner calls)

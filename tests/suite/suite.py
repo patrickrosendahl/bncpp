@@ -65,15 +65,20 @@ TESTS = [
     "TestNoVtableBase",          # bases without a vtable in the image, anchored by the RTTI base lists (bncpp-31)
     "TestClosure",               # lambdas in std::function / a function object vs same-shaped classes (bncpp-23)
     "TestAnchoredBaseFields",    # polymorphic anchored base with fields as the second base (bncpp-58/59)
+    # names hashed like SynthV's raw slices
+    "TestCatchAllHashed",        # clang's terminate helper and std::terminate unnamed: guards found anyway (bncpp-71)
 ]
 
 # tests built differently from src/TestX.cpp with -undefined dynamic_lookup: name -> (source, link flags, hash
-# the undefined nlist names?). Hashing keeps the dyld info intact (the dylib stays valid), like an obfuscator.
+# the undefined nlist names? True, or the list of names to hash). Hashing keeps the dyld info intact (the dylib
+# stays valid), like an obfuscator.
 BUILDS = {
     "TestVirtual": ("TestVirtual", ["-Wl,-no_fixup_chains"], False),
     "TestVirtualChained": ("TestVirtual", ["-Wl,-fixup_chains"], False),
     "TestVirtualHashed": ("TestVirtual", ["-Wl,-no_fixup_chains"], True),
     "TestVirtualChainedHashed": ("TestVirtual", ["-Wl,-fixup_chains"], True),
+    "TestCatchAllHashed": ("TestCatchAll", ["-undefined", "dynamic_lookup"],
+                           ["___clang_call_terminate", "__ZSt9terminatev"]),
 }
 RENAME_NLIST = os.path.join(REPO, "tests", "repro_nlist_binds", "rename_nlist.py")
 
@@ -94,9 +99,9 @@ def build(names):
                            + flags + ["-install_name", "@rpath/%s.dylib" % t, "-o", dylib,
                                       os.path.join(SRC, src + ".cpp")], check=True)
             if hashed:
-                undefined = subprocess.run(["nm", "-u", dylib], capture_output=True, text=True,
-                                           check=True).stdout.split()
-                subprocess.run([sys.executable, "-I", RENAME_NLIST, dylib, dylib] + undefined, check=True,
+                names_ = hashed if hashed is not True else subprocess.run(
+                    ["nm", "-u", dylib], capture_output=True, text=True, check=True).stdout.split()
+                subprocess.run([sys.executable, "-I", RENAME_NLIST, dylib, dylib] + names_, check=True,
                                stdout=subprocess.DEVNULL)
                 subprocess.run(["codesign", "-f", "-s", "-", dylib], check=True, stderr=subprocess.DEVNULL)
     print("built %d tests x %d variants into %s" % (len(names), len(VARIANTS), BIN))
