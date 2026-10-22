@@ -29,7 +29,8 @@ _ASSERTY = re.compile(r"^(?:[A-Z][A-Z0-9_]{2,}|assert\w*|panic\w*|\w*_assert\w*|
 
 
 class SourceFunction:
-    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline", "static", "params", "macro")
+    __slots__ = ("name", "qualname", "file", "first", "last", "body_first", "inline", "static", "params", "macro",
+                 "branch")
 
     def __init__(self, name, qualname, file, first, last, body_first, inline=False, static=False, params=None):
         self.name, self.qualname, self.file = name, qualname, file
@@ -38,6 +39,7 @@ class SourceFunction:
         self.static = static     # file-local (static, not noinline, not a member): the compiler may inline it
         self.params = params     # the parameter list as written ('const char *key, int n = 0'), None if unknown
         self.macro = None        # the macro whose invocation defines it (all of them sit at that line)
+        self.branch = ()         # the #if branches it sits in, outermost first: ((#if line, branch number), ...)
 
     def __repr__(self):
         return "<SourceFunction %s %s:%d-%d>" % (self.qualname, os.path.basename(self.file), self.first, self.last)
@@ -256,7 +258,34 @@ def index_text(text, path, macros=None):
     if cur is not None:  # an unbalanced file: keep what was open
         cur.last = toks[-1][2] if toks else cur.first
         sf.functions.append(cur)
+    branches = _branches(text)
+    for f in sf.functions:
+        f.branch = branches.get(f.first, ())
     return sf
+
+
+_DIRECTIVE = re.compile(r"[ \t]*#[ \t]*(if|ifdef|ifndef|elif|elifdef|elifndef|else|endif)\b")
+
+
+def _branches(text):
+    """{line: the #if branches open at it} for the lines inside a conditional (bncpp-81): a branch is (the line of
+    its #if, its number in the #if / #elif / #else chain); exactly one branch of a chain is compiled. A line
+    pass: directives inside block comments are taken as real"""
+    out, stack = {}, []
+    for ln, line in enumerate(text.split("\n"), 1):
+        m = _DIRECTIVE.match(line)
+        if m:
+            d = m.group(1)
+            if d.startswith("if"):
+                stack.append((ln, 0))
+            elif d == "endif":
+                if stack:
+                    stack.pop()
+            elif stack:
+                stack[-1] = (stack[-1][0], stack[-1][1] + 1)
+        elif stack:
+            out[ln] = tuple(stack)
+    return out
 
 
 def _join(parts):

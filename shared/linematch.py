@@ -361,11 +361,11 @@ def _incompatible(b, s):
     return False
 
 
-def match_named(bf, name, names, tree, index=None):
+def match_named(bf, name, names, tree, index=None, tied=None):
     """the source function of a binary function with a known name: (SourceFile, SourceFunction, anchors) or
     None. Several candidates (overloads, a static function in several files, #if variants): bf["sig"] (the
     demangled parameter list, if any) keeps those that fit it best, then the anchors decide; a tie stays
-    unmatched"""
+    unmatched and, with tied ({start: [(SourceFile, SourceFunction, anchors)]}), is recorded for resolve_ties"""
     cands = names.lookup(name)
     if len(cands) > 1 and bf.get("sig") is not None:
         bk = param_keys(bf["sig"])
@@ -387,6 +387,8 @@ def match_named(bf, name, names, tree, index=None):
         scored.append((score, sf, sfunc, anchors))
     scored.sort(key=lambda x: -x[0])
     if len(scored) > 1 and scored[0][0] == scored[1][0]:
+        if tied is not None:
+            tied[bf["start"]] = [(sf, f, _dedupe_anchors(a)) for s, sf, f, a in scored if s == scored[0][0]]
         return None
     return scored[0][1], scored[0][2], _dedupe_anchors(scored[0][3])
 
@@ -603,6 +605,95 @@ def link_order(bin_funcs, pairs, tree, index=None, rounds=10):
                 taken.add(c)
                 out[g] = (rnd, how)
                 added += 1
+        if not added:
+            break
+    return out
+
+
+# -- seed ties (bncpp-81): one binary function, several equally good source definitions of its name (#if variants
+# in one file, a C function defined in several files). Exactly one was compiled; the linker kept its object file's
+# functions together in definition order, so the matched neighbours by address name the file and bracket the index
+
+TIE_WINDOW = 16          # how many functions by address to look past for a neighbour in a candidate's file
+TIE_TINY = 8             # bytes: a function this small without a call is a ret / mov+ret, no source call in it
+
+
+def resolve_ties(bin_funcs, pairs, tied, rounds=10, window=TIE_WINDOW):
+    """pick the one candidate the neighbours support: per candidate, a neighbour on each side (the nearest
+    matched function within `window` whose file is one of the candidates' files) counts 2 when it is in the
+    candidate's file and on the right side of it in definition order, 1 in the file only; a unique best score
+    wins. Before that, candidates inside a dead #if branch drop out, and a tiny binary function without calls
+    (TIE_TINY) keeps only the candidates that call nothing; one left is the pick. Resolved ties are neighbours
+    for the next round. tied: {start: [(SourceFile, SourceFunction, anchors)]} (match_named); pairs extended in
+    place. Returns {start: (round, 'branch' | 'size' | 'neighbours')}"""
+    order = sorted(bin_funcs)
+    pos = {a: k for k, a in enumerate(order)}
+    defs = {}
+
+    def def_index(sf, f):
+        if sf.path not in defs:
+            defs[sf.path] = {g: k for k, g in enumerate(sorted(sf.functions, key=lambda g: g.first))}
+        return defs[sf.path].get(f)
+
+    def neighbour(a, step, paths):
+        k = pos[a] + step
+        for _ in range(window):
+            if not 0 <= k < len(order):
+                return None
+            p = pairs.get(order[k])
+            if p is not None and p[0].path in paths:
+                return p
+            k += step
+        return None
+
+    # exactly one branch of an #if chain is compiled: a uniquely matched function inside a branch makes its
+    # siblings dead, and a candidate inside a dead branch is not the binary function's source
+    live = {}
+    for sf, f, _ in pairs.values():
+        for ln, k in f.branch:
+            live.setdefault((sf.path, ln), set()).add(k)
+
+    def dead(sf, f):
+        return any(live.get((sf.path, ln), {k}) - {k} for ln, k in f.branch)
+
+    out = {}
+    for rnd in range(1, rounds + 1):
+        added = 0
+        for a, cands in tied.items():
+            if a in pairs or a not in pos:
+                continue
+            alive = [c for c in cands if not dead(c[0], c[1])]
+            if len(alive) == 1:
+                pairs[a] = alive[0]
+                out[a] = (rnd, "branch")
+                added += 1
+                continue
+            cands = alive or cands
+            bf = bin_funcs[a]
+            if bf["end"] - bf["start"] <= TIE_TINY and not any(k in ("bl", "call") for _, k, _ in bf["features"]):
+                bare = [c for c in cands if not any(k == "call" for _, k, _ in c[0].features(c[1]))]
+                if len(bare) == 1:
+                    pairs[a] = bare[0]
+                    out[a] = (rnd, "size")
+                    added += 1
+                    continue
+            paths = {sf.path for sf, _, _ in cands}
+            prev, nxt = neighbour(a, -1, paths), neighbour(a, 1, paths)
+            scored = []
+            for sf, f, anchors in cands:
+                score = 0
+                for p, ok in ((prev, lambda i, j: i <= j), (nxt, lambda i, j: i >= j)):
+                    if p is None or p[0].path != sf.path:
+                        continue
+                    i, j = def_index(sf, p[1]), def_index(sf, f)
+                    score += 2 if i is not None and j is not None and ok(i, j) else 1
+                scored.append((score, sf, f, anchors))
+            scored.sort(key=lambda x: -x[0])
+            if scored[0][0] == 0 or len(scored) > 1 and scored[0][0] == scored[1][0]:
+                continue
+            pairs[a] = scored[0][1:]
+            out[a] = (rnd, "neighbours")
+            added += 1
         if not added:
             break
     return out

@@ -8,7 +8,7 @@ join the names from the kernel symbols file, run the lazy matcher against the xn
 
   python3 -I tests/ref_kernel_linemap.py [--limit N] [--skip N] [--out MAP.json] [--quiet]
                                          [--holdout] [--no-anchors] [--no-propagate] [--only kp|pl]
-                                         [--no-exclude] [--no-order]
+                                         [--no-exclude] [--no-order] [--no-ties] [--ties-review FILE]
 Defaults read .scratch/linemap/kernel/kernel.features.jsonl and sample/kernel/… symbols against the xnu tree;
 --out writes the matched functions' line map (bncpp-37 format).
 """
@@ -148,8 +148,9 @@ def agrees(name, sfunc):
 
 
 def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, holdout=False, anchors=True,
-        prop=True, only=None, exclude=XNU_ARM64_EXCLUDE, order=True):
-    """phases: (1) named functions -> their source function by name (the seeds); (2) the rest by anchors
+        prop=True, only=None, exclude=XNU_ARM64_EXCLUDE, order=True, ties=True, ties_review=None):
+    """phases: (1) named functions -> their source function by name (the seeds), (1b) seed ties by the matched
+    neighbours (bncpp-81); (2) the rest by anchors
     (file-line / string / rare const; the slow part, --no-anchors skips it); (3) call-graph propagation from the
     matched pairs; (3b) link order (the unmatched neighbours of one file's functions), then propagation again;
     (4) scores. --holdout seeds with half of the names and scores the other half: how well anchors, propagation
@@ -185,6 +186,7 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         print("read %d functions, tree %d source functions, %.1f s" % (len(funcs), sum(map(len, names.by_qual.values())),
                                                                         time.time() - t0), flush=True)
     pairs, how = {}, {}
+    tied = {}
     outside = set()
     # 1. names
     for a, bf in funcs.items():
@@ -193,12 +195,29 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
         if bf["name"] is None:
             continue
         tot["seeds"] += 1
-        res = linematch.match_named(bf, bf["name"], names, tree, index)
+        res = linematch.match_named(bf, bf["name"], names, tree, index, tied)
         if res is None:
-            tot["seed_unresolved"] += 1
             continue
         pairs[a], how[a] = res, "name"
+    tot["seed_tied"] = len(tied)
+    if ties:
+        got = linematch.resolve_ties(funcs, pairs, tied)
+        for a in got:
+            how[a] = "name"
+        tot["seed_ties_resolved"] = len(got)
+        tot.update(Counter("ties_" + h for _, h in got.values()))
+        if ties_review:
+            with open(ties_review, "w") as fh:
+                for a in sorted(tied):
+                    bf, cands = funcs[a], tied[a]
+                    pick = pairs[a][1] if a in got else None
+                    fh.write("%s %#x %d bytes  %s  %s\n" % ("R" if pick else "-", a, bf["end"] - bf["start"],
+                                                            bf["name"], got[a][1] if pick else ""))
+                    for sf, f, _ in cands:
+                        fh.write("    %s %s:%d-%d  %s\n" % ("*" if f is pick else " ", os.path.relpath(sf.path, xnu),
+                                                          f.first, f.last, f.branch))
     tot["seed_matched"] = len(pairs)
+    tot["seed_unresolved"] = tot["seeds"] - tot["seed_matched"]
     if not quiet:
         print("names: %d seeds, %d resolved to a source function, %.1f s" % (tot["seeds"], len(pairs),
                                                                             time.time() - t0), flush=True)
@@ -299,8 +318,9 @@ def run(feats, symbols_path, xnu, out=None, limit=None, skip=0, quiet=False, hol
               " call %(anchor_call)d" % tot)
         print("file:line anchors: %(fl_functions)d functions, %(fl_anchors)d anchors: file in the tree"
               " %(fl_files_found)d / missing %(fl_files_missing)d, line inside the file %(fl_lines_in_file)d" % tot)
-        print("named %d: seeds %d (resolved %d, unresolved %d)%s" % (
-            len(truth), tot["seeds"], tot["seed_matched"], tot["seed_unresolved"],
+        print("named %d: seeds %d (resolved %d, unresolved %d; tied %d: by #if branch %d, size %d, neighbours %d)%s" % (
+            len(truth), tot["seeds"], tot["seed_matched"], tot["seed_unresolved"], tot["seed_tied"],
+            tot["ties_branch"], tot["ties_size"], tot["ties_neighbours"],
             ", held out %d" % (len(truth) - tot["seeds"]) if holdout else ""))
         print("vs the names: anchors agree %(anchors_agree)d / differ %(anchors_differ)d;"
               " calls agree %(calls_agree)d / differ %(calls_differ)d;"
@@ -333,7 +353,9 @@ if __name__ == "__main__":
     ap.add_argument("--only", choices=("kp", "pl"), help="kernel proper / prelinked functions only")
     ap.add_argument("--no-order", action="store_true", help="skip the link-order phase")
     ap.add_argument("--no-exclude", action="store_true", help="keep the x86 and user-space source files")
+    ap.add_argument("--no-ties", action="store_true", help="leave seed ties unresolved (no neighbour phase)")
+    ap.add_argument("--ties-review", help="write the tied seeds and the picks to this file")
     args = ap.parse_args()
     run(args.feats, args.symbols, args.xnu, args.out, args.limit, args.skip, args.quiet, args.holdout,
         not args.no_anchors, not args.no_propagate, args.only, () if args.no_exclude else XNU_ARM64_EXCLUDE,
-        not args.no_order)
+        not args.no_order, not args.no_ties, args.ties_review)
