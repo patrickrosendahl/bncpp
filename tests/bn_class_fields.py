@@ -798,6 +798,49 @@ for _k, _v in _final_counts.items():
     _count(_k, _v)
 for _line, _what in _param_review.values():
     _count("params from callers: " + _what)
+
+
+def _why(d):
+    """the innermost reason a call-site argument resolves to no class (bncpp-28: which evidence source is next)"""
+    if d is None:
+        return "no variable (constant / expression)"
+    k = d[0]
+    if k == "new":
+        return "new: no class of that size"
+    if k == "ret":
+        return "ret: callee returns no class"
+    if k == "param":
+        return "param of a vtable-slot function" if d[1] in _virtual else "param: no caller evidence"
+    if k == "load":
+        return "load: " + (_why(d[1]) if _resolve(d[1], _lays) is None else "field has no class")
+    if k == "phi":
+        return "phi: " + ("several classes" if all(_resolve(x, _lays) is not None for x in d[1])
+                          else next(_why(x) for x in d[1] if _resolve(x, _lays) is None))
+    if k == "or":
+        return next(_why(x) for x in d[1] if _resolve(x, _lays) is None)
+    return k
+
+
+# why: per parameter with direct callers (already a class / evidence / none) and per unresolved argument the reason
+if not _apply:
+    _why_params, _why_args = {}, {}
+    for (_fa, _i), _args in _param_args.items():
+        _fc = _func_classes(_fa)
+        if _fc is not None and _i < len(_fc[1]) and _fc[1][_i] is not None:
+            _what = "already a class"
+        elif _param_plan.get((_fa, _i), (None, {}))[1]:
+            _what = "evidence"
+        else:
+            _what = "no evidence"
+        _why_params[_what] = _why_params.get(_what, 0) + 1
+        if _what == "already a class":
+            continue
+        for _d in _args:
+            if _d is None or _resolve(_d, _lays) is None:
+                _r = _why(_d)
+                _why_args[_r] = _why_args.get(_r, 0) + 1
+    print("why params: " + ", ".join("%s %d" % kv for kv in sorted(_why_params.items(), key=lambda kv: -kv[1])))
+    print("why args unresolved: " + ", ".join("%s %d" % kv for kv in sorted(_why_args.items(), key=lambda kv: -kv[1])))
 _review += sorted(_names_notes, key=lambda n: int(n.split()[3].rstrip(':'))) + _final_review + [line for line, _what in sorted(_param_review.values())]
 _rv = os.path.join(REPO, ".scratch/classes/%s.fields.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)
