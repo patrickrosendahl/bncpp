@@ -381,12 +381,7 @@
 
 // std::__throw_bad_function_call[abi:nqe210106](struct std* this) @ 0x400c10
 {
-    void* __offset(vtable_for_std::__1::bad_function_call, 0x10)* thrown_exception =
-        ___cxa_allocate_exception(8);
-    *(uint64_t*)thrown_exception = _vtable_for_std::__1::bad_function_call + 0x10;
-    ___cxa_throw(thrown_exception, typeinfo_for_std::__1::bad_function_call,
-        std::bad_function_call::~bad_function_call);
-    /* no return */
+    throw std::__1::bad_function_call();
 }
 
 // FnImpl<neg_obj()::$_0>::~FnImpl(struct FnImpl<neg_obj()::$_0>* this) @ 0x400c50

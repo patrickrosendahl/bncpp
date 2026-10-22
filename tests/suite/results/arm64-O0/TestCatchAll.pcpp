@@ -1,6 +1,6 @@
 // catch_all(int32_t) @ 0x4005f8
 {
-    // exception table (LSDA 0x4007dc): 3 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400814): 3 of 6 call sites have a landing pad; #n = the selector value
     //   0x40060c..0x400614 -> 0x400624 sub_400624: catch (...) #1
     //   0x40063c..0x400648 (in sub_400624) -> 0x40065c sub_40065c: cleanup
     //   0x400668..0x40066c (in sub_40065c) -> 0x40068c sub_40068c: catch (...) #1
@@ -14,9 +14,9 @@
     catch (...)
     {
         int32_t x1;
-        int32_t arg_c = x1;
+        int32_t var_24 = x1;
         log_line("something");
-        *(uint32_t*)((char*)arg2 - 4) = 0xfffffffd;
+        var_14 = 0xfffffffd;
         /* tailcall */
         return sub_400674(arg2);
     }
@@ -80,7 +80,7 @@
 
 // catch_type_then_all(int32_t) @ 0x4006a0
 {
-    // exception table (LSDA 0x400800): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400838): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x4006b4..0x4006bc -> 0x4006cc sub_4006cc: catch (int32_t) #2, catch (...) #1
 
     int64_t fp;
@@ -91,13 +91,13 @@
     }
     catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg3 - 4) = e;
+        var_14 = e;
         /* tailcall */
         return sub_400724(arg3);
     }
     catch (...)
     {
-        *(uint32_t*)((char*)arg3 - 4) = 0xfffffffd;
+        var_14 = 0xfffffffd;
         /* tailcall */
         return sub_400724(arg3);
     }
@@ -128,5 +128,22 @@
 // sub_400724 @ 0x400724
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// no_throw_boundary(int32_t) @ 0x400734
+{
+    // exception table (LSDA 0x400854): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x400748..0x400750 -> 0x400768 sub_400768: catch (...) #1
+
+    return (uint64_t)(may_throw(arg1) + 1);
+}
+
+// sub_400768 @ 0x400768
+{
+    // landing pad of no_throw_boundary(int32_t) @ 0x400734
+    //   from 0x400748..0x400750: catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
 }
 

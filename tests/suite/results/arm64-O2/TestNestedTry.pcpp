@@ -11,7 +11,7 @@
     catch (int32_t)
     {
         // the whole landing pad sub_40061c: its dispatch on the selector was not found
-        uint64_t arg_0;
+        uint64_t var_30;
 
         if (arg2 != 2)
         {
@@ -21,13 +21,13 @@
                 /* no return */
             }
 
-            arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+            var_30 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
             _printf("outer %s\n");
         }
         else
         {
             uint64_t x19_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
-            arg_0 = x19_1;
+            var_30 = x19_1;
             _printf("inner int %d\n");
             may_throw((uint32_t)x19_1 + 0xa);
         }

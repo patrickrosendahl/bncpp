@@ -1,0 +1,12 @@
+try_in_if(int32_t)  lsda base+0x79c  lpstart +0x0  2 call sites
+  +0xb   .. +0x10  lp +0x30  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x10  .. +0x4e  unwind
+
+try_in_else(int32_t)  lsda base+0x7b4  lpstart +0x0  2 call sites
+  +0xa   .. +0xf   lp +0x2f  catch(...)
+  +0xf   .. +0x43  unwind
+
+try_in_switch(int32_t)  lsda base+0x7c8  lpstart +0x0  3 call sites
+  +0x0   .. +0x3c  unwind
+  +0x3c  .. +0x46  lp +0x64  catch(typeinfo_for_int32_t), cleanup, cleanup
+  +0x46  .. +0x7f  unwind

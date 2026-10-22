@@ -1,0 +1,21 @@
+typeinfo 0x401030  si    mangled 7IoError  bind __ZTI7IoError
+  base 0x401048 8AppError
+  vtable 0x401068  offset_to_top 0  3 slots
+    [0] 0x400760 IoError::~IoError(struct IoError* this)
+    [1] 0x400800 IoError::~IoError(struct IoError* this)
+    [2] 0x400810 IoError::severity(struct IoError* this) const
+typeinfo 0x401048  class mangled 8AppError  bind __ZTI8AppError
+  vtable 0x401090  offset_to_top 0  3 slots
+    [0] 0x400760 IoError::~IoError(struct IoError* this)
+    [1] 0x400800 IoError::~IoError(struct IoError* this)
+    [2] 0x400820 AppError::severity(struct AppError* this) const
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400760 AppError::~AppError   [now: IoError::~IoError(struct IoError* this)]
+R 0x400800 AppError::~AppError [deleting]   [now: IoError::~IoError(struct IoError* this)]
+R 0x400810 IoError::vfunc2   [now: IoError::severity(struct IoError* this) const]
+R 0x400820 AppError::vfunc2   [now: AppError::severity(struct AppError* this) const]
+D 0x401030 typeinfo_for_IoError   [now: _typeinfo_for_IoError]
+D 0x401048 typeinfo_for_AppError   [now: _typeinfo_for_AppError]
+D 0x401058 vtable_for_IoError   [now: _vtable_for_IoError]
+D 0x401080 vtable_for_AppError   [now: _vtable_for_AppError]

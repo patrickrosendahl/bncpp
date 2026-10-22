@@ -6,7 +6,7 @@
 
 // Owner::Owner(struct Owner* this) @ 0x4006c0
 {
-    // exception table (LSDA 0x401584): 2 of 5 call sites have a landing pad
+    // exception table (LSDA 0x4018b0): 2 of 5 call sites have a landing pad
     //   0x4006fc..0x400700 -> 0x400748 sub_400748: cleanup
     //   0x400720..0x400724 -> 0x400764 sub_400764: cleanup
 
@@ -71,7 +71,7 @@
 
 // make_owner() @ 0x400830
 {
-    // exception table (LSDA 0x4015a0): 1 of 3 call sites have a landing pad
+    // exception table (LSDA 0x4018cc): 1 of 3 call sites have a landing pad
     //   0x400848..0x40084c -> 0x400860 sub_400860: cleanup
 
     struct Owner* result = operator new(0x28);
@@ -106,7 +106,7 @@
 
 // make_block() @ 0x4008dc
 {
-    // exception table (LSDA 0x4015b0): 3 of 5 call sites have a landing pad
+    // exception table (LSDA 0x4018dc): 3 of 5 call sites have a landing pad
     //   0x4008f4..0x400900 -> 0x400930 sub_400930: cleanup
     //   0x400904..0x40090c -> 0x400940 sub_400940: cleanup
     //   0x400910..0x40091c -> 0x400930 sub_400930: cleanup
@@ -152,7 +152,7 @@
 
 // make_engine_raw() @ 0x4009a4
 {
-    // exception table (LSDA 0x4015c8): 1 of 3 call sites have a landing pad
+    // exception table (LSDA 0x4018f4): 1 of 3 call sites have a landing pad
     //   0x4009bc..0x4009c0 -> 0x4009d4 sub_4009d4: cleanup
 
     struct Engine* result = operator new(0x10);
@@ -179,7 +179,7 @@
 
 // make_station() @ 0x400a0c
 {
-    // exception table (LSDA 0x4015d8): 1 of 3 call sites have a landing pad
+    // exception table (LSDA 0x401904): 1 of 3 call sites have a landing pad
     //   0x400a24..0x400a28 -> 0x400a3c sub_400a3c: cleanup
 
     struct Station* result = operator new(0x18);
@@ -205,29 +205,62 @@
     Station::Station(this);
 }
 
-// Child::~Child(struct Child* this) @ 0x400a8c
+// make_dock(int32_t) @ 0x400a8c
+{
+    char var_21 = 0;
+    char var_31 = 0;
+
+    if (!arg1)
+    {
+        struct Harbor* x0_2 = operator new(0x10);
+        struct Harbor* var_30_1 = x0_2;
+        char var_31_1 = 1;
+        Dock::Dock(x0_2);
+        return x0_2;
+    }
+
+    struct Harbor* x0 = operator new(0x18);
+    struct Harbor* var_20_1 = x0;
+    char var_21_1 = 1;
+    Harbor::Harbor(x0);
+    return x0;
+}
+
+// Harbor::Harbor(struct Harbor* this) @ 0x400b40
+{
+    struct Harbor* this_1 = this;
+    Harbor::Harbor(this);
+}
+
+// Dock::Dock(struct Dock* this) @ 0x400b6c
+{
+    struct Dock* this_1 = this;
+    Dock::Dock(this);
+}
+
+// Child::~Child(struct Child* this) @ 0x400b98
 {
     struct Child* this_1 = this;
 }
 
-// Child::~Child(struct Child* this) @ 0x400ab8
+// Child::~Child(struct Child* this) @ 0x400bc4
 {
     Child::~Child(this);
     operator delete(this);
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x400ae8
+// Owner::~Owner(struct Owner* this) @ 0x400bf4
 {
     struct Owner* this_1 = this;
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x400b14
+// Owner::~Owner(struct Owner* this) @ 0x400c20
 {
     Owner::~Owner(this);
     operator delete(this);
 }
 
-// Owner::step(struct Owner* this) @ 0x400b44
+// Owner::step(struct Owner* this) @ 0x400c50
 {
     int64_t x9_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))()
         + (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
@@ -241,7 +274,7 @@
     return x9_1 + var_38;
 }
 
-// Owner::reshape(struct Owner* this, int32_t) @ 0x400be4
+// Owner::reshape(struct Owner* this, int32_t) @ 0x400cf0
 {
     struct Square* result;
 
@@ -263,12 +296,12 @@
     return result;
 }
 
-// Owner::share(struct Owner* this) @ 0x400c58
+// Owner::share(struct Owner* this) @ 0x400d64
 {
     *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
 }
 
-// Owner::mix(struct Owner* this) @ 0x400c74
+// Owner::mix(struct Owner* this) @ 0x400d80
 {
     if (!*(uint64_t*)((char*)this + 0x20))
         return 0;
@@ -276,7 +309,7 @@
     return (*(uint64_t*)(**(uint64_t**)((char*)this + 0x20) + 0x10))();
 }
 
-// Engine::Engine(struct Engine* this) @ 0x400cd0
+// Engine::Engine(struct Engine* this) @ 0x400ddc
 {
     struct Engine* this_1 = this;
     *(uint64_t*)this = &data_4040b8;
@@ -284,28 +317,28 @@
     announce(this);
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400d14
+// Engine::~Engine(struct Engine* this) @ 0x400e20
 {
     struct Engine* this_1 = this;
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400d40
+// Engine::~Engine(struct Engine* this) @ 0x400e4c
 {
     Engine::~Engine(this);
     operator delete(this);
 }
 
-// Engine::tick(struct Engine* this) @ 0x400d70
+// Engine::tick(struct Engine* this) @ 0x400e7c
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// Engine::~Engine(struct Engine* this) @ 0x400d88
+// Engine::~Engine(struct Engine* this) @ 0x400e94
 {
     return;
 }
 
-// Child::Child(struct Child* this, Owner*) @ 0x400d9c
+// Child::Child(struct Child* this, Owner*) @ 0x400ea8
 {
     struct Child* this_1 = this;
     *(uint64_t*)this = &_vtable_for_Child;
@@ -314,27 +347,27 @@
     announce(this);
 }
 
-// Slot::Slot(struct Slot* this) @ 0x400de8
+// Slot::Slot(struct Slot* this) @ 0x400ef4
 {
     *(uint64_t*)this = &data_4040f0;
     *(uint64_t*)((char*)this + 8) = 0;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400e10
+// Slot::~Slot(struct Slot* this) @ 0x400f1c
 {
     struct Slot* this_1 = this;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400e3c
+// Slot::~Slot(struct Slot* this) @ 0x400f48
 {
     Slot::~Slot(this);
     operator delete(this);
 }
 
-// Slot::hold_engine(struct Slot* this) @ 0x400e6c
+// Slot::hold_engine(struct Slot* this) @ 0x400f78
 {
-    // exception table (LSDA 0x4015e8): 1 of 3 call sites have a landing pad
-    //   0x400e90..0x400e94 -> 0x400eb0 sub_400eb0: cleanup
+    // exception table (LSDA 0x401914): 1 of 3 call sites have a landing pad
+    //   0x400f9c..0x400fa0 -> 0x400fbc sub_400fbc: cleanup
 
     struct Engine* result = operator new(0x10);
     Engine::Engine(result);
@@ -342,10 +375,10 @@
     return result;
 }
 
-// sub_400eb0 @ 0x400eb0
+// sub_400fbc @ 0x400fbc
 {
-    // landing pad of Slot::hold_engine(struct Slot* this) @ 0x400e6c
-    //   from 0x400e90..0x400e94: cleanup
+    // landing pad of Slot::hold_engine(struct Slot* this) @ 0x400f78
+    //   from 0x400f9c..0x400fa0: cleanup
 
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
@@ -354,10 +387,10 @@
     /* no return */
 }
 
-// Slot::hold_child(struct Slot* this, Owner*) @ 0x400ed4
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400fe0
 {
-    // exception table (LSDA 0x4015f8): 1 of 3 call sites have a landing pad
-    //   0x400f00..0x400f04 -> 0x400f20 sub_400f20: cleanup
+    // exception table (LSDA 0x401924): 1 of 3 call sites have a landing pad
+    //   0x40100c..0x401010 -> 0x40102c sub_40102c: cleanup
 
     struct Child* result = operator new(0x18);
     Child::Child(result, arg2);
@@ -365,10 +398,10 @@
     return result;
 }
 
-// sub_400f20 @ 0x400f20
+// sub_40102c @ 0x40102c
 {
-    // landing pad of Slot::hold_child(struct Slot* this, Owner*) @ 0x400ed4
-    //   from 0x400f00..0x400f04: cleanup
+    // landing pad of Slot::hold_child(struct Slot* this, Owner*) @ 0x400fe0
+    //   from 0x40100c..0x401010: cleanup
 
     int32_t x1;
     int32_t arg_14 = x1;
@@ -377,200 +410,279 @@
     /* no return */
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x400f44
+// Slot::~Slot(struct Slot* this) @ 0x401050
 {
     return;
 }
 
-// FastBlock::FastBlock(struct FastBlock* this, void*) @ 0x400f58
+// FastBlock::FastBlock(struct FastBlock* this, void*) @ 0x401064
 {
     Block::Block(this, arg2);
     *(uint64_t*)this = &data_404130;
     *(uint64_t*)((char*)this + 0x10) = 2;
 }
 
-// Block::Block(struct Block* this, void*) @ 0x400fa4
+// Block::Block(struct Block* this, void*) @ 0x4010b0
 {
     *(uint64_t*)this = &data_404180;
     *(uint64_t*)((char*)this + 8) = arg2;
 }
 
-// FastBlock::~FastBlock(struct FastBlock* this) @ 0x400fd4
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x4010e0
 {
     struct FastBlock* this_1 = this;
     FastBlock::~FastBlock(this);
 }
 
-// FastBlock::~FastBlock(struct FastBlock* this) @ 0x401000
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x40110c
 {
     FastBlock::~FastBlock(this);
     operator delete(this);
 }
 
-// FastBlock::go(struct FastBlock* this) @ 0x401030
+// FastBlock::go(struct FastBlock* this) @ 0x40113c
 {
     return *(uint64_t*)((char*)this + 0x10)
         * (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
 }
 
-// Block::~Block(struct Block* this) @ 0x401070
+// Block::~Block(struct Block* this) @ 0x40117c
 {
     struct Block* this_1 = this;
 }
 
-// Block::~Block(struct Block* this) @ 0x40109c
+// Block::~Block(struct Block* this) @ 0x4011a8
 {
     Block::~Block(this);
     operator delete(this);
 }
 
-// Block::go(struct Block* this) @ 0x4010cc
+// Block::go(struct Block* this) @ 0x4011d8
 {
     return (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
 }
 
-// Block::~Block(struct Block* this) @ 0x4010fc
+// Block::~Block(struct Block* this) @ 0x401208
 {
     return;
 }
 
-// FastBlock::~FastBlock(struct FastBlock* this) @ 0x401110
+// FastBlock::~FastBlock(struct FastBlock* this) @ 0x40121c
 {
     struct FastBlock* this_1 = this;
 }
 
-// Station::Station(struct Station* this) @ 0x40113c
+// Station::Station(struct Station* this) @ 0x401248
 {
     *(uint64_t*)this = &data_4041a8;
     *(uint64_t*)((char*)this + 8) = engine_again();
     *(uint64_t*)((char*)this + 0x10) = 0;
 }
 
-// Station::~Station(struct Station* this) @ 0x401184
+// Station::~Station(struct Station* this) @ 0x401290
 {
     struct Station* this_1 = this;
 }
 
-// Station::~Station(struct Station* this) @ 0x4011b0
+// Station::~Station(struct Station* this) @ 0x4012bc
 {
     Station::~Station(this);
     operator delete(this);
 }
 
-// Station::go(struct Station* this) @ 0x4011e0
+// Station::go(struct Station* this) @ 0x4012ec
 {
     return *(uint64_t*)((char*)this + 0x10)
         + (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
 }
 
-// Station::~Station(struct Station* this) @ 0x401220
+// Station::~Station(struct Station* this) @ 0x40132c
 {
     return;
 }
 
-// Child::~Child(struct Child* this) @ 0x401234
+// Harbor::Harbor(struct Harbor* this) @ 0x401340
+{
+    Dock::Dock(this);
+    *(uint64_t*)this = &data_4041e0;
+    *(uint64_t*)((char*)this + 0x10) = 3;
+}
+
+// Dock::Dock(struct Dock* this) @ 0x401384
+{
+    *(uint64_t*)this = &data_404238;
+    *(uint64_t*)((char*)this + 8) = 0;
+}
+
+// Harbor::~Harbor(struct Harbor* this) @ 0x4013ac
+{
+    struct Harbor* this_1 = this;
+    Harbor::~Harbor(this);
+}
+
+// Harbor::~Harbor(struct Harbor* this) @ 0x4013d8
+{
+    Harbor::~Harbor(this);
+    operator delete(this);
+}
+
+// Harbor::attach(struct Harbor* this, void*) @ 0x401408
+{
+    *(uint64_t*)((char*)this + 0x10) += 1;
+    *(uint64_t*)((char*)this + 8) = arg2;
+}
+
+// Dock::refit(struct Dock* this) @ 0x401434
+{
+    // exception table (LSDA 0x401934): 1 of 3 call sites have a landing pad
+    //   0x401458..0x40145c -> 0x401480 sub_401480: cleanup
+
+    struct Engine* x0 = operator new(0x10);
+    Engine::Engine(x0);
+    return (*(uint64_t*)(*(uint64_t*)this + 0x10))(this, x0);
+}
+
+// sub_401480 @ 0x401480
+{
+    // landing pad of Dock::refit(struct Dock* this) @ 0x401434
+    //   from 0x401458..0x40145c: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// Dock::~Dock(struct Dock* this) @ 0x4014a4
+{
+    struct Dock* this_1 = this;
+}
+
+// Dock::~Dock(struct Dock* this) @ 0x4014d0
+{
+    Dock::~Dock(this);
+    operator delete(this);
+}
+
+// Dock::attach(struct Dock* this, void*) @ 0x401500
+{
+    *(uint64_t*)((char*)this + 8) = arg2;
+}
+
+// Dock::~Dock(struct Dock* this) @ 0x401520
 {
     return;
 }
 
-// Owner::~Owner(struct Owner* this) @ 0x401248
+// Harbor::~Harbor(struct Harbor* this) @ 0x401534
+{
+    struct Harbor* this_1 = this;
+}
+
+// Child::~Child(struct Child* this) @ 0x401560
 {
     return;
 }
 
-// Square::Square(struct Square* this) @ 0x40125c
+// Owner::~Owner(struct Owner* this) @ 0x401574
+{
+    return;
+}
+
+// Square::Square(struct Square* this) @ 0x401588
 {
     struct Square* this_1 = this;
     Square::Square(this);
 }
 
-// Circle::Circle(struct Circle* this) @ 0x401288
+// Circle::Circle(struct Circle* this) @ 0x4015b4
 {
     struct Circle* this_1 = this;
     Circle::Circle(this);
 }
 
-// Square::Square(struct Square* this) @ 0x4012b4
+// Square::Square(struct Square* this) @ 0x4015e0
 {
     Shape::Shape(this);
-    *(uint64_t*)this = &data_4041e0;
+    *(uint64_t*)this = &data_404268;
     *(uint64_t*)((char*)this + 8) = 2;
 }
 
-// Shape::Shape(struct Shape* this) @ 0x4012f8
+// Shape::Shape(struct Shape* this) @ 0x401624
 {
-    *(uint64_t*)this = &data_404230;
+    *(uint64_t*)this = &data_4042b8;
 }
 
-// Square::~Square(struct Square* this) @ 0x40131c
+// Square::~Square(struct Square* this) @ 0x401648
 {
     struct Square* this_1 = this;
     Square::~Square(this);
 }
 
-// Square::~Square(struct Square* this) @ 0x401348
+// Square::~Square(struct Square* this) @ 0x401674
 {
     Square::~Square(this);
     operator delete(this);
 }
 
-// Square::area(struct Square* this) @ 0x401378
+// Square::area(struct Square* this) @ 0x4016a4
 {
     return *(uint64_t*)((char*)this + 8) * *(uint64_t*)((char*)this + 8);
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x401398
+// Shape::~Shape(struct Shape* this) @ 0x4016c4
 {
     struct Shape* this_1 = this;
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x4013c4
+// Shape::~Shape(struct Shape* this) @ 0x4016f0
 {
     Shape::~Shape(this);
     operator delete(this);
 }
 
-// Shape::area(struct Shape* this) @ 0x4013f4
+// Shape::area(struct Shape* this) @ 0x401720
 {
     struct Shape* this_1 = this;
     return 0;
 }
 
-// Shape::~Shape(struct Shape* this) @ 0x401408
+// Shape::~Shape(struct Shape* this) @ 0x401734
 {
     return;
 }
 
-// Square::~Square(struct Square* this) @ 0x40141c
+// Square::~Square(struct Square* this) @ 0x401748
 {
     struct Square* this_1 = this;
 }
 
-// Circle::Circle(struct Circle* this) @ 0x401448
+// Circle::Circle(struct Circle* this) @ 0x401774
 {
     Shape::Shape(this);
-    *(uint64_t*)this = &data_404258;
+    *(uint64_t*)this = &data_4042e0;
     *(uint64_t*)((char*)this + 8) = 1;
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x40148c
+// Circle::~Circle(struct Circle* this) @ 0x4017b8
 {
     struct Circle* this_1 = this;
     Circle::~Circle(this);
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x4014b8
+// Circle::~Circle(struct Circle* this) @ 0x4017e4
 {
     Circle::~Circle(this);
     operator delete(this);
 }
 
-// Circle::area(struct Circle* this) @ 0x4014e8
+// Circle::area(struct Circle* this) @ 0x401814
 {
     return 3 * *(uint64_t*)((char*)this + 8) * *(uint64_t*)((char*)this + 8);
 }
 
-// Circle::~Circle(struct Circle* this) @ 0x401510
+// Circle::~Circle(struct Circle* this) @ 0x40183c
 {
     struct Circle* this_1 = this;
 }

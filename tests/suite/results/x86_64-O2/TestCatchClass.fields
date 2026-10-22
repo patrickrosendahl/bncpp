@@ -1,0 +1,29 @@
+classes sized 0
+ctors/dtors 0
+fields 1
+fields named (override) 0
+functions scanned 1
+params with direct callers 1
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 1
+ptr stores 2
+returns used as objects 0
+rounds 2
+stable 1
+structs 2
+structs with a base 1
+
+struct IoError  (0xc bytes, from members)  base AppError @ 0x0
+     0x0 vptr                     struct IoError::VTable*  [vptr]
+struct AppError  (0xc bytes, from members)
+     0x0 vptr                     struct AppError::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+
+catch clauses 2
+catch clauses: a class of the scan 2
+handlers with the object in a variable 2
+variables: typed 2
+apply catch sub_400785 rax typed: IoError  (from 0x400785 #2)   [now: void*]
+apply catch sub_400785 rax_3 typed: AppError  (from 0x400785 #1)   [now: void*]

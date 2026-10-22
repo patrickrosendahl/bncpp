@@ -1,6 +1,6 @@
 // catch_all(int32_t) @ 0x4005f0
 {
-    // exception table (LSDA 0x400770): 3 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4007a8): 3 of 6 call sites have a landing pad; #n = the selector value
     //   0x4005fe..0x400603 -> 0x400610 sub_400610: catch (...) #1
     //   0x400625..0x400631 (in sub_400610) -> 0x400641 sub_400641: cleanup
     //   0x40064d..0x400652 (in sub_400641) -> 0x400668 sub_400668: catch (...) #1
@@ -14,7 +14,7 @@
     catch (...)
     {
         log_line("something");
-        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffd;
+        var_c = 0xfffffffd;
         /* tailcall */
         return sub_400656(arg5);
     }
@@ -79,7 +79,7 @@
 
 // catch_type_then_all(int32_t) @ 0x400680
 {
-    // exception table (LSDA 0x400794): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4007cc): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x40068e..0x400693 -> 0x4006a0 sub_4006a0: catch (int32_t) #2, catch (...) #1
 
     try
@@ -88,14 +88,14 @@
     }
     catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg5 - 0x18) = e;
-        *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x18);
-        return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
+        var_20 = e;
+        var_c = var_20;
+        return (uint64_t)var_c;
     }
     catch (...)
     {
-        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffd;
-        return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
+        var_c = 0xfffffffd;
+        return (uint64_t)var_c;
     }
 }
 
@@ -122,5 +122,22 @@
     }
 
     return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
+}
+
+// no_throw_boundary(int32_t) @ 0x400700
+{
+    // exception table (LSDA 0x4007e8): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x40070e..0x400713 -> 0x400724 sub_400724: catch (...) #1
+
+    return (uint64_t)(may_throw(arg1) + 1);
+}
+
+// sub_400724 @ 0x400724
+{
+    // landing pad of no_throw_boundary(int32_t) @ 0x400700
+    //   from 0x40070e..0x400713: catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
 }
 

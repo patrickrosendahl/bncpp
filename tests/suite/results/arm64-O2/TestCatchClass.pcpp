@@ -1,0 +1,132 @@
+// fail(int32_t) @ 0x400698
+{
+    if (arg1 >= 4)
+    {
+        throw IoError{&data_404068, 5, &data_40094f, arg1};
+    }
+
+    if (arg1 >= 2)
+    {
+        throw AppError{&data_404090, arg1, &data_40094b};
+    }
+
+    if (arg1 > 0xfffffffa)
+        return;
+
+    throw 7;
+}
+
+// IoError::~IoError(struct IoError* this) @ 0x400770
+{
+    return;
+}
+
+// catch_class(int32_t) @ 0x400774
+{
+    // exception table (LSDA 0x400904): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400780..0x400784 -> 0x400794 sub_400794: catch (IoError) #2, catch (AppError) #1
+    //   0x4007b4..0x4007b8 (in sub_400794) -> 0x4007ec sub_4007ec: cleanup
+    //   0x4007f0..0x4007f4 (in sub_4007ec) -> 0x4007fc sub_4007fc: catch (...) #3
+
+    try
+    {
+        fail(arg1);
+    }
+    catch (IoError& e)
+    {
+        *(uint32_t*)((char*)&e + 0x18);
+        (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
+        /* tailcall */
+        return sub_400788();
+    }
+    catch (AppError& e)
+    {
+        _puts(*(uint64_t*)((char*)&e + 0x10));
+        *(uint32_t*)((char*)&e + 8);
+        /* tailcall */
+        return sub_400788();
+    }
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400788(entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400788 @ 0x400788
+{
+    return;
+}
+
+// sub_400794 @ 0x400794
+{
+    // landing pad of catch_class(int32_t) @ 0x400774
+    //   from 0x400780..0x400784: catch (IoError) #2, catch (AppError) #1
+
+    if (arg2 != 2)
+    {
+        if (arg2 != 1)
+        {
+            __Unwind_Resume(arg1);
+            /* no return */
+        }
+
+        void* x0_4 = ___cxa_begin_catch(arg1);
+        _puts(*(uint64_t*)((char*)x0_4 + 0x10));
+        *(uint32_t*)((char*)x0_4 + 8);
+    }
+    else
+    {
+        void* x0_1 = ___cxa_begin_catch(arg1);
+        *(uint32_t*)((char*)x0_1 + 0x18);
+        (*(uint64_t*)(*(uint64_t*)x0_1 + 0x10))();
+    }
+
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400788();
+}
+
+// sub_4007ec @ 0x4007ec
+{
+    // landing pad of catch_class(int32_t) @ 0x400774
+    //   from 0x4007b4..0x4007b8 (in sub_400794): cleanup
+
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_4007fc @ 0x4007fc
+{
+    // landing pad of catch_class(int32_t) @ 0x400774
+    //   from 0x4007f0..0x4007f4 (in sub_4007ec): catch (...) #3
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400800
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// IoError::~IoError(struct IoError* this) @ 0x400810
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// IoError::severity(struct IoError* this) const @ 0x400814
+{
+    return 9;
+}
+
+// AppError::severity(struct AppError* this) const @ 0x40081c
+{
+    int32_t x8_1 = (int32_t)((*(uint32_t*)((char*)this + 8) * 0x66666667) >> 0x22);
+    return (uint64_t)(x8_1 + (x8_1 >> 0x1f));
+}
+

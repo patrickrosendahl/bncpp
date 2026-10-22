@@ -1,0 +1,187 @@
+// try_in_if(int32_t) @ 0x4005f8
+{
+    // exception table (LSDA 0x4008f8): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400620..0x400628 -> 0x400638 sub_400638: catch (std::runtime_error) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t* fp_1 = &var_10;
+    int32_t var_18 = 0;
+
+    if (arg1 <= 5)
+    {
+        int32_t var_18_2 = next_value();
+        /* tailcall */
+        return sub_400690(fp_1, var_10);
+    }
+
+    try
+    {
+        int32_t var_18_1 = may_throw(arg1);
+    }
+    catch (std::runtime_error& e)
+    {
+        var_18 = 0xffffffff;
+        log_line("after try");
+        /* tailcall */
+        return sub_400690(arg3);
+    }
+    log_line("after try");
+    /* tailcall */
+    return sub_400690(fp_1, var_10);
+}
+
+// sub_400638 @ 0x400638
+{
+    // landing pad of try_in_if(int32_t) @ 0x4005f8
+    //   from 0x400620..0x400628: catch (std::runtime_error) #1
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+
+    if (*(uint32_t*)((char*)arg3 - 0x14) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
+
+    void* arg_10 = ___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+    *(uint32_t*)((char*)arg3 - 8) = 0xffffffff;
+    ___cxa_end_catch();
+    log_line("after try");
+    /* tailcall */
+    return sub_400690(arg3);
+}
+
+// sub_400690 @ 0x400690
+{
+    return (uint64_t)(*(uint32_t*)((char*)arg1 - 8) << 1);
+}
+
+// try_in_else(int32_t) @ 0x4006ac
+{
+    // exception table (LSDA 0x40090c): 1 of 3 call sites have a landing pad; #n = the selector value
+    //   0x4006d8..0x4006e0 -> 0x4006f0 sub_4006f0: catch (...) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t* fp_1 = &var_10;
+
+    if (arg1 & 0x80000000)
+    {
+        int32_t var_18 = next_value();
+        /* tailcall */
+        return sub_400728(fp_1, var_10);
+    }
+
+    try
+    {
+        int32_t var_18_1 = may_throw(arg1);
+    }
+    catch (...)
+    {
+        int32_t x1;
+        int32_t var_24 = x1;
+        var_18 = 0xfffffffe;
+        log_line("else done");
+        /* tailcall */
+        return sub_400728(arg2);
+    }
+    log_line("else done");
+    /* tailcall */
+    return sub_400728(fp_1, var_10);
+}
+
+// sub_4006f0 @ 0x4006f0
+{
+    // landing pad of try_in_else(int32_t) @ 0x4006ac
+    //   from 0x4006d8..0x4006e0: catch (...) #1
+
+    int32_t x1;
+    int32_t arg_c = x1;
+    ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg2 - 8) = 0xfffffffe;
+    ___cxa_end_catch();
+    log_line("else done");
+    /* tailcall */
+    return sub_400728(arg2);
+}
+
+// sub_400728 @ 0x400728
+{
+    return (uint64_t)(*(uint32_t*)((char*)arg1 - 8) + 1);
+}
+
+// try_in_switch(int32_t) @ 0x40073c
+{
+    // exception table (LSDA 0x400924): 1 of 3 call sites have a landing pad; #n = the selector value
+    //   0x4007a0..0x4007a8 -> 0x4007b8 sub_4007b8: catch (int32_t) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t* fp_1 = &var_10;
+
+    if (arg1 == 1)
+    {
+        int32_t var_18 = next_value();
+        /* tailcall */
+        return sub_400834(fp_1, var_10);
+    }
+
+    if (arg1 == 2)
+    {
+        try
+        {
+            int32_t var_18_1 = may_throw(arg1);
+        }
+        catch (int32_t e)
+        {
+            var_18 = e;
+        }
+        log_line("case 2");
+        /* tailcall */
+        return sub_400834(fp_1, var_10);
+    }
+
+    if (arg1 == 3)
+    {
+        int32_t var_18_2 = may_throw(3) + 1;
+        /* tailcall */
+        return sub_400834(fp_1, var_10);
+    }
+
+    if (arg1 == 4)
+    {
+        int32_t var_18_3 = next_value() << 2;
+        /* tailcall */
+        return sub_400834(fp_1, var_10);
+    }
+
+    int32_t var_18_4 = 0;
+    /* tailcall */
+    return sub_400834(fp_1, var_10);
+}
+
+// sub_4007b8 @ 0x4007b8
+{
+    // landing pad of try_in_switch(int32_t) @ 0x40073c
+    //   from 0x4007a0..0x4007a8: catch (int32_t) #1
+
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    *(uint32_t*)((char*)arg3 - 8) = *(uint32_t*)___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    log_line("case 2");
+    /* tailcall */
+    return sub_400834(arg3);
+}
+
+// sub_400834 @ 0x400834
+{
+    return (uint64_t)(*(uint32_t*)((char*)arg1 - 8) + 7);
+}
+

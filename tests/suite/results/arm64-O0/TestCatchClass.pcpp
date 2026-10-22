@@ -1,0 +1,239 @@
+// fail(int32_t) @ 0x400698
+{
+    // exception table (LSDA 0x400bf8): 2 of 5 call sites have a landing pad
+    //   0x4006c8..0x4006cc -> 0x4006e8 sub_4006e8: cleanup
+    //   0x400724..0x400730 -> 0x40074c sub_40074c: cleanup
+
+    if (arg1 > 3)
+    {
+        throw IoError(arg1);
+    }
+
+    if (arg1 > 1)
+    {
+        throw AppError(arg1, "app");
+    }
+
+    if (arg1 >= 0xfffffffb)
+        return;
+
+    throw 7;
+}
+
+// sub_4006e8 @ 0x4006e8
+{
+    // landing pad of fail(int32_t) @ 0x400698
+    //   from 0x4006c8..0x4006cc: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_free_exception(arg4);
+    /* tailcall */
+    return sub_4007a4(arg3);
+}
+
+// sub_40074c @ 0x40074c
+{
+    // landing pad of fail(int32_t) @ 0x400698
+    //   from 0x400724..0x400730: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_free_exception(arg4);
+    /* tailcall */
+    return sub_4007a4(arg3);
+}
+
+// sub_4007a4 @ 0x4007a4
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// IoError::IoError(struct IoError* this, int32_t) @ 0x4007ac
+{
+    struct IoError* this_1 = this;
+    IoError::IoError(this, arg2);
+}
+
+// IoError::~IoError(struct IoError* this) @ 0x4007e0
+{
+    struct IoError* this_1 = this;
+    IoError::~IoError(this);
+}
+
+// AppError::AppError(struct AppError* this, int32_t, char const*) @ 0x40080c
+{
+    struct AppError* this_1 = this;
+    AppError::AppError(this, arg2, arg3);
+}
+
+// AppError::~AppError(struct AppError* this) @ 0x400848
+{
+    struct AppError* this_1 = this;
+}
+
+// catch_class(int32_t) @ 0x400874
+{
+    // exception table (LSDA 0x400c14): 4 of 8 call sites have a landing pad; #n = the selector value
+    //   0x400888..0x40088c -> 0x400898 sub_400898: catch (IoError) #2, catch (AppError) #1
+    //   0x4008e0..0x4008e8 (in sub_400898) -> 0x40096c sub_40096c: cleanup
+    //   0x400928..0x40093c (in sub_400898) -> 0x400954 sub_400954: cleanup
+    //   0x400960..0x40097c (in sub_400954) -> 0x40099c sub_40099c: catch (...) #3
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    try
+    {
+        fail(arg1);
+    }
+    catch (IoError& e)
+    {
+        var_14 =
+            *(uint32_t*)((char*)&e + 0x18) + (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
+        /* tailcall */
+        return sub_400984(arg3);
+    }
+    catch (AppError& e)
+    {
+        int64_t var_50 = *(uint64_t*)((char*)&e + 0x10);
+        _printf("%s\n");
+        var_14 = *(uint32_t*)((char*)&e + 8);
+        /* tailcall */
+        return sub_400984(arg3);
+    }
+    int32_t var_14 = 0;
+    /* tailcall */
+    return sub_400984(&var_10, var_10);
+}
+
+// sub_400898 @ 0x400898
+{
+    // landing pad of catch_class(int32_t) @ 0x400874
+    //   from 0x400888..0x40088c: catch (IoError) #2, catch (AppError) #1
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    int32_t x8_1 = *(uint32_t*)((char*)arg3 - 0x14);
+
+    if (x8_1 == 2)
+    {
+        void* x0_1 = ___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+        *(uint32_t*)((char*)arg3 - 4) =
+            *(uint32_t*)((char*)x0_1 + 0x18) + (*(uint64_t*)(*(uint64_t*)x0_1 + 0x10))();
+        ___cxa_end_catch();
+        /* tailcall */
+        return sub_400984(arg3);
+    }
+
+    if (x8_1 != 1)
+        /* tailcall */
+        return sub_400994(arg3);
+
+    void* x0_6 = ___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
+    int64_t arg_0 = *(uint64_t*)((char*)x0_6 + 0x10);
+    _printf("%s\n");
+    *(uint32_t*)((char*)arg3 - 4) = *(uint32_t*)((char*)x0_6 + 8);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400984(arg3);
+}
+
+// sub_400954 @ 0x400954
+{
+    // landing pad of catch_class(int32_t) @ 0x400874
+    //   from 0x400928..0x40093c (in sub_400898): cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400994(arg3);
+}
+
+// sub_40096c @ 0x40096c
+{
+    // landing pad of catch_class(int32_t) @ 0x400874
+    //   from 0x4008e0..0x4008e8 (in sub_400898): cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400994(arg3);
+}
+
+// sub_400984 @ 0x400984
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// sub_400994 @ 0x400994
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    /* no return */
+}
+
+// sub_40099c @ 0x40099c
+{
+    // landing pad of catch_class(int32_t) @ 0x400874
+    //   from 0x400960..0x40097c (in sub_400954): catch (...) #3
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x4009a0
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// IoError::IoError(struct IoError* this, int32_t) @ 0x4009b0
+{
+    AppError::AppError(this, 5, "io");
+    *(uint64_t*)this = &data_404068;
+    *(uint32_t*)((char*)this + 0x18) = arg2;
+}
+
+// AppError::AppError(struct AppError* this, int32_t, char const*) @ 0x400a04
+{
+    *(uint64_t*)this = &data_404090;
+    *(uint32_t*)((char*)this + 8) = arg2;
+    *(uint64_t*)((char*)this + 0x10) = arg3;
+}
+
+// IoError::~IoError(struct IoError* this) @ 0x400a40
+{
+    IoError::~IoError(this);
+    operator delete(this);
+}
+
+// IoError::severity(struct IoError* this) const @ 0x400a70
+{
+    struct IoError* this_1 = this;
+    return 9;
+}
+
+// AppError::~AppError(struct AppError* this) @ 0x400a84
+{
+    AppError::~AppError(this);
+    operator delete(this);
+}
+
+// AppError::severity(struct AppError* this) const @ 0x400ab4
+{
+    return (uint64_t)(*(uint32_t*)((char*)this + 8) / 0xa);
+}
+
+// IoError::~IoError(struct IoError* this) @ 0x400ad4
+{
+    struct IoError* this_1 = this;
+}
+
+// AppError::~AppError(struct AppError* this) @ 0x400b00
+{
+    return;
+}
+

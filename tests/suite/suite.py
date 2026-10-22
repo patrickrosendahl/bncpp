@@ -48,6 +48,7 @@ TESTS = [
     "TestDestructorCleanup",  # cleanup-only landing pads
     "TestCleanupAndCatch",    # destructors and a catch in one landing pad
     "TestNestedTry",          # try inside try / inside a loop
+    "TestTryInBranch",        # try inside one branch of an if / else and inside a switch case (bncpp-67)
     "TestStringTemporary",    # library destructors on the unwind path
     "TestCatchClass",         # the program's own exception classes: throw statements, typed catch objects
     # readability passes (from binary-jvm)
@@ -212,9 +213,10 @@ COUNTERS = {
     "render_errors": re.compile(r"could not render"),
 }
 DISTINCT = ("temps",)
-# calls the try/catch rendering may hide (bncpp-7): not lost when they vanish
+# calls the try/catch rendering may hide (bncpp-7): not lost when they vanish; a throw statement (bncpp-65) hides the
+# allocation, ___cxa_throw and the declaration of the exception variable (BN's type syntax `__offset(vtable, 0x10)*`)
 MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|Unwind_Resume|"
-                        r"clang_call_terminate)")
+                        r"clang_call_terminate|cxa_allocate_exception|cxa_throw|offset)")
 # the name needs a separator before it: `catch (T)` has none (the type's last character is not a variable)
 CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+?(?: const)?(?:\s*[&*]\s*|\s+)(\w+)\)"
 # gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report

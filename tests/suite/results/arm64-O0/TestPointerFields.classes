@@ -1,96 +1,116 @@
 typeinfo 0x404088  class mangled 5Child
   vtable 0x404070  offset_to_top 0  3 slots
-    [0] 0x400a8c Child::~Child(struct Child* this)
-    [1] 0x400ab8 Child::~Child(struct Child* this)
+    [0] 0x400b98 Child::~Child(struct Child* this)
+    [1] 0x400bc4 Child::~Child(struct Child* this)
     [2] 0x400698 Child::run(struct Child* this)
 typeinfo 0x404098  class mangled 5Owner
   vtable 0x404030  offset_to_top 0  6 slots
-    [0] 0x400ae8 Owner::~Owner(struct Owner* this)
-    [1] 0x400b14 Owner::~Owner(struct Owner* this)
-    [2] 0x400b44 Owner::step(struct Owner* this)
-    [3] 0x400be4 Owner::reshape(struct Owner* this, int32_t)
-    [4] 0x400c58 Owner::share(struct Owner* this)
-    [5] 0x400c74 Owner::mix(struct Owner* this)
+    [0] 0x400bf4 Owner::~Owner(struct Owner* this)
+    [1] 0x400c20 Owner::~Owner(struct Owner* this)
+    [2] 0x400c50 Owner::step(struct Owner* this)
+    [3] 0x400cf0 Owner::reshape(struct Owner* this, int32_t)
+    [4] 0x400d64 Owner::share(struct Owner* this)
+    [5] 0x400d80 Owner::mix(struct Owner* this)
 typeinfo 0x4040d0  class mangled 6Engine
   vtable 0x4040b8  offset_to_top 0  3 slots
-    [0] 0x400d14 Engine::~Engine(struct Engine* this)
-    [1] 0x400d40 Engine::~Engine(struct Engine* this)
-    [2] 0x400d70 Engine::tick(struct Engine* this)
+    [0] 0x400e20 Engine::~Engine(struct Engine* this)
+    [1] 0x400e4c Engine::~Engine(struct Engine* this)
+    [2] 0x400e7c Engine::tick(struct Engine* this)
 typeinfo 0x404110  class mangled 4Slot
   vtable 0x4040f0  offset_to_top 0  4 slots
-    [0] 0x400e10 Slot::~Slot(struct Slot* this)
-    [1] 0x400e3c Slot::~Slot(struct Slot* this)
-    [2] 0x400e6c Slot::hold_engine(struct Slot* this)
-    [3] 0x400ed4 Slot::hold_child(struct Slot* this, Owner*)
+    [0] 0x400f1c Slot::~Slot(struct Slot* this)
+    [1] 0x400f48 Slot::~Slot(struct Slot* this)
+    [2] 0x400f78 Slot::hold_engine(struct Slot* this)
+    [3] 0x400fe0 Slot::hold_child(struct Slot* this, Owner*)
 typeinfo 0x404148  si    mangled 9FastBlock
   base 0x404160 5Block
   vtable 0x404130  offset_to_top 0  3 slots
-    [0] 0x400fd4 FastBlock::~FastBlock(struct FastBlock* this)
-    [1] 0x401000 FastBlock::~FastBlock(struct FastBlock* this)
-    [2] 0x401030 FastBlock::go(struct FastBlock* this)
+    [0] 0x4010e0 FastBlock::~FastBlock(struct FastBlock* this)
+    [1] 0x40110c FastBlock::~FastBlock(struct FastBlock* this)
+    [2] 0x40113c FastBlock::go(struct FastBlock* this)
 typeinfo 0x404160  class mangled 5Block
   vtable 0x404180  offset_to_top 0  3 slots
-    [0] 0x401070 Block::~Block(struct Block* this)
-    [1] 0x40109c Block::~Block(struct Block* this)
-    [2] 0x4010cc Block::go(struct Block* this)
+    [0] 0x40117c Block::~Block(struct Block* this)
+    [1] 0x4011a8 Block::~Block(struct Block* this)
+    [2] 0x4011d8 Block::go(struct Block* this)
 typeinfo 0x4041c0  class mangled 7Station
   vtable 0x4041a8  offset_to_top 0  3 slots
-    [0] 0x401184 Station::~Station(struct Station* this)
-    [1] 0x4011b0 Station::~Station(struct Station* this)
-    [2] 0x4011e0 Station::go(struct Station* this)
-typeinfo 0x4041f8  si    mangled 6Square
-  base 0x404210 5Shape
-  vtable 0x4041e0  offset_to_top 0  3 slots
-    [0] 0x40131c Square::~Square(struct Square* this)
-    [1] 0x401348 Square::~Square(struct Square* this)
-    [2] 0x401378 Square::area(struct Square* this)
-typeinfo 0x404210  class mangled 5Shape
-  vtable 0x404230  offset_to_top 0  3 slots
-    [0] 0x401398 Shape::~Shape(struct Shape* this)
-    [1] 0x4013c4 Shape::~Shape(struct Shape* this)
-    [2] 0x4013f4 Shape::area(struct Shape* this)
-typeinfo 0x404270  si    mangled 6Circle
-  base 0x404210 5Shape
-  vtable 0x404258  offset_to_top 0  3 slots
-    [0] 0x40148c Circle::~Circle(struct Circle* this)
-    [1] 0x4014b8 Circle::~Circle(struct Circle* this)
-    [2] 0x4014e8 Circle::area(struct Circle* this)
+    [0] 0x401290 Station::~Station(struct Station* this)
+    [1] 0x4012bc Station::~Station(struct Station* this)
+    [2] 0x4012ec Station::go(struct Station* this)
+typeinfo 0x404200  si    mangled 6Harbor
+  base 0x404218 4Dock
+  vtable 0x4041e0  offset_to_top 0  4 slots
+    [0] 0x4013ac Harbor::~Harbor(struct Harbor* this)
+    [1] 0x4013d8 Harbor::~Harbor(struct Harbor* this)
+    [2] 0x401408 Harbor::attach(struct Harbor* this, void*)
+    [3] 0x401434 Dock::refit(struct Dock* this)
+typeinfo 0x404218  class mangled 4Dock
+  vtable 0x404238  offset_to_top 0  4 slots
+    [0] 0x4014a4 Dock::~Dock(struct Dock* this)
+    [1] 0x4014d0 Dock::~Dock(struct Dock* this)
+    [2] 0x401500 Dock::attach(struct Dock* this, void*)
+    [3] 0x401434 Dock::refit(struct Dock* this)
+typeinfo 0x404280  si    mangled 6Square
+  base 0x404298 5Shape
+  vtable 0x404268  offset_to_top 0  3 slots
+    [0] 0x401648 Square::~Square(struct Square* this)
+    [1] 0x401674 Square::~Square(struct Square* this)
+    [2] 0x4016a4 Square::area(struct Square* this)
+typeinfo 0x404298  class mangled 5Shape
+  vtable 0x4042b8  offset_to_top 0  3 slots
+    [0] 0x4016c4 Shape::~Shape(struct Shape* this)
+    [1] 0x4016f0 Shape::~Shape(struct Shape* this)
+    [2] 0x401720 Shape::area(struct Shape* this)
+typeinfo 0x4042f8  si    mangled 6Circle
+  base 0x404298 5Shape
+  vtable 0x4042e0  offset_to_top 0  3 slots
+    [0] 0x4017b8 Circle::~Circle(struct Circle* this)
+    [1] 0x4017e4 Circle::~Circle(struct Circle* this)
+    [2] 0x401814 Circle::area(struct Circle* this)
 
 names (cpp/rtti_names.py; now: BN's name)
 R 0x400698 Child::vfunc2   [now: Child::run(struct Child* this)]
-R 0x400a8c Child::~Child   [now: Child::~Child(struct Child* this)]
-R 0x400ab8 Child::~Child [deleting]   [now: Child::~Child(struct Child* this)]
-R 0x400ae8 Owner::~Owner   [now: Owner::~Owner(struct Owner* this)]
-R 0x400b14 Owner::~Owner [deleting]   [now: Owner::~Owner(struct Owner* this)]
-R 0x400b44 Owner::vfunc2   [now: Owner::step(struct Owner* this)]
-R 0x400be4 Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
-R 0x400c58 Owner::vfunc4   [now: Owner::share(struct Owner* this)]
-R 0x400c74 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
-R 0x400d14 Engine::~Engine   [now: Engine::~Engine(struct Engine* this)]
-R 0x400d40 Engine::~Engine [deleting]   [now: Engine::~Engine(struct Engine* this)]
-R 0x400d70 Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
-R 0x400e10 Slot::~Slot   [now: Slot::~Slot(struct Slot* this)]
-R 0x400e3c Slot::~Slot [deleting]   [now: Slot::~Slot(struct Slot* this)]
-R 0x400e6c Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
-R 0x400ed4 Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
-R 0x400fd4 FastBlock::~FastBlock   [now: FastBlock::~FastBlock(struct FastBlock* this)]
-R 0x401000 FastBlock::~FastBlock [deleting]   [now: FastBlock::~FastBlock(struct FastBlock* this)]
-R 0x401030 FastBlock::vfunc2   [now: FastBlock::go(struct FastBlock* this)]
-R 0x401070 Block::~Block   [now: Block::~Block(struct Block* this)]
-R 0x40109c Block::~Block [deleting]   [now: Block::~Block(struct Block* this)]
-R 0x4010cc Block::vfunc2   [now: Block::go(struct Block* this)]
-R 0x401184 Station::~Station   [now: Station::~Station(struct Station* this)]
-R 0x4011b0 Station::~Station [deleting]   [now: Station::~Station(struct Station* this)]
-R 0x4011e0 Station::vfunc2   [now: Station::go(struct Station* this)]
-R 0x40131c Square::~Square   [now: Square::~Square(struct Square* this)]
-R 0x401348 Square::~Square [deleting]   [now: Square::~Square(struct Square* this)]
-R 0x401378 Square::vfunc2   [now: Square::area(struct Square* this)]
-R 0x401398 Shape::~Shape   [now: Shape::~Shape(struct Shape* this)]
-R 0x4013c4 Shape::~Shape [deleting]   [now: Shape::~Shape(struct Shape* this)]
-R 0x4013f4 Shape::vfunc2   [now: Shape::area(struct Shape* this)]
-R 0x40148c Circle::~Circle   [now: Circle::~Circle(struct Circle* this)]
-R 0x4014b8 Circle::~Circle [deleting]   [now: Circle::~Circle(struct Circle* this)]
-R 0x4014e8 Circle::vfunc2   [now: Circle::area(struct Circle* this)]
+R 0x400b98 Child::~Child   [now: Child::~Child(struct Child* this)]
+R 0x400bc4 Child::~Child [deleting]   [now: Child::~Child(struct Child* this)]
+R 0x400bf4 Owner::~Owner   [now: Owner::~Owner(struct Owner* this)]
+R 0x400c20 Owner::~Owner [deleting]   [now: Owner::~Owner(struct Owner* this)]
+R 0x400c50 Owner::vfunc2   [now: Owner::step(struct Owner* this)]
+R 0x400cf0 Owner::vfunc3   [now: Owner::reshape(struct Owner* this, int32_t)]
+R 0x400d64 Owner::vfunc4   [now: Owner::share(struct Owner* this)]
+R 0x400d80 Owner::vfunc5   [now: Owner::mix(struct Owner* this)]
+R 0x400e20 Engine::~Engine   [now: Engine::~Engine(struct Engine* this)]
+R 0x400e4c Engine::~Engine [deleting]   [now: Engine::~Engine(struct Engine* this)]
+R 0x400e7c Engine::vfunc2   [now: Engine::tick(struct Engine* this)]
+R 0x400f1c Slot::~Slot   [now: Slot::~Slot(struct Slot* this)]
+R 0x400f48 Slot::~Slot [deleting]   [now: Slot::~Slot(struct Slot* this)]
+R 0x400f78 Slot::vfunc2   [now: Slot::hold_engine(struct Slot* this)]
+R 0x400fe0 Slot::vfunc3   [now: Slot::hold_child(struct Slot* this, Owner*)]
+R 0x4010e0 FastBlock::~FastBlock   [now: FastBlock::~FastBlock(struct FastBlock* this)]
+R 0x40110c FastBlock::~FastBlock [deleting]   [now: FastBlock::~FastBlock(struct FastBlock* this)]
+R 0x40113c FastBlock::vfunc2   [now: FastBlock::go(struct FastBlock* this)]
+R 0x40117c Block::~Block   [now: Block::~Block(struct Block* this)]
+R 0x4011a8 Block::~Block [deleting]   [now: Block::~Block(struct Block* this)]
+R 0x4011d8 Block::vfunc2   [now: Block::go(struct Block* this)]
+R 0x401290 Station::~Station   [now: Station::~Station(struct Station* this)]
+R 0x4012bc Station::~Station [deleting]   [now: Station::~Station(struct Station* this)]
+R 0x4012ec Station::vfunc2   [now: Station::go(struct Station* this)]
+R 0x4013ac Harbor::~Harbor   [now: Harbor::~Harbor(struct Harbor* this)]
+R 0x4013d8 Harbor::~Harbor [deleting]   [now: Harbor::~Harbor(struct Harbor* this)]
+R 0x401408 Harbor::vfunc2   [now: Harbor::attach(struct Harbor* this, void*)]
+R 0x401434 Dock::vfunc3   [now: Dock::refit(struct Dock* this)]
+R 0x4014a4 Dock::~Dock   [now: Dock::~Dock(struct Dock* this)]
+R 0x4014d0 Dock::~Dock [deleting]   [now: Dock::~Dock(struct Dock* this)]
+R 0x401500 Dock::vfunc2   [now: Dock::attach(struct Dock* this, void*)]
+R 0x401648 Square::~Square   [now: Square::~Square(struct Square* this)]
+R 0x401674 Square::~Square [deleting]   [now: Square::~Square(struct Square* this)]
+R 0x4016a4 Square::vfunc2   [now: Square::area(struct Square* this)]
+R 0x4016c4 Shape::~Shape   [now: Shape::~Shape(struct Shape* this)]
+R 0x4016f0 Shape::~Shape [deleting]   [now: Shape::~Shape(struct Shape* this)]
+R 0x401720 Shape::vfunc2   [now: Shape::area(struct Shape* this)]
+R 0x4017b8 Circle::~Circle   [now: Circle::~Circle(struct Circle* this)]
+R 0x4017e4 Circle::~Circle [deleting]   [now: Circle::~Circle(struct Circle* this)]
+R 0x401814 Circle::vfunc2   [now: Circle::area(struct Circle* this)]
 D 0x404020 vtable_for_Owner   [now: _vtable_for_Owner]
 D 0x404060 vtable_for_Child   [now: _vtable_for_Child]
 D 0x404088 typeinfo_for_Child   [now: _typeinfo_for_Child]
@@ -105,9 +125,13 @@ D 0x404160 typeinfo_for_Block
 D 0x404170 vtable_for_Block   [now: _vtable_for_Block]
 D 0x404198 vtable_for_Station   [now: _vtable_for_Station]
 D 0x4041c0 typeinfo_for_Station
-D 0x4041d0 vtable_for_Square   [now: _vtable_for_Square]
-D 0x4041f8 typeinfo_for_Square
-D 0x404210 typeinfo_for_Shape
-D 0x404220 vtable_for_Shape   [now: _vtable_for_Shape]
-D 0x404248 vtable_for_Circle   [now: _vtable_for_Circle]
-D 0x404270 typeinfo_for_Circle
+D 0x4041d0 vtable_for_Harbor   [now: _vtable_for_Harbor]
+D 0x404200 typeinfo_for_Harbor
+D 0x404218 typeinfo_for_Dock
+D 0x404228 vtable_for_Dock   [now: _vtable_for_Dock]
+D 0x404258 vtable_for_Square   [now: _vtable_for_Square]
+D 0x404280 typeinfo_for_Square
+D 0x404298 typeinfo_for_Shape
+D 0x4042a8 vtable_for_Shape   [now: _vtable_for_Shape]
+D 0x4042d0 vtable_for_Circle   [now: _vtable_for_Circle]
+D 0x4042f8 typeinfo_for_Circle

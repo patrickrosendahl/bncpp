@@ -63,3 +63,7 @@ struct FnImpl<add_obj(int32_t)::$_0>  (0xc bytes, from members)  base FnBase @ 0
 struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from members)  base FnBase @ 0x0
      0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
+
+catch clauses 1
+catch clauses: a class of the scan 1
+handlers: no begin_catch variable 1

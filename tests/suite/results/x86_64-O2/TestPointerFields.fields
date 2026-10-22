@@ -1,21 +1,24 @@
-classes sized 6
+2c virtual call sites 2
+2c vtable slots read 4
+classes sized 8
 ctor already typed 2
 ctors/dtors 2
-fields 14
+fields 16
 fields named (override) 0
-functions scanned 11
-params with direct callers 0
+functions scanned 13
+params from callers: typed 2
+params with direct callers 2
 pointer fields kept 0
-pointer fields typed 7
+pointer fields typed 8
 pointer fields: contradiction 1
-ptr store functions scanned 12
-ptr stores 16
+ptr store functions scanned 16
+ptr stores 18
 returns used as objects 2
 returns: typed 2
 rounds 2
 stable 1
-structs 10
-structs with a base 3
+structs 12
+structs with a base 4
 
 struct Child  (0x18 bytes, from new)
      0x0 vptr                     struct Child::VTable*  [vptr]
@@ -51,6 +54,13 @@ struct Station  (0x18 bytes, from new)
      0x8 field_8                  struct Engine*  [pointer]
     0x10 field_10                 int64_t  [access]
   pointer 0x8 typed: Engine  (Engine ret)
+struct Harbor  (0x18 bytes, from new)  base Dock @ 0x0
+     0x0 vptr                     struct Harbor::VTable*  [vptr]
+    0x10 field_10                 int64_t  [access]
+struct Dock  (0x10 bytes, from new)
+     0x0 vptr                     struct Dock::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+  pointer 0x8 typed: Engine  (Engine param)
 struct Square  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
@@ -60,5 +70,7 @@ struct Circle  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
 
+apply param 0x400be0 Harbor::vfunc2 arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
+apply param 0x400c40 Dock::vfunc2 arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
 apply ret   0x4008f0 __Z15make_engine_rawv: Engine  (Engine vptr; 0 returns unresolved)   [now: struct Engine::VTable**]
 apply ret   0x400930 __Z12engine_againv: Engine  (Engine callee; 0 returns unresolved)   [now: struct Engine::VTable**]

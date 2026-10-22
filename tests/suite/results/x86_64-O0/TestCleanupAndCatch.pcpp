@@ -1,6 +1,6 @@
 // cleanup_and_catch(int32_t) @ 0x4005f0
 {
-    // exception table (LSDA 0x4007c0): 5 of 8 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400878): 5 of 8 call sites have a landing pad; #n = the selector value
     //   0x40060b..0x40061b -> 0x400645 sub_400645: catch (std::runtime_error) #1, cleanup, cleanup
     //   0x400620..0x400625 -> 0x400653 sub_400653: catch (std::runtime_error) #1, cleanup, cleanup
     //   0x400691..0x40069f (in sub_400668) -> 0x4006b6 sub_4006b6: cleanup
@@ -17,12 +17,13 @@
         Guard::Guard(&var_20, "inner");
         int32_t var_c = may_throw(arg1);
     }
+    // unwind: Guard::~Guard(&var_20);
     catch (std::runtime_error& e)
     {
-        *(uint64_t*)((char*)arg1 - 0x30) = &e;
-        _printf("caught %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg1 - 0x30) + 0x10))());
-        *(uint32_t*)((char*)arg1 - 4) = 0xfffffffc;
-        *(uint32_t*)((char*)arg1 - 0x28) = 1;
+        var_38 = &e;
+        _printf("caught %s\n", (*(uint64_t*)(*var_38 + 0x10))());
+        var_c = 0xfffffffc;
+        var_30 = 1;
         /* tailcall */
         return j_sub_4006db(arg1);
     }
@@ -132,5 +133,72 @@
     ___cxa_begin_catch(arg1);
     std::terminate();
     /* no return */
+}
+
+// cleanup_before_dispatch(int32_t) @ 0x400720
+{
+    // exception table (LSDA 0x4008b4): 2 of 3 call sites have a landing pad; #n = the selector value
+    //   0x40072b..0x40073b -> 0x400769 sub_400769: catch (int32_t) #1
+    //   0x40073d..0x400753 -> 0x400777 sub_400777: catch (int32_t) #1, cleanup, cleanup
+
+    struct Guard var_18;
+    try
+    {
+        Guard::Guard(&var_18, "inner");
+        log_line("in");
+        int32_t rax = may_throw(arg1);
+    }
+    // unwind: Guard::~Guard(&var_18);
+    catch (int32_t e)
+    {
+        var_28 = e;
+        var_c = var_28;
+        return (uint64_t)var_c;
+    }
+    Guard::~Guard(&var_18);
+    return (uint64_t)rax;
+}
+
+// sub_400769 @ 0x400769
+{
+    // landing pad of cleanup_before_dispatch(int32_t) @ 0x400720
+    //   from 0x40072b..0x40073b: catch (int32_t) #1
+
+    *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x1c) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
+        /* no return */
+    }
+
+    *(uint32_t*)((char*)arg5 - 0x20) =
+        *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
+    *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x20);
+    ___cxa_end_catch();
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
+}
+
+// sub_400777 @ 0x400777
+{
+    // landing pad of cleanup_before_dispatch(int32_t) @ 0x400720
+    //   from 0x40073d..0x400753: catch (int32_t) #1, cleanup, cleanup
+
+    *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
+    Guard::~Guard((char*)arg5 - 0x10);
+
+    if (*(uint32_t*)((char*)arg5 - 0x1c) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
+        /* no return */
+    }
+
+    *(uint32_t*)((char*)arg5 - 0x20) =
+        *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
+    *(uint32_t*)((char*)arg5 - 4) = *(uint32_t*)((char*)arg5 - 0x20);
+    ___cxa_end_catch();
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
 }
 

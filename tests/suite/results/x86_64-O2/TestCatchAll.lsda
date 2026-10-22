@@ -1,4 +1,4 @@
-catch_all(int32_t)  lsda base+0x708  lpstart +0x0  6 call sites
+catch_all(int32_t)  lsda base+0x724  lpstart +0x0  6 call sites
   +0x6   .. +0xb   lp +0x12  catch(...)
   +0xb   .. +0x1a  unwind
   +0x1a  .. +0x26  lp +0x32  cleanup
@@ -6,6 +6,9 @@ catch_all(int32_t)  lsda base+0x708  lpstart +0x0  6 call sites
   +0x35  .. +0x3a  lp +0x42  catch(...)
   +0x3a  .. +0x4a  unwind
 
-catch_type_then_all(int32_t)  lsda base+0x72c  lpstart +0x0  2 call sites
-  +0x6   .. +0xb   lp +0x12  catch(typeinfo_for_int32_t), catch(...)
-  +0xb   .. +0x39  unwind
+catch_type_then_all(int32_t)  lsda base+0x748  lpstart +0x0  2 call sites
+  +0x7   .. +0xc   lp +0x11  catch(typeinfo_for_int32_t), catch(...)
+  +0xc   .. +0x34  unwind
+
+no_throw_boundary(int32_t)  lsda base+0x764  lpstart +0x0  1 call sites
+  +0x4   .. +0x9   lp +0xd   catch(...)

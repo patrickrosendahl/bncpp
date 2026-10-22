@@ -1,22 +1,24 @@
-classes sized 8
-ctor already typed 18
-ctors forwarding 8
-ctors/dtors 18
-fields 14
+2c virtual call sites 2
+2c vtable slots read 4
+classes sized 10
+ctor already typed 22
+ctors forwarding 10
+ctors/dtors 22
+fields 16
 fields named (override) 0
-functions scanned 19
-params from callers: typed 3
-params with direct callers 7
+functions scanned 23
+params from callers: typed 5
+params with direct callers 9
 pointer fields kept 0
-pointer fields typed 7
+pointer fields typed 8
 pointer fields: contradiction 1
-ptr store functions scanned 20
-ptr stores 10
+ptr store functions scanned 26
+ptr stores 12
 returns used as objects 2
 rounds 2
 stable 1
-structs 10
-structs with a base 3
+structs 12
+structs with a base 4
 
 struct Child  (0x18 bytes, from new)
      0x0 vptr                     struct Child::VTable*  [vptr]
@@ -52,6 +54,13 @@ struct Station  (0x18 bytes, from new)
      0x8 field_8                  struct Engine*  [pointer]
     0x10 field_10                 int64_t  [access]
   pointer 0x8 typed: Engine  (Engine ret)
+struct Harbor  (0x18 bytes, from new)  base Dock @ 0x0
+     0x0 vptr                     struct Harbor::VTable*  [vptr]
+    0x10 field_10                 int64_t  [access]
+struct Dock  (0x10 bytes, from new)
+     0x0 vptr                     struct Dock::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+  pointer 0x8 typed: Engine  (Engine param)
 struct Square  (0x10 bytes, from new)  base Shape @ 0x0
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
@@ -62,5 +71,7 @@ struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
      0x8 field_8                  int64_t  [access]
 
 apply param 0x400930 __ZN9FastBlockC1EPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
-apply param 0x400e90 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
-apply param 0x400ee0 __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400f50 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400fa0 __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x4012a0 Harbor::vfunc2 arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
+apply param 0x401390 Dock::vfunc2 arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]

@@ -1,0 +1,131 @@
+// catch_all(int32_t) @ 0x4005f8
+{
+    // exception table (LSDA 0x40075c): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400604..0x400608 -> 0x400614 sub_400614: catch (...) #1
+    //   0x400618..0x400624 (in sub_400614) -> 0x400630 sub_400630: cleanup
+    //   0x400634..0x400638 (in sub_400630) -> 0x400640 sub_400640: catch (...) #1
+
+    try
+    {
+        may_throw(arg1);
+    }
+    catch (...)
+    {
+        log_line("something");
+        /* tailcall */
+        return sub_400608();
+    }
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400608(entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400608 @ 0x400608
+{
+    return;
+}
+
+// sub_400614 @ 0x400614
+{
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x400604..0x400608: catch (...) #1
+
+    ___cxa_begin_catch(arg1);
+    log_line("something");
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400608();
+}
+
+// sub_400630 @ 0x400630
+{
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x400618..0x400624 (in sub_400614): cleanup
+
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400640 @ 0x400640
+{
+    // landing pad of catch_all(int32_t) @ 0x4005f8
+    //   from 0x400634..0x400638 (in sub_400630): catch (...) #1
+
+    _5b7c27374e02b3bbbbb81cd(arg1);
+    /* no return */
+}
+
+// _5b7c27374e02b3bbbbb81cd @ 0x400644
+{
+    ___cxa_begin_catch(arg1);
+    f49857155208d1c7();
+    /* no return */
+}
+
+// catch_type_then_all(int32_t) @ 0x400654
+{
+    // exception table (LSDA 0x400780): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400660..0x400664 -> 0x400670 sub_400670: catch (int32_t) #2, catch (...) #1
+
+    try
+    {
+        may_throw(arg1);
+    }
+    catch (int32_t e)
+    {
+        e;
+        /* tailcall */
+        return sub_400664();
+    }
+    catch (...)
+    {
+        /* tailcall */
+        return sub_400664();
+    }
+    int64_t entry_x19;
+    int64_t entry_x20;
+    int64_t entry_fp;
+    /* tailcall */
+    return sub_400664(entry_x20, entry_x19, entry_fp);
+}
+
+// sub_400664 @ 0x400664
+{
+    return;
+}
+
+// sub_400670 @ 0x400670
+{
+    // landing pad of catch_type_then_all(int32_t) @ 0x400654
+    //   from 0x400660..0x400664: catch (int32_t) #2, catch (...) #1
+
+    void* x0 = ___cxa_begin_catch(arg1);
+
+    if (arg2 == 2)
+        *(uint32_t*)x0;
+
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400664();
+}
+
+// no_throw_boundary(int32_t) @ 0x400698
+{
+    // exception table (LSDA 0x40079c): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x4006a0..0x4006a4 -> 0x4006b0 sub_4006b0: catch (...) #1
+
+    return (uint64_t)(may_throw(arg1) + 1);
+}
+
+// sub_4006b0 @ 0x4006b0
+{
+    // landing pad of no_throw_boundary(int32_t) @ 0x400698
+    //   from 0x4006a0..0x4006a4: catch (...) #1
+
+    _5b7c27374e02b3bbbbb81cd(arg1);
+    /* no return */
+}
+

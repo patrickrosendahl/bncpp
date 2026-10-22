@@ -1,3 +1,4 @@
+2c vtable slots read 4
 classes sized 8
 ctors/dtors 0
 fields 10
@@ -63,3 +64,7 @@ struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from new)  base Fn
      0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
      0xc field_c                  int32_t  [access]
+
+catch clauses 1
+catch clauses: a class of the scan 1
+handlers: no begin_catch variable 1

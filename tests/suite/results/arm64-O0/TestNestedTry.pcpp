@@ -14,19 +14,19 @@
     }
     catch (int32_t e)
     {
-        uint64_t arg_0;
-        arg_0 = (uint64_t)e;
+        uint64_t var_40;
+        var_40 = (uint64_t)e;
         _printf("inner int %d\n");
-        *(uint32_t*)((char*)arg3 - 4) = may_throw(e + 0xa);
+        var_14 = may_throw(e + 0xa);
         /* tailcall */
         return sub_400714(arg3);
     }
     catch (std::runtime_error& e)
     {
-        uint64_t arg_0;
-        arg_0 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
+        uint64_t var_40;
+        var_40 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("outer %s\n");
-        *(uint32_t*)((char*)arg3 - 4) = 0xfffffffb;
+        var_14 = 0xfffffffb;
         /* tailcall */
         return sub_400714(arg3);
     }
@@ -143,7 +143,7 @@
         }
         catch (std::runtime_error& e)
         {
-            *(uint32_t*)((char*)arg3 - 8) -= 1;
+            var_18 -= 1;
         }
     }
     return (uint64_t)var_18;

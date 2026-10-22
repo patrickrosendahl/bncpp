@@ -11,8 +11,8 @@
     }
     catch (std::exception& e)
     {
-        *(uint64_t*)((char*)arg5 - 0x20) = &e;
-        _printf("rethrowing %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+        var_28 = &e;
+        _printf("rethrowing %s\n", (*(uint64_t*)(*var_28 + 0x10))());
         throw;
     }
 }
@@ -79,14 +79,14 @@
     }
     catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg5 - 0x18) = e;
-        *(uint8_t*)((char*)arg5 - 0x49) = 1;
-        *(uint64_t*)((char*)arg5 - 0x58) = ___cxa_allocate_exception(0x10);
-        std::to_string((char*)arg5 - 0x48, *(uint32_t*)((char*)arg5 - 0x18));
-        std::operator+[abi:nqe210106]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
-        std::runtime_error::runtime_error(*(uint64_t*)((char*)arg5 - 0x58), (char*)arg5 - 0x30);
-        void* thrown_exception = *(uint64_t*)((char*)arg5 - 0x58);
-        *(uint8_t*)((char*)arg5 - 0x49) = 0;
+        var_20 = e;
+        var_51 = 1;
+        var_60 = ___cxa_allocate_exception(0x10);
+        std::to_string(&var_50, var_20);
+        std::operator+[abi:nqe210106]<char>(&var_38, "int ", &var_50);
+        std::runtime_error::runtime_error(var_60, &var_38);
+        void* thrown_exception = var_60;
+        var_51 = 0;
         ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
             std::runtime_error::~runtime_error);
         /* no return */

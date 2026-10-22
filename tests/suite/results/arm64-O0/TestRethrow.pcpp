@@ -11,7 +11,7 @@
     }
     catch (std::exception& e)
     {
-        int64_t arg_0 =
+        int64_t var_40 =
             (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("rethrowing %s\n");
         throw;
@@ -81,17 +81,17 @@
     }
     catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg3 - 0x18) = e;
-        char arg_17 = 1;
+        var_28 = e;
+        char var_59 = 1;
         struct std::runtime_error* thrown_exception;
         int32_t x1;
         thrown_exception = ___cxa_allocate_exception(0x10);
-        std::basic_string arg_18;
-        std::operator+[abi:nqe210106]<char>("int ", &arg_18,
-            std::to_string((uint64_t)*(uint32_t*)((char*)arg3 - 0x18), x1));
-        std::string arg_30;
-        std::runtime_error::runtime_error(thrown_exception, &arg_30);
-        arg_17 = 0;
+        std::basic_string var_58;
+        std::operator+[abi:nqe210106]<char>("int ", &var_58,
+            std::to_string((uint64_t)var_28, x1));
+        std::string var_40;
+        std::runtime_error::runtime_error(thrown_exception, &var_40);
+        var_59 = 0;
         ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
             std::runtime_error::~runtime_error);
         /* no return */

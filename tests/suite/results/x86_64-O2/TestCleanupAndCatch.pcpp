@@ -1,9 +1,9 @@
 // cleanup_and_catch(int32_t) @ 0x4005f0
 {
-    // exception table (LSDA 0x400730): 3 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4007cc): 3 of 6 call sites have a landing pad; #n = the selector value
     //   0x40060d..0x40061d -> 0x400654 sub_400654: catch (std::runtime_error) #1, cleanup, cleanup
     //   0x40061d..0x400624 -> 0x400643 sub_400643: catch (std::runtime_error) #1, cleanup, cleanup
-    //   0x400687..0x40068c (in sub_400654) -> 0x40068e sub_40068e: cleanup
+    //   0x400687..0x40068c (in sub_40065a) -> 0x40068e sub_40068e: cleanup
 
     int64_t rbp;
     int64_t var_8 = rbp;
@@ -15,11 +15,13 @@
         Guard::Guard(&var_20, "inner");
         int32_t rax = may_throw(arg1);
     }
+    // unwind: Guard::~Guard(&var_20);
     catch (std::runtime_error& e)
     {
+        void* rbp;
         _printf("caught %s\n", (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         /* tailcall */
-        return sub_40062f(0xfffffffc, arg5);
+        return sub_40062f(0xfffffffc, arg2);
     }
     Guard::~Guard(&var_20);
     int64_t entry_rbx;
@@ -40,20 +42,8 @@
     //   from 0x40061d..0x400624: catch (std::runtime_error) #1, cleanup, cleanup
 
     Guard::~Guard((char*)arg5 - 0x18);
-
-    if (arg3 != 1)
-    {
-        Guard::~Guard((char*)arg5 - 0x20);
-        void* const var_8 = &data_4006a2;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
-    }
-
-    void* rax = ___cxa_begin_catch(arg4);
-    _printf("caught %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
-    ___cxa_end_catch();
     /* tailcall */
-    return sub_40062f(0xfffffffc, arg5);
+    return sub_40065a(arg4, arg5, arg3);
 }
 
 // sub_400654 @ 0x400654
@@ -61,29 +51,104 @@
     // landing pad of cleanup_and_catch(int32_t) @ 0x4005f0
     //   from 0x40060d..0x40061d: catch (std::runtime_error) #1, cleanup, cleanup
 
+    void* rbp;
+    /* tailcall */
+    return sub_40065a(arg4, rbp, arg3);
+}
+
+// sub_40065a @ 0x40065a
+{
     if (arg3 != 1)
     {
-        Guard::~Guard((char*)arg5 - 0x20);
-        void* const var_8 = &data_4006a2;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
+        Guard::~Guard((char*)arg2 - 0x20);
+        __Unwind_Resume(arg1);
+        /* no return */
     }
 
-    void* rax = ___cxa_begin_catch(arg4);
+    void* rax = ___cxa_begin_catch(arg1);
     _printf("caught %s\n", (*(uint64_t*)(*(uint64_t*)rax + 0x10))(rax));
     ___cxa_end_catch();
     /* tailcall */
-    return sub_40062f(0xfffffffc, arg5);
+    return sub_40062f(0xfffffffc, arg2);
 }
 
 // sub_40068e @ 0x40068e
 {
     // landing pad of cleanup_and_catch(int32_t) @ 0x4005f0
-    //   from 0x400687..0x40068c (in sub_400654): cleanup
+    //   from 0x400687..0x40068c (in sub_40065a): cleanup
 
     Guard::~Guard((char*)arg2 - 0x20);
-    void* const var_8 = &data_4006a2;
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// cleanup_before_dispatch(int32_t) @ 0x4006b0
+{
+    // exception table (LSDA 0x4007f8): 2 of 3 call sites have a landing pad; #n = the selector value
+    //   0x4006bd..0x4006cd -> 0x4006f6 sub_4006f6: catch (int32_t) #1, cleanup, cleanup
+    //   0x4006cd..0x4006e0 -> 0x4006fe sub_4006fe: catch (int32_t) #1, cleanup, cleanup
+
+    struct Guard var_20;
+    try
+    {
+        Guard::Guard(&var_20, "inner");
+        log_line("in");
+        int32_t rax = may_throw(arg1);
+    }
+    // unwind: Guard::~Guard(&var_20);
+    catch (int32_t e)
+    {
+        /* tailcall */
+        return sub_4006eb(e);
+    }
+    Guard::~Guard(&var_20);
+    int64_t entry_rbx;
+    int64_t entry_rbp;
+    int64_t entry_r14;
     /* tailcall */
-    return __Unwind_Resume(arg1);
+    return sub_4006eb(rax, entry_rbx, entry_r14, entry_rbp);
+}
+
+// sub_4006eb @ 0x4006eb
+{
+    return (uint64_t)arg1;
+}
+
+// sub_4006f6 @ 0x4006f6
+{
+    // landing pad of cleanup_before_dispatch(int32_t) @ 0x4006b0
+    //   from 0x4006bd..0x4006cd: catch (int32_t) #1, cleanup, cleanup
+
+    if (arg3 != 1)
+    {
+        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+        /* tailcall */
+        return __Unwind_Resume(arg4);
+    }
+
+    uint64_t rbx_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006eb(rbx_1);
+}
+
+// sub_4006fe @ 0x4006fe
+{
+    // landing pad of cleanup_before_dispatch(int32_t) @ 0x4006b0
+    //   from 0x4006cd..0x4006e0: catch (int32_t) #1, cleanup, cleanup
+
+    Guard::~Guard((char*)arg5 - 0x18);
+
+    if (arg3 != 1)
+    {
+        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
+        /* tailcall */
+        return __Unwind_Resume(arg4);
+    }
+
+    uint64_t rbx_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4006eb(rbx_1);
 }
 

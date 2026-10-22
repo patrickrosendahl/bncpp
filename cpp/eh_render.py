@@ -154,8 +154,9 @@ class _Holder:
     """what holds a value the personality passed in (the selector, the exception pointer): variables, and memory
     slots it was stored to (by address expression text)"""
 
-    def __init__(self, vars_):
+    def __init__(self, vars_, regs=()):
         self.vars, self.mem = set(vars_), set()
+        self.regs = set(regs)  # registers holding it at the function's entry (bncpp-65: followed tail calls)
 
     def holds(self, e):
         e = _strip(e)
@@ -194,11 +195,12 @@ class _Holder:
 
 
 class Handler:
-    """a clause's handler code: stmts (the live statements) and cont, the address where it goes on in the owner's
-    own code (None: it returns, tail-calls or does not return)"""
+    """a clause's handler code: stmts (the live statements), cont, the address where it goes on in the owner's
+    own code (None: it returns, tail-calls or does not return), and before, how many of stmts run before the pad
+    tests the selector (destructors of the try block's locals: the unwind cleanup, the same for every clause)"""
 
-    def __init__(self, stmts, cont):
-        self.stmts, self.cont = stmts, cont
+    def __init__(self, stmts, cont, before=0):
+        self.stmts, self.cont, self.before = stmts, cont, before
 
 
 def specialize(pad_func, n, clauses_on_pad, owner=None):
@@ -208,21 +210,23 @@ def specialize(pad_func, n, clauses_on_pad, owner=None):
     there (the rest of a loop around the try) into the pad function -- that is the code after the try. A tail
     call into code that still dispatches or catches (a cleanup pad jumping to the shared dispatch, a catch body
     BN split off) is followed (bncpp-64)."""
-    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG)), 0)
+    reg = SELECTOR_REG.get(pad_func.arch.name)
+    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG), [reg] if reg else ()), 0)
     if r is None:
         return None
-    stmts, cont, tests = r
+    stmts, cont, tests, before = r
     if not tests and clauses_on_pad > 1:
         return None
-    return Handler(stmts, cont)
+    return Handler(stmts, cont, before or 0)
 
 
 def _specialize(func, n, owner, sel, depth):
-    """(live statements, continuation | None, selector tests resolved) of func with the selector known to sel"""
+    """(live statements, continuation | None, selector tests resolved, statements before the first test | None) of
+    func with the selector known to sel"""
     hlil = func.hlil
     if hlil is None or hlil.root is None:
         return None
-    out, cont, tests = [], [], [0]
+    out, cont, tests, before = [], [], [0], [None]
 
     def visit(stmts):
         """append the live statements; True if the path ended (return, tail call, no return, the owner's code)"""
@@ -236,12 +240,16 @@ def _specialize(func, n, owner, sel, depth):
                 t = sel.test(s.condition)
                 if t is not None:
                     tests[0] += 1
+                    if before[0] is None:
+                        before[0] = len(out)
                     if visit(body(s.true if t(n) else s.false)):
                         return True
                     continue
-            if s.operation == Op.HLIL_TAILCALL and depth < 3:
+            if s.operation == Op.HLIL_TAILCALL and depth < 4:
                 f = _follow(func, s, n, owner, sel, depth)
                 if f is not None:
+                    if before[0] is None and f[3] is not None:
+                        before[0] = len(out) + f[3]
                     out.extend(f[0])
                     cont.extend([f[1]] if f[1] is not None else [])
                     tests[0] += f[2]
@@ -253,7 +261,7 @@ def _specialize(func, n, owner, sel, depth):
         return False
 
     visit(body(hlil.root))
-    return out, (cont[0] if cont else None), tests[0]
+    return out, (cont[0] if cont else None), tests[0], before[0]
 
 
 def _follow(func, call, n, owner, sel, depth):
@@ -266,7 +274,8 @@ def _follow(func, call, n, owner, sel, depth):
     if target is None or target.start == func.start or (owner is not None and target.start == owner.start):
         return None
     params = list(target.parameter_vars)
-    seeded = _Holder(param_vars(target, SELECTOR_REG))
+    regs = _parked(func, sel.regs)
+    seeded = _Holder(param_vars(target, SELECTOR_REG) | _reg_vars(target, regs), regs)
     rename = {}
     for i, arg in enumerate(call.params):
         arg = _strip(arg)
@@ -282,6 +291,54 @@ def _follow(func, call, n, owner, sel, depth):
     if r[2] or any(callee(i) in (_BEGIN, _END) for st in r[0] for i in walk(st)):
         return r
     return None
+
+
+def _full(arch, name):
+    try:
+        return arch.regs[name].full_width_reg
+    except (KeyError, AttributeError):
+        return name
+
+
+def _parked(func, regs):
+    """the registers holding the selector where func jumps on, if it held it in regs at func's entry: a pad parks
+    it in a callee-saved register before a tail call (SynthV: `mov r14, rdx; mov r12, rax`, then the cleanup chain;
+    BN's HLIL of the stub drops the copy). Copies add a register, other writes remove it -- in the order of the
+    LLIL, which is enough for the straight-line stubs this is for"""
+    from binaryninja import LowLevelILOperation as L
+    regs = set(regs)
+    try:
+        llil = func.llil
+    except Exception:
+        llil = None
+    if llil is None or not regs:
+        return regs
+    for il in llil.instructions:
+        if il.operation != L.LLIL_SET_REG:
+            continue
+        d = _full(func.arch, il.dest.name)
+        if il.src.operation == L.LLIL_REG and _full(func.arch, il.src.src.name) in regs:
+            regs.add(d)
+        else:
+            regs.discard(d)
+    return regs
+
+
+def _reg_vars(func, regs):
+    """func's variables in the registers regs that it reads before any write: its parameters there, and the
+    uninitialised locals BN makes of registers a jump hands on (`int64_t r14` in a function no one calls)"""
+    if not regs:
+        return set()
+    hlil = func.hlil
+    out = set()
+    for v in func.vars:
+        if v.source_type != VariableSourceType.RegisterVariableSourceType:
+            continue
+        if _full(func.arch, func.arch.get_reg_name(v.storage)) not in regs:
+            continue
+        if v in func.parameter_vars or (hlil is not None and not hlil.get_var_definitions(v)):
+            out.add(v)
+    return out
 
 
 # --- EH plumbing in a catch body (bncpp-7) ------------------------------------------------------------------------
@@ -316,7 +373,7 @@ def catch_var(type_name):
 class Plumbing:
     """what the catch body of one clause hides and renames:
       stmts     the statements that remain
-      rethrow   expr indexes of `___cxa_rethrow()` statements, printed as `throw;`
+      rethrow   (function start, expr index) of the `___cxa_rethrow()` statements, printed as `throw;`
       names     {variable name: text} -- a variable that holds the exception object's address prints as '&e',
                 one that holds a scalar exception's value as 'e'"""
 
@@ -342,7 +399,7 @@ def plumbing(pad_func, stmts, type_name):
         if name in (_BEGIN, _END):
             continue
         if name == _RETHROW:
-            rethrow.add(s.expr_index)
+            rethrow.add((s.function.source_function.start, s.expr_index))  # unique across functions
             out.append(s)
             after_rethrow = True
             continue
@@ -362,18 +419,133 @@ def plumbing(pad_func, stmts, type_name):
     return Plumbing(out, rethrow, names)
 
 
-def loop_for(stmts, region, cont):
-    """the index of the loop in stmts the region's try sits inside (bncpp-64), or None: every call of the block in
-    the region's range is in that loop, and so is the handler's continuation -- after the catch, the loop goes on"""
-    if cont is None:
-        return None
+def sub_bodies(s):
+    """the bodies of a compound statement a try can sit in: a loop's, an if's two branches (not an `else if`, which
+    Pseudo C prints on the else line), a switch's cases and default"""
+    if s.operation in LOOPS:
+        return [s.body]
+    if s.operation == Op.HLIL_IF:
+        out = [s.true]
+        if s.false is not None and s.false.operation not in (Op.HLIL_IF, Op.HLIL_NOP):
+            out.append(s.false)
+        return out
+    if s.operation == Op.HLIL_SWITCH:
+        out = [c.body for c in s.cases]
+        if s.default is not None and s.default.operation != Op.HLIL_NOP:
+            out.append(s.default)
+        return out
+    return []
+
+
+def compound_for(stmts, region, cont):
+    """(index of the statement in stmts, the body of it) the region's try sits inside, or None: every call of the
+    block in the region's range is in that body, and so is the handler's continuation -- after the catch, the body
+    goes on (bncpp-64: loops; bncpp-67: if / else branches, switch cases). A handler that does not go on in this
+    function (cont None) places the try in an if branch or a case as well, never in a loop"""
     inside = [a for s in stmts for a in call_addrs(s) if region.start <= a < region.end]
     if not inside:
         return None
     for k, s in enumerate(stmts):
-        if s.operation not in LOOPS:
-            continue
-        addrs = [i.address for i in walk(s)]
-        if min(addrs) <= cont <= max(addrs) and set(inside) <= set(call_addrs(s)):
-            return k
+        for b in sub_bodies(s):
+            if b is None or (cont is None and s.operation in LOOPS):
+                continue
+            # a loop goes on in its update / condition too (`i += 1` is the for's, not its body's)
+            addrs = [i.address for i in walk(s if s.operation in LOOPS else b)]
+            if (cont is None or min(addrs) <= cont <= max(addrs)) and set(inside) <= set(call_addrs(b)):
+                return k, b
     return None
+
+
+# --- the owner's stack slots in a catch body (bncpp-68) ---------------------------------------------------------
+
+FRAME_REG = {"x86_64": ("rbp",), "aarch64": ("x29", "fp")}
+
+
+def _frame_reg(arch):
+    names = set(arch.regs)
+    return next((r for r in FRAME_REG.get(arch.name, ()) if r in names), None)
+
+
+def frame_vars(pad_func, depth=3):
+    """{function start: names of its variables holding the owner's frame pointer}: the pad's parameter in the frame
+    register (the personality restores it), and the parameters it is passed into by the pad's tail calls (a -O0
+    pad hands it on to the split catch body: `return sub_400668(arg5)`); followed through functions that do not
+    use it (a stub pad jumping to its cleanup chain)"""
+    fp = {_frame_reg(pad_func.arch)} - {None}
+    out, seen, todo = {}, set(), [(pad_func, _reg_vars(pad_func, fp), 0)]
+    while todo:
+        f, vs, d = todo.pop()
+        if f.start in seen:
+            continue
+        seen.add(f.start)
+        if vs:
+            out[f.start] = {v.name for v in vs}
+        hlil = f.hlil
+        if d >= depth or hlil is None or hlil.root is None:
+            continue
+        for i in walk(hlil.root):
+            if i.operation != Op.HLIL_TAILCALL or i.dest.operation != Op.HLIL_CONST_PTR:
+                continue
+            g = f.view.get_function_at(i.dest.constant)
+            if g is None or g.start in seen:
+                continue
+            params = list(g.parameter_vars)
+            got = {params[n] for n, a in enumerate(i.params)
+                   if n < len(params) and _strip(a).operation == Op.HLIL_VAR and _strip(a).var in vs}
+            # a jump keeps the register: the frame pointer read uninitialised in a cleanup chain (bncpp-65)
+            got |= _reg_vars(g, fp)
+            todo.append((g, got, d + 1))
+    return out
+
+
+class Frame:
+    """the owner's stack at a call site, as offsets from its entry stack pointer: fp (the frame register) and sp
+    (the stack pointer the personality resumes the landing pad with), None where unknown; names {offset: the
+    owner's variable}"""
+
+    def __init__(self, fp, sp, names):
+        self.fp, self.sp, self.names = fp, sp, names
+
+
+def owner_frame(owner, addr):
+    """the owner's Frame at addr, or None where neither register holds a known stack offset there"""
+    from binaryninja import RegisterValueType
+
+    def offset(reg):
+        if reg is None:
+            return None
+        try:
+            v = owner.get_reg_value_at(addr, reg)
+        except Exception:
+            return None
+        return v.value if v.type == RegisterValueType.StackFrameOffset else None
+    fp, sp = offset(_frame_reg(owner.arch)), offset(owner.arch.stack_pointer)
+    if fp is None and sp is None:
+        return None
+    names = {}
+    for var in owner.stack_layout:
+        if var.source_type == VariableSourceType.StackVariableSourceType:
+            names.setdefault(var.storage, var.name)
+    return Frame(fp, sp, names)
+
+
+def slot_name(frame, off):
+    """the owner's name for its stack slot at offset off: its variable there, else BN's var_N for it"""
+    if off in frame.names:
+        return frame.names[off]
+    return "var_%x" % -off if off < 0 else None
+
+
+def pad_slots(pad_func, frame):
+    """{name of a pad's stack variable in its caller's frame (arg_N, past its entry stack pointer): the owner's
+    name for that slot} -- the pad runs on the owner's stack (an -O2 arm64 pad reaches the owner's locals
+    through sp)"""
+    if frame is None or frame.sp is None:
+        return {}
+    out = {}
+    for var in pad_func.stack_layout:
+        if var.source_type == VariableSourceType.StackVariableSourceType and var.storage >= 0:
+            n = slot_name(frame, frame.sp + var.storage)
+            if n is not None:
+                out[var.name] = n
+    return out

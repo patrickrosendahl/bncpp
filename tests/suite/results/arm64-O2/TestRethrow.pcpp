@@ -11,7 +11,7 @@
     }
     catch (std::exception& e)
     {
-        int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
+        int64_t var_30 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("rethrowing %s\n");
         throw;
     }
@@ -78,16 +78,16 @@
         int32_t x1;
         thrown_exception = ___cxa_allocate_exception(0x10);
         std::to_string(e, x1);
-        std::string arg_8;
+        std::string var_68;
         int64_t* x0_4;
         int128_t v0;
-        x0_4 = std::string::insert(&arg_8, 0, "int ");
+        x0_4 = std::string::insert(&var_68, 0, "int ");
         (uint64_t)v0 = *(uint64_t*)x0_4;
         *(uint64_t*)((char*)&v0 + 8) = x0_4[1];
-        int64_t arg_30 = x0_4[2];
-        int128_t arg_20 = v0;
+        int64_t var_40 = x0_4[2];
+        int128_t var_50 = v0;
         __builtin_memset(x0_4, 0, 0x18);
-        std::runtime_error::runtime_error(thrown_exception, &arg_20);
+        std::runtime_error::runtime_error(thrown_exception, &var_50);
         ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
             std::runtime_error::~runtime_error);
         /* no return */

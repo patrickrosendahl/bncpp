@@ -11,23 +11,23 @@
     {
         // the whole landing pad sub_400614: its dispatch on the selector was not found
         int32_t x8_2;
-        uint64_t arg_0;
+        uint64_t var_20;
 
         if (arg2 != 2)
         {
-            arg_0 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
+            var_20 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
             _printf("int: %d\n");
             x8_2 = -2;
         }
         else
         {
-            arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+            var_20 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
             _printf("runtime_error: %s\n");
             x8_2 = -1;
         }
-        *(uint32_t*)((char*)arg3 - 4) = x8_2;
+        var_14 = x8_2;
         ___cxa_end_catch();
-        *(uint32_t*)((char*)arg3 - 4);
+        var_14;
         /* tailcall */
         return sub_400608();
     }

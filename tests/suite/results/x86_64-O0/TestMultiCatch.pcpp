@@ -14,17 +14,17 @@
     }
     catch (std::runtime_error& e)
     {
-        *(uint64_t*)((char*)arg5 - 0x20) = &e;
-        _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
-        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        var_28 = &e;
+        _printf("runtime_error: %s\n", (*(uint64_t*)(*var_28 + 0x10))());
+        var_c = 0xffffffff;
         /* tailcall */
         return sub_4006cc(arg5);
     }
     catch (int32_t e)
     {
-        *(uint32_t*)((char*)arg5 - 0x18) = e;
-        _printf("int: %d\n", (uint64_t)*(uint32_t*)((char*)arg5 - 0x18));
-        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+        var_20 = e;
+        _printf("int: %d\n", (uint64_t)var_20);
+        var_c = 0xfffffffe;
         /* tailcall */
         return sub_4006cc(arg5);
     }
@@ -132,17 +132,17 @@
     }
     catch (std::invalid_argument& e)
     {
-        *(uint64_t*)((char*)arg5 - 0x28) = &e;
-        log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))());
-        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        var_30 = &e;
+        log_line((*(uint64_t*)(*var_30 + 0x10))());
+        var_c = 0xffffffff;
         /* tailcall */
         return sub_4007d8(arg5);
     }
     catch (std::exception& e)
     {
-        *(uint64_t*)((char*)arg5 - 0x20) = &e;
-        log_line((*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
-        *(uint32_t*)((char*)arg5 - 4) = 0xfffffffe;
+        var_28 = &e;
+        log_line((*(uint64_t*)(*var_28 + 0x10))());
+        var_c = 0xfffffffe;
         /* tailcall */
         return sub_4007d8(arg5);
     }

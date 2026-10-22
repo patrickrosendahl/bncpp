@@ -5,20 +5,13 @@
 
     if (arg1 > 2)
     {
-        struct std::runtime_error* thrown_exception = ___cxa_allocate_exception(0x10);
-        std::runtime_error::runtime_error(thrown_exception, "too big");
-        ___cxa_throw(thrown_exception, typeinfo_for_std::runtime_error,
-            std::runtime_error::~runtime_error);
-        /* no return */
+        throw std::runtime_error("too big");
     }
 
     if (arg1 >= 0)
         return (uint64_t)(arg1 << 1);
 
-    int32_t* thrown_exception_1 = ___cxa_allocate_exception(4);
-    *(uint32_t*)thrown_exception_1 = arg1;
-    ___cxa_throw(thrown_exception_1, typeinfo_for_int32_t, nullptr);
-    /* no return */
+    throw arg1;
 }
 
 // sub_40068a @ 0x40068a
@@ -103,9 +96,9 @@
     }
     catch (std::runtime_error& e)
     {
-        *(uint64_t*)((char*)arg5 - 0x20) = &e;
-        _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
-        *(uint32_t*)((char*)arg5 - 4) = 0xffffffff;
+        var_28 = &e;
+        _printf("runtime_error: %s\n", (*(uint64_t*)(*var_28 + 0x10))());
+        var_c = 0xffffffff;
         /* tailcall */
         return sub_400888(arg5);
     }

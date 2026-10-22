@@ -296,7 +296,7 @@
     }
     catch (Err& e)
     {
-        *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
+        var_18 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         /* tailcall */
         return sub_400ed8(arg3);
     }

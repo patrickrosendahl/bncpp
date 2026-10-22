@@ -1,3 +1,4 @@
+2c vtable slots read 5
 classes sized 8
 ctor typed 3
 ctors/dtors 3
@@ -63,3 +64,9 @@ struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from new)  base Fn
      0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
      0xc field_c                  int32_t  [access]
+
+catch clauses 1
+catch clauses: a class of the scan 1
+handlers with the object in a variable 1
+variables: typed 1
+apply catch sub_400d7d rax typed: Err  (from 0x400d7d #1)   [now: void*]

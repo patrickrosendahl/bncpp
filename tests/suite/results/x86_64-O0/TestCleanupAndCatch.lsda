@@ -1,4 +1,4 @@
-cleanup_and_catch(int32_t)  lsda base+0x7c0  lpstart +0x0  8 call sites
+cleanup_and_catch(int32_t)  lsda base+0x878  lpstart +0x0  8 call sites
   +0x0   .. +0x1b  unwind
   +0x1b  .. +0x2b  lp +0x55  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
   +0x30  .. +0x35  lp +0x63  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
@@ -7,3 +7,8 @@ cleanup_and_catch(int32_t)  lsda base+0x7c0  lpstart +0x0  8 call sites
   +0xbf  .. +0xc4  lp +0xdb  cleanup
   +0xd2  .. +0xd7  lp +0x10f catch(...)
   +0xd7  .. +0x119 unwind
+
+cleanup_before_dispatch(int32_t)  lsda base+0x8b4  lpstart +0x0  3 call sites
+  +0xb   .. +0x1b  lp +0x49  catch(typeinfo_for_int32_t)
+  +0x1d  .. +0x33  lp +0x57  catch(typeinfo_for_int32_t), cleanup, cleanup
+  +0x33  .. +0xa3  unwind
