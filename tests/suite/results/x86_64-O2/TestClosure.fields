@@ -10,6 +10,7 @@ pointer fields typed 0
 pointer fields: contradiction 0
 ptr store functions scanned 16
 ptr stores 10
+returns used as objects 0
 rounds 2
 stable 1
 structs 19

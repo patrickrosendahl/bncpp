@@ -1,18 +1,20 @@
-classes sized 5
+classes sized 6
 ctor already typed 2
 ctors/dtors 2
-fields 12
+fields 14
 fields named (override) 0
-functions scanned 9
+functions scanned 11
 params with direct callers 0
 pointer fields kept 0
-pointer fields typed 6
+pointer fields typed 7
 pointer fields: contradiction 1
-ptr store functions scanned 10
-ptr stores 15
+ptr store functions scanned 12
+ptr stores 16
+returns used as objects 2
+returns: typed 2
 rounds 2
 stable 1
-structs 9
+structs 10
 structs with a base 3
 
 struct Child  (0x18 bytes, from new)
@@ -44,6 +46,11 @@ struct FastBlock  (0x18 bytes, from new)  base Block @ 0x0
   pointer 0x8 typed: Engine  (Engine vptr)
 struct Block  (0x8 bytes, from vptr)
      0x0 vptr                     struct Block::VTable*  [vptr]
+struct Station  (0x18 bytes, from new)
+     0x0 vptr                     struct Station::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+    0x10 field_10                 int64_t  [access]
+  pointer 0x8 typed: Engine  (Engine ret)
 struct Square  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
@@ -52,3 +59,6 @@ struct Shape  (0x8 bytes, from vptr)
 struct Circle  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
+
+apply ret   0x4008f0 __Z15make_engine_rawv: Engine  (Engine vptr; 0 returns unresolved)   [now: struct Engine::VTable**]
+apply ret   0x400930 __Z12engine_againv: Engine  (Engine callee; 0 returns unresolved)   [now: struct Engine::VTable**]

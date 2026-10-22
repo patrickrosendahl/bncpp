@@ -1,20 +1,21 @@
-classes sized 5
-ctor already typed 14
-ctors forwarding 5
-ctors/dtors 14
-fields 12
+classes sized 6
+ctor already typed 16
+ctors forwarding 6
+ctors/dtors 16
+fields 14
 fields named (override) 0
-functions scanned 16
+functions scanned 19
 params from callers: typed 3
 params with direct callers 7
 pointer fields kept 0
-pointer fields typed 6
+pointer fields typed 7
 pointer fields: contradiction 0
-ptr store functions scanned 17
-ptr stores 9
+ptr store functions scanned 20
+ptr stores 10
+returns used as objects 2
 rounds 2
 stable 1
-structs 9
+structs 10
 structs with a base 3
 
 struct Child  (0x18 bytes, from members)
@@ -45,6 +46,11 @@ struct Block  (0x10 bytes, from members)
      0x0 vptr                     struct Block::VTable*  [vptr]
      0x8 field_8                  struct Engine*  [pointer]
   pointer 0x8 typed: Engine  (Engine param)
+struct Station  (0x18 bytes, from new)
+     0x0 vptr                     struct Station::VTable*  [vptr]
+     0x8 field_8                  struct Engine*  [pointer]
+    0x10 field_10                 int64_t  [access]
+  pointer 0x8 typed: Engine  (Engine ret)
 struct Square  (0x10 bytes, from new)  base Shape @ 0x0
      0x0 vptr                     struct Square::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
@@ -55,5 +61,5 @@ struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
      0x8 field_8                  int64_t  [access]
 
 apply param 0x400970 __ZN9FastBlockC1EPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
-apply param 0x400e70 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
-apply param 0x400ebc __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400f58 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
+apply param 0x400fa4 __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]

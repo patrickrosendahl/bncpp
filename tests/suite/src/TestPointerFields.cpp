@@ -3,7 +3,9 @@
 // their common base Shape), a field copied from another typed field (Owner::spare, the fixpoint), and unrelated
 // classes stored into one field (Slot::any: a contradiction, left alone). A constructor parameter stored into a
 // field (Block::eng, bncpp-28): the parameter's class from the arguments at its direct callers, through the derived
-// constructor's own parameter (void*: the demangled names would type it otherwise).
+// constructor's own parameter (void*: the demangled names would type it otherwise). A field stored from a function's
+// result (Station::eng, bncpp-28): the class from the callee's return statements, through a wrapper returning another
+// callee's result (void* returns: Itanium names carry no return type).
 #define TEST extern "C++" __attribute__((noinline, visibility("default")))
 
 struct Owner;
@@ -69,6 +71,16 @@ struct FastBlock : Block {
     long go() override { return boost * eng->tick(); }
 };
 
+TEST void *make_engine_raw();
+TEST void *engine_again();
+struct Station {
+    Engine *eng;
+    long load = 0;
+    Station() : eng(static_cast<Engine *>(engine_again())) {}
+    virtual ~Station() {}
+    virtual long go() { return load + eng->tick(); }
+};
+
 long Child::run() { return id + parent->engine->rate; }
 Owner::Owner() {
     engine = new Engine;
@@ -80,3 +92,6 @@ TEST void announce(void *p) { static void *last; last = p; }
 TEST Owner *make_owner() { return new Owner; }
 TEST Slot *make_slot() { return new Slot; }
 TEST Block *make_block() { return new FastBlock(new Engine); }
+TEST void *make_engine_raw() { return new Engine; }
+TEST void *engine_again() { return make_engine_raw(); }
+TEST Station *make_station() { return new Station; }

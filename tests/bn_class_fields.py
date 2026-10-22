@@ -22,6 +22,9 @@
 # bncpp-28: a parameter the stores come from ('this->field_40 = arg2') gets its class from the arguments at its
 # direct call sites (step 2c, cached as section "paramargs"; not for functions also in a vtable); APPLY types it too
 # (never over a user type), the review has 'param' lines.
+# bncpp-28: a function whose result the stores or call-site arguments use ('this->eng = make_engine()') gets its
+# return class from its own return statements (step 2d, cached as section "retdescs"; same rules); APPLY types it
+# 'X* f(...)', the review has 'ret' lines.
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
@@ -541,6 +544,65 @@ else:
         _cache_file.put("paramargs", _ARGS_VERSION, {"args": {"%#x:%d" % k: v for k, v in
                                                               sorted(_param_args.items())}})
 _count("params with direct callers", len(_param_args))
+
+
+# 2d. the return statements of the callees whose result is used as an object (bncpp-28): ['ret', callee] in the
+# stores and the call-site arguments; followed through callees returning another callee's result. Cached (section
+# "retdescs", valid with the two above).
+_RETS_VERSION = 1
+
+
+def _rets_in(d, out):
+    """the callees of the 'ret' descriptors in d"""
+    if d is None:
+        return out
+    if d[0] == "ret":
+        out.add(d[1])
+    elif d[0] == "load":
+        _rets_in(d[1], out)
+    elif d[0] in ("phi", "or"):
+        for x in d[1]:
+            _rets_in(x, out)
+    return out
+
+
+_rcache = _cache_file.get("retdescs", _RETS_VERSION) if _limit is None and not _nocache and _acache is not None \
+    else None
+if _rcache is not None:
+    _ret_descs = {int(k, 0): v for k, v in _rcache["rets"].items()}
+    _count("step 2d from cache")
+else:
+    _ret_descs = {}  # callee -> [descriptor of each returned value]
+    _todo = set()
+    for _a, _o, _dd, _sd in _ptr_stores:
+        _rets_in(_sd, _todo)
+    for _args in _param_args.values():
+        for _d in _args:
+            _rets_in(_d, _todo)
+    while _todo:
+        _fa = _todo.pop()
+        if _fa in _ret_descs:
+            continue
+        _f = bv.get_function_at(_fa)
+        _m = _f.mlil if _f is not None else None
+        if _m is None:
+            continue
+        _ssa, _memo, _out = _m.ssa_form, {}, []
+        for _mi in _ssa.instructions:
+            if _mi.operation == Op.MLIL_TAILCALL_SSA and _mi.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT):
+                _d = ["ret", _mi.dest.constant]  # 'return g()' as a jump: g's result is ours
+            elif _mi.operation == Op.MLIL_RET and _mi.src:
+                _v = _mi.src[0]
+                _d = _desc(_f, _ssa, _v.src, _memo) if _v.operation == Op.MLIL_VAR_SSA else None
+            else:
+                continue
+            _out.append(_d)
+            _todo |= _rets_in(_d, set()) - set(_ret_descs)
+        _ret_descs[_fa] = _out
+    _lap("2d returns")
+    if _limit is None and not _nocache:
+        _cache_file.put("retdescs", _RETS_VERSION, {"rets": {"%#x" % k: v for k, v in sorted(_ret_descs.items())}})
+_count("returns used as objects", len(_ret_descs))
 _new_class = {call: c for (call, _size), c in _fields.new_classes(_sites, _ctors, _types).items()}
 _by_label = {l: a for a, l in _labels.items()}
 
@@ -597,6 +659,9 @@ def _resolve(d, lays):
             return None
         if k == "ret":
             c = fc[0]
+            if c is None:
+                c = _ret_plan.get(d[1], (None,))[0]
+                return (c, "callee") if c is not None else None
         else:
             c = fc[1][d[2]] if d[2] < len(fc[1]) else None
             if c is None:
@@ -618,28 +683,37 @@ def _resolve(d, lays):
 
 _param_review = {}  # (function, index) -> (review line, outcome): over all rounds (an applied one is typed after)
 _param_plan = {}  # (function, index) -> (class or None, {class: [kind]}): the last _evidence pass's
+_ret_plan = {}  # function -> (class or None, {class: [kind]}): from its return statements, the same pass
 
 
 def _param_classes(lays):
     """_param_plan for the untyped parameters, from the arguments at their direct call sites (bncpp-28): one class,
     or their common base at offset 0; unrelated classes: a contradiction (None). Arguments that resolve to nothing
     are left out, as the stores are. A fixpoint over all of them at once (an argument can be the caller's own
-    parameter), so the result does not depend on where a chain is entered"""
+    parameter), so the result does not depend on where a chain is entered. _ret_plan the same way, from the
+    return statements (a parameter can come from a callee's result and a result from a parameter)"""
     _param_plan.clear()
-    for _i in range(10):
+    _ret_plan.clear()
+
+    def plan_of(items):
         new = {}
-        for key, args in _param_args.items():
+        for key, descs in items:
             ev = {}
-            for d in args:
+            for d in descs:
                 r = _resolve(d, lays) if d is not None else None
                 if r is not None:
                     ev.setdefault(r[0], []).append(r[1])
             if ev:
                 new[key] = (_fields.pointer_class(_types, sorted(ev)), ev)
-        if new == _param_plan:
+        return new
+    for _i in range(10):
+        new_p, new_r = plan_of(_param_args.items()), plan_of(_ret_descs.items())
+        if new_p == _param_plan and new_r == _ret_plan:
             return
         _param_plan.clear()
-        _param_plan.update(new)
+        _param_plan.update(new_p)
+        _ret_plan.clear()
+        _ret_plan.update(new_r)
     _count("params from callers: no fixpoint")
 
 
@@ -726,6 +800,23 @@ def _plan():
                       for k, v in sorted(ev.items())), unknown, ps[i].type), what)
         if what == "typed":
             params.append((f, i, lays[c].name))
+    # the return types from the return statements (bncpp-28): (f, None, label) in params
+    for fa in sorted(_ret_descs):
+        f = bv.get_function_at(fa)
+        if f is None or _class_of(f.return_type) is not None or f.return_type.width != bv.arch.address_size:
+            continue
+        c, ev = _ret_plan.get(fa, (None, {}))
+        if not ev:
+            continue
+        unknown = sum(1 for d in _ret_descs[fa] if d is None or _resolve(d, lays) is None)
+        what = "contradiction" if c is None else "no struct" if c not in lays or c not in existing \
+            else "kept (user)" if _protected(f) else "typed"
+        _param_review[("ret", fa)] = ("%s ret   %#x %s: %s  (%s; %d returns unresolved)   [now: %s]" % (
+            "apply" if what == "typed" else "keep ", fa, f.name, lays[c].name if c in lays else "-",
+            ", ".join("%s %s" % (lays[k].name if k in lays else "%#x" % k, "/".join(sorted(set(v))))
+                      for k, v in sorted(ev.items())), unknown, f.return_type), what)
+        if what == "typed":
+            params.append((f, None, lays[c].name))
     for a, lay in sorted(lays.items()):
         if a not in existing:  # no struct of ours (bn_class_types.py makes them)
             counts["structs: no type yet (run bn_class_types.py)"] = \
@@ -781,8 +872,12 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
             _old = _f.type
             _ps = list(_old.parameters)
             _typed_here.add(_f.start)
-            _ps[_i] = FunctionParameter(Type.pointer(bv.arch, _ref(_label)), _ps[_i].name)
-            _f.type = Type.function(_old.return_value, _ps, calling_convention=_f.calling_convention,
+            _ret = _old.return_value
+            if _i is None:  # the return type
+                _ret = Type.pointer(bv.arch, _ref(_label))
+            else:
+                _ps[_i] = FunctionParameter(Type.pointer(bv.arch, _ref(_label)), _ps[_i].name)
+            _f.type = Type.function(_ret, _ps, calling_convention=_f.calling_convention,
                                     variable_arguments=_old.has_variable_arguments)
     if _apply and (_defs or _params):
         bv.update_analysis_and_wait()
@@ -796,8 +891,8 @@ if _apply and _changed != 0:
         "structs changed %d" % _changed if _changed else "only one round"))
 for _k, _v in _final_counts.items():
     _count(_k, _v)
-for _line, _what in _param_review.values():
-    _count("params from callers: " + _what)
+for _key, (_line, _what) in _param_review.items():
+    _count(("returns: " if _key[0] == "ret" else "params from callers: ") + _what)
 
 
 def _why(d):
@@ -839,6 +934,20 @@ if not _apply:
             if _d is None or _resolve(_d, _lays) is None:
                 _r = _why(_d)
                 _why_args[_r] = _why_args.get(_r, 0) + 1
+    _why_rets, _why_rvals = {}, {}
+    for _fa, _descs in _ret_descs.items():
+        _fc = _func_classes(_fa)
+        _what = "no function" if _fc is None else "already a class" if _fc[0] is not None else \
+            "evidence" if _ret_plan.get(_fa, (None, {}))[1] else "no returns" if not _descs else "no evidence"
+        _why_rets[_what] = _why_rets.get(_what, 0) + 1
+        if _what in ("no evidence", "evidence"):
+            for _d in _descs:
+                if _d is None or _resolve(_d, _lays) is None:
+                    _r = _why(_d)
+                    _why_rvals[_r] = _why_rvals.get(_r, 0) + 1
+    print("why returns: " + ", ".join("%s %d" % kv for kv in sorted(_why_rets.items(), key=lambda kv: -kv[1])))
+    print("why returned values unresolved: " + ", ".join("%s %d" % kv for kv in sorted(_why_rvals.items(),
+                                                                                       key=lambda kv: -kv[1])))
     print("why params: " + ", ".join("%s %d" % kv for kv in sorted(_why_params.items(), key=lambda kv: -kv[1])))
     print("why args unresolved: " + ", ".join("%s %d" % kv for kv in sorted(_why_args.items(), key=lambda kv: -kv[1])))
 _review += sorted(_names_notes, key=lambda n: int(n.split()[3].rstrip(':'))) + _final_review + [line for line, _what in sorted(_param_review.values())]

@@ -1,28 +1,38 @@
-Owner::Owner(struct Owner* this)  lsda base+0x13a4  lpstart +0x0  5 call sites
+Owner::Owner(struct Owner* this)  lsda base+0x1584  lpstart +0x0  5 call sites
   +0x0   .. +0x3c  unwind
   +0x3c  .. +0x40  lp +0x88  cleanup
   +0x40  .. +0x60  unwind
   +0x60  .. +0x64  lp +0xa4  cleanup
   +0x64  .. +0xc8  unwind
 
-make_owner()  lsda base+0x13c0  lpstart +0x0  3 call sites
+make_owner()  lsda base+0x15a0  lpstart +0x0  3 call sites
   +0x0   .. +0x18  unwind
   +0x18  .. +0x1c  lp +0x30  cleanup
   +0x1c  .. +0x54  unwind
 
-make_block()  lsda base+0x13d0  lpstart +0x0  5 call sites
+make_block()  lsda base+0x15b0  lpstart +0x0  5 call sites
   +0x0   .. +0x18  unwind
   +0x18  .. +0x24  lp +0x54  cleanup
   +0x28  .. +0x30  lp +0x64  cleanup
   +0x34  .. +0x40  lp +0x54  cleanup
   +0x40  .. +0x94  unwind
 
-Slot::hold_engine(struct Slot* this)  lsda base+0x13e8  lpstart +0x0  3 call sites
+make_engine_raw()  lsda base+0x15c8  lpstart +0x0  3 call sites
+  +0x0   .. +0x18  unwind
+  +0x18  .. +0x1c  lp +0x30  cleanup
+  +0x1c  .. +0x54  unwind
+
+make_station()  lsda base+0x15d8  lpstart +0x0  3 call sites
+  +0x0   .. +0x18  unwind
+  +0x18  .. +0x1c  lp +0x30  cleanup
+  +0x1c  .. +0x54  unwind
+
+Slot::hold_engine(struct Slot* this)  lsda base+0x15e8  lpstart +0x0  3 call sites
   +0x0   .. +0x24  unwind
   +0x24  .. +0x28  lp +0x44  cleanup
   +0x28  .. +0x68  unwind
 
-Slot::hold_child(struct Slot* this, Owner*)  lsda base+0x13f8  lpstart +0x0  3 call sites
+Slot::hold_child(struct Slot* this, Owner*)  lsda base+0x15f8  lpstart +0x0  3 call sites
   +0x0   .. +0x2c  unwind
   +0x2c  .. +0x30  lp +0x4c  cleanup
   +0x30  .. +0x70  unwind

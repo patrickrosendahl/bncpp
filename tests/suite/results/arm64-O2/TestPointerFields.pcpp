@@ -43,7 +43,7 @@
 
 // make_owner() @ 0x400770
 {
-    // exception table (LSDA 0x400ac8): 1 of 3 call sites have a landing pad
+    // exception table (LSDA 0x400b8c): 1 of 3 call sites have a landing pad
     //   0x40079c..0x4007cc -> 0x400800 sub_400800: cleanup
 
     void*** result = operator new(0x28);
@@ -82,7 +82,7 @@
 
 // make_block() @ 0x40083c
 {
-    // exception table (LSDA 0x400adc): 1 of 3 call sites have a landing pad
+    // exception table (LSDA 0x400ba0): 1 of 3 call sites have a landing pad
     //   0x400854..0x40085c -> 0x4008a0 sub_4008a0: cleanup
 
     void*** result = operator new(0x18);
@@ -105,18 +105,54 @@
     /* no return */
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x4008b4
+// make_engine_raw() @ 0x4008b4
+{
+    void*** result = operator new(0x10);
+    *(uint64_t*)result = &data_4040b8;
+    result[1] = 0xbb80;
+    return result;
+}
+
+// engine_again() @ 0x4008f4
+{
+    /* tailcall */
+    return make_engine_raw();
+}
+
+// make_station() @ 0x4008f8
+{
+    // exception table (LSDA 0x400bb0): 1 of 3 call sites have a landing pad
+    //   0x400920..0x400924 -> 0x400938 sub_400938: cleanup
+
+    void*** result = operator new(0x18);
+    *(uint64_t*)result = &data_404180;
+    result[1] = engine_again();
+    result[2] = 0;
+    return result;
+}
+
+// sub_400938 @ 0x400938
+{
+    // landing pad of make_station() @ 0x4008f8
+    //   from 0x400920..0x400924: cleanup
+
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Slot::~Slot(struct Slot* this) @ 0x40094c
 {
     return;
 }
 
-// Slot::~Slot(struct Slot* this) @ 0x4008b8
+// Slot::~Slot(struct Slot* this) @ 0x400950
 {
     /* tailcall */
     return operator delete(this);
 }
 
-// Owner::step(struct Owner* this) @ 0x4008bc
+// Owner::step(struct Owner* this) @ 0x400954
 {
     int64_t x0_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))();
     void* x0_3 = (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
@@ -128,12 +164,12 @@
     return (char*)x0_3 + x0_1 + x0_4;
 }
 
-// Owner::reshape(struct Owner* this, int32_t) @ 0x400924
+// Owner::reshape(struct Owner* this, int32_t) @ 0x4009bc
 {
     void*** result = operator new(0x10);
     void** const x8;
 
-    x8 = !arg2 ? &data_4041d0 : &data_404180;
+    x8 = !arg2 ? &data_404208 : &data_4041b8;
 
     int64_t x9;
 
@@ -145,12 +181,12 @@
     return result;
 }
 
-// Owner::share(struct Owner* this) @ 0x40097c
+// Owner::share(struct Owner* this) @ 0x400a14
 {
     *(uint64_t*)((char*)this + 0x20) = *(uint64_t*)((char*)this + 8);
 }
 
-// Owner::mix(struct Owner* this) @ 0x400988
+// Owner::mix(struct Owner* this) @ 0x400a20
 {
     int64_t* result = *(uint64_t*)((char*)this + 0x20);
 
@@ -160,12 +196,12 @@
 ❓    /* jump -> *(uint64_t*)(*(uint64_t*)result + 0x10) */
 }
 
-// Engine::tick(struct Engine* this) @ 0x4009a0
+// Engine::tick(struct Engine* this) @ 0x400a38
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// Slot::hold_engine(struct Slot* this) @ 0x4009a8
+// Slot::hold_engine(struct Slot* this) @ 0x400a40
 {
     void*** result = operator new(0x10);
     *(uint64_t*)result = &data_4040b8;
@@ -174,7 +210,7 @@
     return result;
 }
 
-// Slot::hold_child(struct Slot* this, Owner*) @ 0x4009ec
+// Slot::hold_child(struct Slot* this, Owner*) @ 0x400a84
 {
     struct Child::VTable** result = operator new(0x18);
     *(uint64_t*)result = &_vtable_for_Child;
@@ -184,19 +220,25 @@
     return result;
 }
 
-// FastBlock::go(struct FastBlock* this) @ 0x400a38
+// FastBlock::go(struct FastBlock* this) @ 0x400ad0
 {
     return (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))() *
         *(uint64_t*)((char*)this + 0x10);
 }
 
-// Square::area(struct Square* this) @ 0x400a64
+// Station::go(struct Station* this) @ 0x400afc
+{
+    return (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))()
+        + *(uint64_t*)((char*)this + 0x10);
+}
+
+// Square::area(struct Square* this) @ 0x400b28
 {
     int64_t x8 = *(uint64_t*)((char*)this + 8);
     return x8 * x8;
 }
 
-// Circle::area(struct Circle* this) @ 0x400a70
+// Circle::area(struct Circle* this) @ 0x400b34
 {
     int64_t x8_1 = *(uint64_t*)((char*)this + 8);
     return x8_1 * x8_1 * 3;
