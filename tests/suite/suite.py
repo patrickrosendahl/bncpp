@@ -49,6 +49,7 @@ TESTS = [
     "TestCleanupAndCatch",    # destructors and a catch in one landing pad
     "TestNestedTry",          # try inside try / inside a loop
     "TestStringTemporary",    # library destructors on the unwind path
+    "TestCatchClass",         # the program's own exception classes: throw statements, typed catch objects
     # readability passes (from binary-jvm)
     "TestTernary",
     "TestBooleanReturn",

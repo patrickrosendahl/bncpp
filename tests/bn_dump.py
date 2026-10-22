@@ -13,7 +13,9 @@
 #          the names cpp/rtti_names.py gives (checked)
 #   .fields   the class structs after the whole class pipeline with APPLY in this throwaway view
 #          (tests/bn_class_apply.py, bn_class_types.py, bn_class_fields.py NOCACHE=1): counts, then the layouts
-#          (cpp/rtti_fields.py; checked), with NAMES=tests/suite/src/<TestX>.names where that exists. Runs last: it
+#          (cpp/rtti_fields.py; checked), with NAMES=tests/suite/src/<TestX>.names where that exists; then the
+#          catch handlers' object variables (tests/bn_catch_types.py APPLY, where a clause catches a class of the
+#          scan; bncpp-28). Runs last: it
 #          changes the view's names and types
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import glob, importlib, os
@@ -84,7 +86,15 @@ def _dump_fields(bv, binary):
     lines = ["%s %d" % kv for kv in sorted(g["_counts"].items()) if not kv[0].startswith("s ")]  # no timings
     params = [line for line, _what in sorted(g["_param_review"].values())]  # bncpp-28
     lines += [g["_unsettled"]] if g.get("_unsettled") else []  # bncpp-60: suite.py check gates on it
-    return lines + [""] + g["_fields"].format_layouts(g["_lays"]) + ([""] + params if params else [])
+    out = lines + [""] + g["_fields"].format_layouts(g["_lays"]) + ([""] + params if params else [])
+    # bncpp-28 source 4: the catch handlers' object variables, after the class structs exist
+    c = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": {"APPLY": "1"}}
+    path = os.path.join(REPO, "tests", "bn_catch_types.py")
+    with open(path, encoding="utf-8") as fh:
+        exec(compile(fh.read(), path, "exec"), c)
+    if c["_counts"].get("catch clauses: a class of the scan"):
+        out += [""] + ["%s %d" % kv for kv in sorted(c["_counts"].items())] + c["_review"]
+    return out
 
 
 _ok = 0

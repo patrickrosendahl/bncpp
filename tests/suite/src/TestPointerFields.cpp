@@ -5,7 +5,9 @@
 // field (Block::eng, bncpp-28): the parameter's class from the arguments at its direct callers, through the derived
 // constructor's own parameter (void*: the demangled names would type it otherwise). A field stored from a function's
 // result (Station::eng, bncpp-28): the class from the callee's return statements, through a wrapper returning another
-// callee's result (void* returns: Itanium names carry no return type).
+// callee's result (void* returns: Itanium names carry no return type). A virtual setter's parameter stored into a
+// field (Dock::eng, bncpp-28 source 2): the class from the arguments at the virtual calls of its slot, for the
+// override (Harbor::attach) too.
 #define TEST extern "C++" __attribute__((noinline, visibility("default")))
 
 struct Owner;
@@ -81,6 +83,20 @@ struct Station {
     virtual long go() { return load + eng->tick(); }
 };
 
+struct Dock {
+    Engine *eng = nullptr;
+    virtual ~Dock() {}
+    virtual void attach(void *e) { eng = static_cast<Engine *>(e); }
+    virtual void refit() { attach(new Engine); }
+};
+struct Harbor : Dock {
+    long berths = 3;
+    void attach(void *e) override {
+        berths += 1;
+        eng = static_cast<Engine *>(e);
+    }
+};
+
 long Child::run() { return id + parent->engine->rate; }
 Owner::Owner() {
     engine = new Engine;
@@ -95,3 +111,4 @@ TEST Block *make_block() { return new FastBlock(new Engine); }
 TEST void *make_engine_raw() { return new Engine; }
 TEST void *engine_again() { return make_engine_raw(); }
 TEST Station *make_station() { return new Station; }
+TEST Dock *make_dock(int big) { return big ? new Harbor : new Dock; }

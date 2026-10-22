@@ -121,6 +121,8 @@ for _f_addr, (_label, _role) in sorted(_functions.items()):
     if _apply:
         _f.type = Type.function(_ret, _params, calling_convention=_f.calling_convention,
                                 variable_arguments=_old.has_variable_arguments)
+        # bncpp-28: ours for the later passes of this session (bn_class_fields.py types more of its parameters)
+        bv.session_data.setdefault("bncpp_typed", set()).add(_f_addr)
 if _apply:
     bv.update_analysis_and_wait()
 

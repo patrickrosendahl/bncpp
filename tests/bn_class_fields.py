@@ -88,7 +88,8 @@ def _lap(step):
 _OURS = re.compile(r"struct [^,()]*::VTable\*\*")  # BN infers X::VTable** from the vptr store once X::VTable exists
 
 
-_typed_here = set()  # functions this run typed: unprotected before, so still ours
+# functions this run typed (unprotected before, so still ours), and those bn_class_types.py typed in this session
+_typed_here = bv.session_data.setdefault("bncpp_typed", set())
 _OUR_PARAM = re.compile(r"struct ([^,()*]+)\* \w+")
 
 
@@ -481,7 +482,47 @@ _count("ptr stores", len(_ptr_stores))
 # 2c. the arguments at the direct call sites of the parameters the stores come from (bncpp-28): a constructor that
 # stores its parameter ('this->field_40 = arg2') gets the parameter's class from its callers. Recorded as
 # descriptors too, following parameters that come from a parameter of the caller; cached (section "paramargs").
-_ARGS_VERSION = 1
+# A function in a vtable gets the arguments of the virtual calls that can reach it instead (bncpp-28 source 2): the
+# calls through its slot in the X::VTable of its class and of every class on that class's primary-base chain that
+# has the slot (BN's references to the X::VTable member: the load of the slot, the call at or after it).
+_ARGS_VERSION = 2
+
+
+def _vslots():
+    """{function: [X::VTable name, slot offset]} for the functions in a primary vtable: the slot's virtual calls"""
+    out = {}
+    for _a, _t in _types.items():
+        for _vt in _t.vtables:
+            if _vt.offset_to_top != 0 or _vt.construction_for is not None:
+                continue
+            for _k, _s in enumerate(_vt.slots):
+                if not isinstance(_s, int):
+                    continue
+                _b, _seen = _a, set()
+                while _b is not None and _b in _types and _b not in _seen:
+                    _seen.add(_b)
+                    _prim = [v for v in _types[_b].vtables if v.offset_to_top == 0 and v.construction_for is None]
+                    if _b != _a and (not _prim or _k >= len(_prim[0].slots)):
+                        break
+                    out.setdefault(_s, set()).add((_labels[_b] + "::VTable", _k * 8))
+                    _b = _names._primary_base(_types[_b])
+    return out
+
+
+def _vcalls_at(m, ssa, addr):
+    """the indirect calls an X::VTable member reference at addr belongs to: the call itself, or the calls of the
+    variable the slot was loaded into"""
+    out = []
+    for _mi in _mlil_at(m, addr):
+        _s = _mi.ssa_form
+        if _s.operation in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA):
+            out.append(_s)
+        elif _s.operation == Op.MLIL_SET_VAR_SSA:
+            for _u in ssa.get_ssa_var_uses(_s.dest):
+                if _u.operation in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA) and \
+                        _u.dest.operation == Op.MLIL_VAR_SSA and _u.dest.src == _s.dest:
+                    out.append(_u)
+    return [c for c in out if c.dest.operation not in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT)]
 
 
 def _params_in(d, out):
@@ -507,7 +548,7 @@ else:
     _param_args = {}  # (function, index) -> [descriptor at a direct call site]
     _todo = sorted(set().union(*[_params_in(sd, set()) for _a, _o, _dd, sd in _ptr_stores]) if _ptr_stores else ())
     _sites_of = {}  # caller -> {(call address, callee)}
-    _done = set()
+    _done, _vs, _vrefs = set(), _vslots(), {}
     while _todo:
         _need = {}  # callee -> indexes not scanned yet
         for _fi in _todo:
@@ -516,8 +557,15 @@ else:
                 _need.setdefault(_fi[0], set()).add(_fi[1])
         _todo, _by_caller = [], {}
         for _fa in _need:
-            if _fa in _virtual:
-                continue  # also reached through the vtable: callers with other classes are not seen
+            if _fa in _virtual:  # source 2: only the virtual calls (a direct call would miss the other classes')
+                for _vk in sorted(_vs.get(_fa, ())):
+                    if _vk not in _vrefs:
+                        _vrefs[_vk] = [(_r.func, _r.address) for _r in bv.get_code_refs_for_type_field(
+                            QualifiedName([_vk[0]]), _vk[1]) if _r.func is not None]
+                        _count("2c vtable slots read")
+                    for _rf, _ra in _vrefs[_vk]:
+                        _by_caller.setdefault(_rf.start, (_rf, set()))[1].add((_ra, _fa))
+                continue
             for _r in bv.get_code_refs(_fa):
                 if _r.function is not None:
                     _by_caller.setdefault(_r.function.start, (_r.function, set()))[1].add((_r.address, _fa))
@@ -527,11 +575,13 @@ else:
                 continue
             _ssa, _memo = _m.ssa_form, {}
             for _addr, _fa in sorted(_calls):
-                for _mi in _mlil_at(_m, _addr):
-                    _s = _mi.ssa_form
-                    if _s.operation not in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA) \
-                            or _s.dest.operation != Op.MLIL_CONST_PTR or _s.dest.constant != _fa:
+                _cs = _vcalls_at(_m, _ssa, _addr) if _fa in _virtual else [_mi.ssa_form for _mi in _mlil_at(_m, _addr)]
+                for _s in _cs:
+                    if _fa not in _virtual and (_s.operation not in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA)
+                                                or _s.dest.operation != Op.MLIL_CONST_PTR or _s.dest.constant != _fa):
                         continue
+                    if _fa in _virtual:
+                        _count("2c virtual call sites")
                     for _i in _need[_fa]:
                         _p = _s.params[_i] if _i < len(_s.params) else None
                         _d = _desc(_f, _ssa, _p.src, _memo) if _p is not None and _p.operation == Op.MLIL_VAR_SSA \
@@ -905,7 +955,8 @@ def _why(d):
     if k == "ret":
         return "ret: callee returns no class"
     if k == "param":
-        return "param of a vtable-slot function" if d[1] in _virtual else "param: no caller evidence"
+        return "param of a vtable-slot function: no virtual-call evidence" if d[1] in _virtual else \
+            "param: no caller evidence"
     if k == "load":
         return "load: " + (_why(d[1]) if _resolve(d[1], _lays) is None else "field has no class")
     if k == "phi":
