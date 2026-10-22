@@ -6,11 +6,11 @@
 
     int64_t var_10 = arg1;
     char var_15 = 0;
-    std::string::string[abi:ne200100]<0>(arg1, "value ");
+    std::string::string[abi:nqe210106]<0>(arg1, "value ");
     std::string var_30;
     int32_t entry_rsi;
     std::to_string(&var_30, may_throw(entry_rsi));
-    std::string::operator+=[abi:ne200100](arg1, &var_30);
+    std::string::operator+=[abi:nqe210106](arg1, &var_30);
     std::string::~string(&var_30);
     char var_15_1 = 1;
     return arg1;
@@ -41,83 +41,82 @@
     /* no return */
 }
 
-// std::string::string[abi:ne200100]<0>(std::string* this, char const*) @ 0x4006b0
+// std::string::string[abi:nqe210106]<0>(std::string* this, char const*) @ 0x4006b0
 {
-    std::string::string[abi:ne200100]<0>(this, arg2);
+    std::string::string[abi:nqe210106]<0>(this, arg2);
 }
 
-// std::string::operator+=[abi:ne200100](std::string* this, std::string const&) @ 0x4006e0
+// std::string::operator+=[abi:nqe210106](std::string* this, std::string const&) @ 0x4006e0
 {
-    return std::string::append[abi:ne200100](this, arg2);
+    return std::string::append[abi:nqe210106](this, arg2);
 }
 
-// std::string::string[abi:ne200100]<0>(std::string* this, char const*) @ 0x400710
+// std::string::string[abi:nqe210106]<0>(std::string* this, char const*) @ 0x400710
 {
-    std::allocator<char>::allocator[abi:ne200100](this);
-    std::string::__init(this, arg2, std::char_traits<char>::length[abi:ne200100](arg2, arg2));
+    std::allocator<char>::allocator[abi:nqe210106](this);
+    std::string::__init(this, arg2, std::char_traits<char>::length[abi:nqe210106](arg2, arg2));
 }
 
-// std::allocator<char>::allocator[abi:ne200100](struct std::allocator<char>* this) @ 0x400760
+// std::allocator<char>::allocator[abi:nqe210106](struct std::allocator<char>* this) @ 0x400760
 {
-    std::allocator<char>::allocator[abi:ne200100](this);
+    std::allocator<char>::allocator[abi:nqe210106](this);
 }
 
-// std::char_traits<char>::length[abi:ne200100](struct std::char_traits<char>* this, char const*) @ 0x400780
+// std::char_traits<char>::length[abi:nqe210106](struct std::char_traits<char>* this, char const*) @ 0x400780
 {
-    return std::__constexpr_strlen[abi:ne200100]<char>(this, arg2);
+    return std::__constexpr_strlen[abi:nqe210106]<char>(this, arg2);
 }
 
-// std::allocator<char>::allocator[abi:ne200100](struct std::allocator<char>* this) @ 0x4007a0
+// std::allocator<char>::allocator[abi:nqe210106](struct std::allocator<char>* this) @ 0x4007a0
 {
     return;
 }
 
-// std::__non_trivial_if<true, std::allocator<char> >::__non_trivial_if[abi:ne200100](struct std::__non_trivial_if<true, std::allocator<char> >* this) @ 0x4007c0
+// std::__non_trivial_if<true, std::allocator<char> >::__non_trivial_if[abi:nqe210106](struct std::__non_trivial_if<true, std::allocator<char> >* this) @ 0x4007c0
 {
     struct std::__non_trivial_if<true, std::allocator<char> >* this_1 = this;
 }
 
-// std::__constexpr_strlen[abi:ne200100]<char>(struct std* this, char const*) @ 0x4007d0
+// std::__constexpr_strlen[abi:nqe210106]<char>(struct std* this, char const*) @ 0x4007d0
 {
     return _strlen(this);
 }
 
-// std::string::append[abi:ne200100](std::string* this, std::string const&) @ 0x4007f0
+// std::string::append[abi:nqe210106](std::string* this, std::string const&) @ 0x4007f0
 {
-    return std::string::append(this, std::string::data[abi:ne200100](arg2),
-        std::string::size[abi:ne200100](arg2));
+    return std::string::append(this, std::string::data[abi:nqe210106](arg2),
+        std::string::size[abi:nqe210106](arg2));
 }
 
-// std::string::data[abi:ne200100](std::string* this) const @ 0x400840
+// std::string::data[abi:nqe210106](std::string* this) const @ 0x400840
 {
     char entry_rsi;
-    return std::__to_address[abi:ne200100]<char const>(
-            std::string::__get_pointer[abi:ne200100](this),
-        entry_rsi);
+    return std::__to_address[abi:nqe210106]<char const>(
+        std::string::__get_pointer[abi:nqe210106](this), entry_rsi);
 }
 
-// std::string::size[abi:ne200100](std::string* this) const @ 0x400870
+// std::string::size[abi:nqe210106](std::string* this) const @ 0x400870
 {
-    if (std::string::__is_long[abi:ne200100](this) & 1)
-        return std::string::__get_long_size[abi:ne200100](this);
+    if (std::string::__is_long[abi:nqe210106](this) & 1)
+        return std::string::__get_long_size[abi:nqe210106](this);
 
-    return std::string::__get_short_size[abi:ne200100](this);
+    return std::string::__get_short_size[abi:nqe210106](this);
 }
 
-// std::__to_address[abi:ne200100]<char const>(struct std* this, char const) @ 0x4008c0
+// std::__to_address[abi:nqe210106]<char const>(struct std* this, char const) @ 0x4008c0
 {
     return this;
 }
 
-// std::string::__get_pointer[abi:ne200100](std::string* this) const @ 0x4008d0
+// std::string::__get_pointer[abi:nqe210106](std::string* this) const @ 0x4008d0
 {
-    if (std::string::__is_long[abi:ne200100](this) & 1)
-        return std::string::__get_long_pointer[abi:ne200100](this);
+    if (std::string::__is_long[abi:nqe210106](this) & 1)
+        return std::string::__get_long_pointer[abi:nqe210106](this);
 
-    return std::string::__get_short_pointer[abi:ne200100](this);
+    return std::string::__get_short_pointer[abi:nqe210106](this);
 }
 
-// std::string::__is_long[abi:ne200100](std::string* this) const @ 0x400920
+// std::string::__is_long[abi:nqe210106](std::string* this) const @ 0x400920
 {
     std::string* result = this;
     (uint8_t)result = *(uint8_t*)result;
@@ -127,28 +126,28 @@
     return result;
 }
 
-// std::string::__get_long_pointer[abi:ne200100](std::string* this) const @ 0x400940
+// std::string::__get_long_pointer[abi:nqe210106](std::string* this) const @ 0x400940
 {
     return *(uint64_t*)((char*)this + 0x10);
 }
 
-// std::string::__get_short_pointer[abi:ne200100](std::string* this) const @ 0x400960
+// std::string::__get_short_pointer[abi:nqe210106](std::string* this) const @ 0x400960
 {
     char* entry_rsi;
-    return std::pointer_traits<char const*>::pointer_to[abi:ne200100]((char*)this + 1, entry_rsi);
+    return std::pointer_traits<char const*>::pointer_to[abi:nqe210106]((char*)this + 1, entry_rsi);
 }
 
-// std::pointer_traits<char const*>::pointer_to[abi:ne200100](struct std::pointer_traits<char const*>* this, char const&) @ 0x400980
+// std::pointer_traits<char const*>::pointer_to[abi:nqe210106](struct std::pointer_traits<char const*>* this, char const&) @ 0x400980
 {
     return this;
 }
 
-// std::string::__get_long_size[abi:ne200100](std::string* this) const @ 0x400990
+// std::string::__get_long_size[abi:nqe210106](std::string* this) const @ 0x400990
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// std::string::__get_short_size[abi:ne200100](std::string* this) const @ 0x4009b0
+// std::string::__get_short_size[abi:nqe210106](std::string* this) const @ 0x4009b0
 {
     return (uint64_t)(*(uint8_t*)this >> 1);
 }

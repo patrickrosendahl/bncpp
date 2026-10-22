@@ -1,8 +1,8 @@
-catch_two_types(int32_t)  lsda base+0x778  lpstart +0x0  2 call sites
-  +0x4   .. +0x9   lp +0xb   catch(typeinfo_for_std::runtime_error), catch(typeinfo_for_int32_t)
-  +0x9   .. +0x5f  unwind
+catch_two_types(int32_t)  lsda base+0x788  lpstart +0x0  2 call sites
+  +0x6   .. +0xb   lp +0x12  catch(typeinfo_for_std::runtime_error), catch(typeinfo_for_int32_t)
+  +0xb   .. +0x63  unwind
 
-catch_base_and_derived(int32_t)  lsda base+0x794  lpstart +0x0  8 call sites
+catch_base_and_derived(int32_t)  lsda base+0x7a4  lpstart +0x0  8 call sites
   +0x6   .. +0xb   lp +0x12  catch(typeinfo_for_std::invalid_argument), catch(typeinfo_for_std::exception)
   +0xb   .. +0x30  unwind
   +0x30  .. +0x38  lp +0x70  cleanup

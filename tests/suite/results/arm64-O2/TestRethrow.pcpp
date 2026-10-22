@@ -1,6 +1,6 @@
 // rethrow(int32_t) @ 0x4005f8
 {
-    // exception table (LSDA 0x4008f0): 3 of 5 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4008f8): 3 of 5 call sites have a landing pad; #n = the selector value
     //   0x400608..0x40060c -> 0x40061c sub_40061c: catch (std::exception) #1
     //   0x40064c..0x400650 (in sub_40061c) -> 0x400654 sub_400654: cleanup
     //   0x400658..0x40065c (in sub_400654) -> 0x400664 sub_400664: catch (...) #2
@@ -62,10 +62,10 @@
 
 // throw_other(int32_t) @ 0x400678
 {
-    // exception table (LSDA 0x400918): 4 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400920): 4 of 6 call sites have a landing pad; #n = the selector value
     //   0x40068c..0x400690 -> 0x4006a4 sub_4006a4: catch (int32_t) #1
-    //   0x4006c8..0x4006d4 (in sub_4006a4) -> 0x40077c sub_40077c: cleanup
-    //   0x4006d4..0x4006e8 (in sub_4006a4) -> 0x400764 sub_400764: cleanup
+    //   0x4006c8..0x4006d4 (in sub_4006a4) -> 0x400784 sub_400784: cleanup
+    //   0x4006d4..0x4006e8 (in sub_4006a4) -> 0x40076c sub_40076c: cleanup
     //   0x400704..0x40072c (in sub_4006a4) -> 0x400730 sub_400730: cleanup
 
     try
@@ -130,25 +130,38 @@
     // landing pad of throw_other(int32_t) @ 0x400678
     //   from 0x400704..0x40072c (in sub_4006a4): cleanup
 
-    if ((int32_t)arg6 & 0x80000000)
-        operator delete(arg5);
-
-    if ((int32_t)arg4 & 0x80000000)
+    if (!((int32_t)arg6 & 0x80000000))
     {
+        if ((int32_t)arg4 & 0x80000000)
+            goto label_400760;
+
+        goto label_400744;
+    }
+
+    operator delete(arg5);
+
+    if (!((int32_t)arg4 & 0x80000000))
+    {
+    label_400744:
+
+        if (arg2 & 1)
+            ___cxa_free_exception();
+    }
+    else
+    {
+    label_400760:
         operator delete(arg3);
 
         if (arg2 & 1)
             ___cxa_free_exception();
     }
-    else if (arg2)
-        ___cxa_free_exception();
 
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
     /* no return */
 }
 
-// sub_400764 @ 0x400764
+// sub_40076c @ 0x40076c
 {
     // landing pad of throw_other(int32_t) @ 0x400678
     //   from 0x4006d4..0x4006e8 (in sub_4006a4): cleanup
@@ -162,7 +175,7 @@
     /* no return */
 }
 
-// sub_40077c @ 0x40077c
+// sub_400784 @ 0x400784
 {
     // landing pad of throw_other(int32_t) @ 0x400678
     //   from 0x4006c8..0x4006d4 (in sub_4006a4): cleanup

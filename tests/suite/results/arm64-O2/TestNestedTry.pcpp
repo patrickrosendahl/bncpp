@@ -1,29 +1,43 @@
 // nested_try(int32_t) @ 0x4005f8
 {
-    // exception table (LSDA 0x4007ac): 2 of 4 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4007a8): 2 of 4 call sites have a landing pad; #n = the selector value
     //   0x400608..0x40060c -> 0x40061c sub_40061c: catch (int32_t) #2, catch (std::runtime_error) #1
-    //   0x400648..0x400650 (in sub_40061c) -> 0x400660 sub_400660: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x400648..0x400650 (in sub_40061c) -> 0x400658 sub_400658: catch (std::runtime_error) #1, cleanup, cleanup
 
     try
     {
         may_throw(arg1);
     }
-    catch (int32_t e)
+    catch (int32_t)
     {
+        // the whole landing pad sub_40061c: its dispatch on the selector was not found
         uint64_t arg_0;
-        arg_0 = e;
-        _printf("inner int %d\n");
-        may_throw((uint32_t)e + 0xa);
+
+        if (arg2 != 2)
+        {
+            if (arg2 != 1)
+            {
+                __Unwind_Resume(arg1);
+                /* no return */
+            }
+
+            arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+            _printf("outer %s\n");
+        }
+        else
+        {
+            uint64_t x19_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
+            arg_0 = x19_1;
+            _printf("inner int %d\n");
+            may_throw((uint32_t)x19_1 + 0xa);
+        }
+        ___cxa_end_catch();
         /* tailcall */
         return sub_40060c();
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error)
     {
-        uint64_t arg_0;
-        arg_0 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
-        _printf("outer %s\n");
-        /* tailcall */
-        return sub_40060c();
+        // selector #1: the landing pad above
     }
     int64_t entry_x19;
     int64_t entry_x20;
@@ -44,31 +58,30 @@
 
     uint64_t arg_0;
 
-    if (arg2 == 2)
+    if (arg2 != 2)
+    {
+        if (arg2 != 1)
+        {
+            __Unwind_Resume(arg1);
+            /* no return */
+        }
+
+        arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
+        _printf("outer %s\n");
+    }
+    else
     {
         uint64_t x19_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg1);
         arg_0 = x19_1;
         _printf("inner int %d\n");
         may_throw((uint32_t)x19_1 + 0xa);
-        ___cxa_end_catch();
-        /* tailcall */
-        return sub_40060c();
     }
-
-    if (arg2 != 1)
-    {
-        __Unwind_Resume(arg1);
-        /* no return */
-    }
-
-    arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
-    _printf("outer %s\n");
     ___cxa_end_catch();
     /* tailcall */
     return sub_40060c();
 }
 
-// sub_400660 @ 0x400660
+// sub_400658 @ 0x400658
 {
     // landing pad of nested_try(int32_t) @ 0x4005f8
     //   from 0x400648..0x400650 (in sub_40061c): catch (std::runtime_error) #1, cleanup, cleanup
@@ -88,10 +101,10 @@
     return sub_40060c();
 }
 
-// try_in_loop(int32_t) @ 0x4006a8
+// try_in_loop(int32_t) @ 0x4006a4
 {
-    // exception table (LSDA 0x4007d4): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x4006cc..0x4006d4 -> 0x4006e8 sub_4006e8: catch (std::runtime_error) #1, cleanup, cleanup
+    // exception table (LSDA 0x4007d0): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4006c8..0x4006d0 -> 0x4006e4 sub_4006e4: catch (std::runtime_error) #1, cleanup, cleanup
 
     if (arg1 < 1)
         return 0;
@@ -115,10 +128,10 @@
     return result;
 }
 
-// sub_4006e8 @ 0x4006e8
+// sub_4006e4 @ 0x4006e4
 {
-    // landing pad of try_in_loop(int32_t) @ 0x4006a8
-    //   from 0x4006cc..0x4006d4: catch (std::runtime_error) #1, cleanup, cleanup
+    // landing pad of try_in_loop(int32_t) @ 0x4006a4
+    //   from 0x4006c8..0x4006d0: catch (std::runtime_error) #1, cleanup, cleanup
 
     if (arg2 != 1)
     {

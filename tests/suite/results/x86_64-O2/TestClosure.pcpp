@@ -439,12 +439,12 @@
     if (arg2 < (int32_t)result)
         return result;
 
-    result = (uint64_t)*(uint32_t*)((char*)this + 0xc);
+    int32_t rax = *(uint32_t*)((char*)this + 0xc);
 
-    if (arg2 < (int32_t)result)
+    if (arg2 < rax)
         return (uint64_t)arg2;
 
-    return result;
+    return (uint64_t)rax;
 }
 
 // fail(int32_t) @ 0x400cf0

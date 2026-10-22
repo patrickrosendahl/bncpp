@@ -1,6 +1,6 @@
 // rethrow(int32_t) @ 0x4005f0
 {
-    // exception table (LSDA 0x400b04): 3 of 5 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400d44): 3 of 5 call sites have a landing pad; #n = the selector value
     //   0x4005fe..0x400603 -> 0x40060a sub_40060a: catch (std::exception) #1
     //   0x40063f..0x400654 (in sub_40060a) -> 0x400656 sub_400656: cleanup
     //   0x400662..0x400667 (in sub_400656) -> 0x40067d sub_40067d: catch (...) #2
@@ -67,7 +67,7 @@
 
 // throw_other(int32_t) @ 0x4006a0
 {
-    // exception table (LSDA 0x400b2c): 4 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400d6c): 4 of 6 call sites have a landing pad; #n = the selector value
     //   0x4006ae..0x4006b3 -> 0x4006bd sub_4006bd: catch (int32_t) #1
     //   0x4006fc..0x400705 (in sub_4006bd) -> 0x400749 sub_400749: cleanup
     //   0x400707..0x40071b (in sub_4006bd) -> 0x400757 sub_400757: cleanup
@@ -83,7 +83,7 @@
         *(uint8_t*)((char*)arg5 - 0x49) = 1;
         *(uint64_t*)((char*)arg5 - 0x58) = ___cxa_allocate_exception(0x10);
         std::to_string((char*)arg5 - 0x48, *(uint32_t*)((char*)arg5 - 0x18));
-        std::operator+[abi:ne200100]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
+        std::operator+[abi:nqe210106]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
         std::runtime_error::runtime_error(*(uint64_t*)((char*)arg5 - 0x58), (char*)arg5 - 0x30);
         void* thrown_exception = *(uint64_t*)((char*)arg5 - 0x58);
         *(uint8_t*)((char*)arg5 - 0x49) = 0;
@@ -110,7 +110,7 @@
     *(uint8_t*)((char*)arg5 - 0x49) = 1;
     *(uint64_t*)((char*)arg5 - 0x58) = ___cxa_allocate_exception(0x10);
     std::to_string((char*)arg5 - 0x48, *(uint32_t*)((char*)arg5 - 0x18));
-    std::operator+[abi:ne200100]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
+    std::operator+[abi:nqe210106]<char>((char*)arg5 - 0x30, "int ", (char*)arg5 - 0x48);
     std::runtime_error::runtime_error(*(uint64_t*)((char*)arg5 - 0x58), (char*)arg5 - 0x30);
     void* thrown_exception = *(uint64_t*)((char*)arg5 - 0x58);
     *(uint8_t*)((char*)arg5 - 0x49) = 0;
@@ -176,26 +176,26 @@
     /* no return */
 }
 
-// std::operator+[abi:ne200100]<char>(struct std* this, std::basic_string const*, std::allocator<char>&&) @ 0x4007b0
+// std::operator+[abi:nqe210106]<char>(struct std* this, std::basic_string const*, std::allocator<char>&&) @ 0x4007b0
 {
     struct std* this_1 = this;
-    std::string::string[abi:ne200100](this, std::string::insert(arg3, 0, arg2));
+    std::string::string[abi:nqe210106](this, std::string::insert(arg3, 0, arg2));
     return this;
 }
 
-// std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400800
+// std::string::string[abi:nqe210106](std::string* this, std::string&&) @ 0x400800
 {
-    std::string::string[abi:ne200100](this, arg2);
+    std::string::string[abi:nqe210106](this, arg2);
 }
 
-// std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400830
+// std::string::string[abi:nqe210106](std::string* this, std::string&&) @ 0x400830
 {
-    // exception table (LSDA 0x400b54): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400d94): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400850..0x400859 -> 0x4008dd sub_4008dd: catch (...) #1
 
-    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
+    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:nqe210106](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
          var_19;
-    std::string& rax_1 = std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(
+    std::string& rax_1 = std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:nqe210106](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(
         &var_19, arg2);
     *(uint64_t*)this = *(uint64_t*)rax_1;
     *(uint64_t*)((char*)this + 8) = *(uint64_t*)((char*)rax_1 + 8);
@@ -207,33 +207,40 @@
     *(uint64_t*)((char*)arg2 + 8) = var_30;
     int64_t var_28;
     *(uint64_t*)((char*)arg2 + 0x10) = var_28;
-    std::string::__is_long[abi:ne200100](this);
+    std::string::__annotate_new[abi:nqe210106](arg2, 0);
+
+    if (!(std::string::__is_long[abi:nqe210106](this) & 1))
+        std::string::__annotate_new[abi:nqe210106](this, std::string::size[abi:nqe210106](this));
 }
 
 // sub_4008dd @ 0x4008dd
 {
-    // landing pad of std::string::string[abi:ne200100](std::string* this, std::string&&) @ 0x400830
+    // landing pad of std::string::string[abi:nqe210106](std::string* this, std::string&&) @ 0x400830
     //   from 0x400850..0x400859: catch (...) #1
 
     ___clang_call_terminate(arg1);
     /* no return */
 }
 
-// std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)* this, std::string&) const @ 0x4008f0
+// std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:nqe210106](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)::operator()(struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:nqe210106](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)* this, std::string&) const @ 0x4008f0
 {
-    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:ne200100](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
+    struct std::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string[abi:nqe210106](std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&&)::'lambda'(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >&)
         * this_1 = this;
-    std::string::__is_long[abi:ne200100](arg2);
+
+    if (!(std::string::__is_long[abi:nqe210106](arg2) & 1))
+        std::string::__annotate_delete[abi:nqe210106](arg2);
+
     return arg2;
 }
 
-// std::string::__annotate_new[abi:ne200100](std::string* this, uint64_t) const @ 0x400920
+// std::string::__annotate_new[abi:nqe210106](std::string* this, uint64_t) const @ 0x400920
 {
-    std::string* this_1 = this;
-    uint64_t var_18 = arg2;
+    std::string::data[abi:nqe210106](this);
+    std::string::capacity[abi:nqe210106](this);
+    return std::string::data[abi:nqe210106](this);
 }
 
-// std::string::__is_long[abi:ne200100](std::string* this) const @ 0x400930
+// std::string::__is_long[abi:nqe210106](std::string* this) const @ 0x400990
 {
     std::string* result = this;
     (uint8_t)result = *(uint8_t*)result;
@@ -243,25 +250,102 @@
     return result;
 }
 
-// std::string::size[abi:ne200100](std::string* this) const @ 0x400950
+// std::string::size[abi:nqe210106](std::string* this) const @ 0x4009b0
 {
-    if (std::string::__is_long[abi:ne200100](this) & 1)
-        return std::string::__get_long_size[abi:ne200100](this);
+    if (std::string::__is_long[abi:nqe210106](this) & 1)
+        return std::string::__get_long_size[abi:nqe210106](this);
 
-    return std::string::__get_short_size[abi:ne200100](this);
+    return std::string::__get_short_size[abi:nqe210106](this);
 }
 
-// std::string::__annotate_delete[abi:ne200100](std::string* this) const @ 0x4009a0
+// std::string::__annotate_delete[abi:nqe210106](std::string* this) const @ 0x400a00
+{
+    // exception table (LSDA 0x400dac): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x400a60..0x400a65 -> 0x400a6d sub_400a6d: catch (...) #1
+
+    std::string::data[abi:nqe210106](this);
+    std::string::size[abi:nqe210106](this);
+    char* result = std::string::data[abi:nqe210106](this);
+    std::string::capacity[abi:nqe210106](this);
+    return result;
+}
+
+// sub_400a6d @ 0x400a6d
+{
+    // landing pad of std::string::__annotate_delete[abi:nqe210106](std::string* this) const @ 0x400a00
+    //   from 0x400a60..0x400a65: catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// std::string::__annotate_contiguous_container[abi:nqe210106](std::string* this, void const*) const @ 0x400a80
 {
     std::string* this_1 = this;
+    void const* var_18 = arg2;
+    int64_t rdx;
+    int64_t var_20 = rdx;
 }
 
-// std::string::__get_long_size[abi:ne200100](std::string* this) const @ 0x4009b0
+// std::string::data[abi:nqe210106](std::string* this) const @ 0x400aa0
+{
+    char entry_rsi;
+    return std::__to_address[abi:nqe210106]<char const>(
+        std::string::__get_pointer[abi:nqe210106](this), entry_rsi);
+}
+
+// std::string::capacity[abi:nqe210106](std::string* this) const @ 0x400ad0
+{
+    uint64_t var_20;
+
+    if (std::string::__is_long[abi:nqe210106](this) & 1)
+        var_20 = std::string::__get_long_cap[abi:nqe210106](this);
+    else
+        var_20 = 0x17;
+
+    return var_20 - 1;
+}
+
+// std::__to_address[abi:nqe210106]<char const>(struct std* this, char const) @ 0x400b20
+{
+    return this;
+}
+
+// std::string::__get_pointer[abi:nqe210106](std::string* this) const @ 0x400b30
+{
+    if (std::string::__is_long[abi:nqe210106](this) & 1)
+        return std::string::__get_long_pointer[abi:nqe210106](this);
+
+    return std::string::__get_short_pointer[abi:nqe210106](this);
+}
+
+// std::string::__get_long_pointer[abi:nqe210106](std::string* this) const @ 0x400b80
+{
+    return *(uint64_t*)((char*)this + 0x10);
+}
+
+// std::string::__get_short_pointer[abi:nqe210106](std::string* this) const @ 0x400ba0
+{
+    char* entry_rsi;
+    return std::pointer_traits<char const*>::pointer_to[abi:nqe210106]((char*)this + 1, entry_rsi);
+}
+
+// std::pointer_traits<char const*>::pointer_to[abi:nqe210106](struct std::pointer_traits<char const*>* this, char const&) @ 0x400bc0
+{
+    return this;
+}
+
+// std::string::__get_long_cap[abi:nqe210106](std::string* this) const @ 0x400bd0
+{
+    return *(uint64_t*)this & 0xfffffffffffffffe;
+}
+
+// std::string::__get_long_size[abi:nqe210106](std::string* this) const @ 0x400bf0
 {
     return *(uint64_t*)((char*)this + 8);
 }
 
-// std::string::__get_short_size[abi:ne200100](std::string* this) const @ 0x4009d0
+// std::string::__get_short_size[abi:nqe210106](std::string* this) const @ 0x400c10
 {
     return (uint64_t)(*(uint8_t*)this >> 1);
 }

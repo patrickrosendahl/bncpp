@@ -1,9 +1,9 @@
 // day_kind(int32_t) @ 0x4005e0
 {
     if (arg1 > 6)
-        return &data_40067a;
+        return &data_400698;
 
-    return (int64_t)*(uint32_t*)(&data_400680 + ((uint64_t)arg1 << 2)) + &data_400680;
+    return (int64_t)*(uint32_t*)(&data_40067c + ((uint64_t)arg1 << 2)) + &data_40067c;
 }
 
 // sparse(int32_t) @ 0x400610

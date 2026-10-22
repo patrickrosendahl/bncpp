@@ -1,8 +1,8 @@
 nested_try(int32_t)  lsda base+0x74c  lpstart +0x0  4 call sites
   +0x7   .. +0xc   lp +0x11  catch(typeinfo_for_int32_t), catch(typeinfo_for_std::runtime_error)
   +0xc   .. +0x3a  unwind
-  +0x3a  .. +0x41  lp +0x4c  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
-  +0x41  .. +0x90  unwind
+  +0x3a  .. +0x41  lp +0x45  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x41  .. +0x8b  unwind
 
 try_in_loop(int32_t)  lsda base+0x774  lpstart +0x0  2 call sites
   +0x20  .. +0x28  lp +0x34  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
