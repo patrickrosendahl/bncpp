@@ -506,16 +506,16 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         folded_idx, names = set(), {}
         hlil = self.function.hlil
         try:
-            for blk in walk(hlil.root):
-                if blk.operation != Op.HLIL_BLOCK:
-                    continue
-                body = list(blk.body)
+            for body in self.fold_lists(hlil.root):  # a do-while's body ends in its condition (bncpp-12)
                 plan = {}
                 for k in range(len(body) - 1):  # x++ / ++x (bncpp-11): fold_candidate reads plan["incdec"]
                     self.plan_incdec(body, k, plan)
                 self.plan_folds(body, 0, len(body) - 1, plan)
                 for k in plan.get("folded", ()):
                     folded_idx.add(body[k].instr_index)
+            # a folded variable declared apart from its assignment loses its declaration with it
+            folded_idx.update(i.instr_index for i in walk(hlil.root)
+                              if i.operation == Op.HLIL_VAR_DECLARE and i.var in self.inline)
         except Exception:
             self.inline = {}
             folded_idx = set()
@@ -536,10 +536,18 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         if not folded and not self.inline:
             return keyed
         start = self.function.start
-        out = []
+        out, blank = [], False
+        empty = lambda ts: not "".join(t.text for t in ts).strip()
         for toks, key in keyed:
             if key is not None and key[0] == start and key[1] in folded:
-                continue  # a folded definition: its value moved into a later statement
+                blank = blank or empty(toks)  # a folded definition: its value moved into a later statement
+                continue
+            closing = "".join(t.text for t in toks).strip().startswith("}")
+            if closing and out and empty(out[-1][0]):
+                out.pop()  # no blank line left before a closing brace (the block's last statements folded away)
+            elif blank and not empty(toks) and out and not empty(out[-1][0]) and not closing:
+                out.append(([], None))  # the dropped lines' blank separator stays
+            blank = False
             out.append((self._subst_inline(list(toks)), key))
         return out
 
@@ -577,7 +585,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         return toks if _atomic(toks) else [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
 
     def emit_token_lines(self, lines, tokens, statement):
-        for i, line in enumerate(lines):
+        for i, line in enumerate(_brace_do(lines)):
             if i:
                 tokens.new_line()
             if not line:
@@ -610,6 +618,39 @@ def _atomic(toks):
 
 def _text(line):
     return "".join(t.text for t in line[0]).strip()
+
+
+def _brace_do(lines):
+    """token lines with each do-while of a one-statement body braced (bncpp-12): Pseudo C prints that body bare,
+    `do` / `    x = f();` / ` while (c);` (the brace-less form, with a stray space before the while) -> `do` / `{` /
+    `    x = f();` / `} while (c);`"""
+    text = lambda l: "".join(t.text for t in l)
+    width = lambda s: len(s) - len(s.lstrip())
+    out, i = [], 0
+    while i < len(lines):
+        s = text(lines[i])
+        if s.strip() != "do":
+            out.append(lines[i])
+            i += 1
+            continue
+        ind, j = width(s), i + 1
+        while j < len(lines) and lines[j] and width(text(lines[j])) > ind + 1:
+            j += 1
+        if j == i + 1 or j >= len(lines) or width(text(lines[j])) != ind + 1 or \
+                not text(lines[j]).lstrip().startswith("while ("):
+            out.append(lines[i])
+            i += 1
+            continue
+        pad = tok(TT.TextToken, " " * ind)
+        close = list(lines[j])
+        while close and not close[0].text.strip():
+            close.pop(0)
+        if close and close[0].text != close[0].text.lstrip():
+            close[0] = tok(close[0].type, close[0].text.lstrip())
+        out += [lines[i], [pad, tok(TT.BraceToken, "{")]] + list(lines[i + 1:j]) + \
+            [[pad, tok(TT.BraceToken, "}"), tok(TT.TextToken, " ")] + close]
+        i = j + 1
+    return out
 
 
 def _cleanups(stmts):

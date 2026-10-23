@@ -19,7 +19,6 @@
     int32_t const* x8_1 = arg1;
     uint64_t result = 0;
     uint64_t i_1 = (uint64_t)arg2;
-    uint64_t i;
 
     do
     {
@@ -33,18 +32,16 @@
 
             result = (uint64_t)(x10_1 + (uint32_t)result);
         }
-
-        i = i_1;
-        i_1 -= 1;
-    } while (i != 1);
+    } while (i_1-- != 1);
     return result;
 }
 
 // do_while(int32_t) @ 0x4005c8
 {
     do
+    {
         arg1 = next_value() + ((arg1 + (arg1 >> 0x1f)) >> 1);
-     while (arg1 > 0x64);
+    } while (arg1 > 0x64);
 
     return arg1;
 }

@@ -147,13 +147,37 @@ class FoldMixin:
             if self.var_count(var) - self.refs(s, var) != 1:
                 return None
             return var, value, all(self.pure(v) for v in (value[2].condition, value[3], value[4]))
-        if k in plan.get("skip", ()) or s.operation != Op.HLIL_VAR_INIT:
+        if k in plan.get("skip", ()):
             return None
-        var = s.dest
-        if self.var_count(var) != 1 or self.def_count(var) != 1 or var in self._addr_taken() or \
+        if s.operation == Op.HLIL_VAR_INIT:
+            var, uses = s.dest, 1
+        elif s.operation == Op.HLIL_ASSIGN and s.dest.operation == Op.HLIL_VAR and self.declared(s.dest.var):
+            var, uses = s.dest.var, 2  # `T x; .. x = v; use(x)`: the store's own read of x and the use
+        else:
+            return None
+        if self.var_count(var) != uses or (uses == 1 and self.def_count(var) != 1) or var in self._addr_taken() or \
                 not self.foldable_var(var):
             return None
         return var, s.src, self.pure(s.src)
+
+    def declared(self, var):
+        """var has a declaration of its own and no initialized definition (its assignments are HLIL_ASSIGNs)"""
+        return self.def_count(var) == 2
+
+    def fold_lists(self, root):
+        """the statement lists plan_folds runs on: every HLIL block's body; a do-while's body with the loop
+        condition as a last item, so the body's last statements can fold into it (`t = i; i -= 1; } while (t)`
+        -> `} while (i--)`) -- not when the body has a `continue` of this loop, which skips them"""
+        conds = {}
+        for i in walk(root):
+            if i.operation == Op.HLIL_DO_WHILE and i.body.operation == Op.HLIL_BLOCK and not _continues(i.body):
+                conds[i.body.expr_index] = i.condition
+        for blk in walk(root):
+            if blk.operation == Op.HLIL_BLOCK:
+                body = list(blk.body)
+                if blk.expr_index in conds:
+                    body.append(conds[blk.expr_index])
+                yield body
 
     def fold_transparent(self, body, j, plan):
         """body[j] is not printed between a definition and its use and has nothing that matters in between"""
@@ -218,22 +242,27 @@ class FoldMixin:
         """`t = f; f = t + 1; use(t)` (post) / `t = f + 1; f = t; use(t)` (pre), f a local or a store target ->
         plan["incdec"][k] = (t, ("incdec", f as an lvalue, "+"/"-", pre, store index)); plan_fold then folds it
         into the use as f++ / ++f and drops the store with it. Native HLIL wraps a load / temporary in zx / sx /
-        low_part / an offset-0 field (the register is wider than the value), so the matching strips those."""
+        low_part / an offset-0 field (the register is wider than the value), so the matching strips those. t may
+        be declared apart (`T t; .. t = f;`), and the post store may read f again (`f = f - 1`: t still equals f)."""
         if k + 1 > len(body) - 1:
             return
         s, st = body[k], body[k + 1]
-        if s.operation != Op.HLIL_VAR_INIT or k in plan.get("skip", ()) or k + 1 in plan.get("skip", ()):
+        if k in plan.get("skip", ()) or k + 1 in plan.get("skip", ()):
             return
-        t = s.dest
-        if self.def_count(t) != 1 or self.var_count(t) != 2 or t in self._addr_taken() or \
-                not self.foldable_var(t):
+        if s.operation == Op.HLIL_VAR_INIT and self.def_count(s.dest) == 1:
+            t, own = s.dest, 0
+        elif s.operation == Op.HLIL_ASSIGN and s.dest.operation == Op.HLIL_VAR and self.declared(s.dest.var):
+            t, own = s.dest.var, 1  # the assignment's own read of t
+        else:
             return
-        if st.operation != Op.HLIL_ASSIGN:
+        if t in self._addr_taken() or not self.foldable_var(t) or st.operation != Op.HLIL_ASSIGN:
             return
         dest, val = st.dest, st.src
+        if self.var_count(t) - own - self.refs(st, t) != 1:
+            return  # t is read once besides the store
         is_t = lambda e: _strip(e).operation == Op.HLIL_VAR and _strip(e).var == t
-        # post: t = f ; f = t + 1 -- the definition copies f, the store writes f + 1 back
-        step = _unit_step(_strip(val), is_t)
+        # post: t = f ; f = t + 1 -- the definition copies f, the store writes f + 1 back (or f + 1 again)
+        step = _unit_step(_strip(val), lambda e: is_t(e) or _same_lvalue(dest, e))
         if step is not None and _same_lvalue(dest, s.src):
             pre = False
         else:
@@ -243,6 +272,18 @@ class FoldMixin:
                 return
             pre = True
         plan.setdefault("incdec", {})[k] = (t, ("incdec", dest, step, pre, k + 1))
+
+
+def _continues(body):
+    """body has a `continue` of its own loop (not one inside a nested loop)"""
+    stack = [body]
+    while stack:
+        i = stack.pop()
+        if i.operation == Op.HLIL_CONTINUE:
+            return True
+        if i.operation not in (Op.HLIL_WHILE, Op.HLIL_DO_WHILE, Op.HLIL_FOR):
+            stack.extend(children(i))
+    return False
 
 
 def _is_bool(e):

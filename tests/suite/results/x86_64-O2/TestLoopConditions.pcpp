@@ -44,8 +44,9 @@
     uint64_t result = (uint64_t)arg1;
 
     do
+    {
         result = (uint64_t)(next_value() + ((((uint32_t)result >> 0x1f) + (uint32_t)result) >> 1));
-     while ((int32_t)result > 0x64);
+    } while ((int32_t)result > 0x64);
 
     return result;
 }
