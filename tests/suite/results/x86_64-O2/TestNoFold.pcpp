@@ -1,0 +1,60 @@
+// skip_then_count(int32_t) @ 0x400590
+{
+    int32_t i = arg1;
+    int32_t rbx = 0;
+
+    do
+    {
+        int32_t rcx_1 = 0;
+        (uint8_t)rcx_1 = next_value();
+        i -= rcx_1;
+        rbx += rcx_1;
+    } while (i > 0);
+
+    return (uint64_t)rbx;
+}
+
+// init_call_first(int32_t) @ 0x4005c0
+{
+    int32_t rax = next_value();
+
+    return (uint64_t)(next_value() > 0 ? arg1 : rax);
+}
+
+// init_read_first(int32_t) @ 0x4005f0
+{
+    int32_t _g_state_1 = _g_state;
+
+    return (uint64_t)(next_value() > 0 ? arg1 : _g_state_1);
+}
+
+// store_between_calls() @ 0x400620
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int32_t rax_1 = next_value();
+    _g_state += 1;
+    return (uint64_t)(next_value() + rax_1);
+}
+
+// not_less(float, float) @ 0x400650
+{
+    int64_t result = 0;
+    (uint8_t)result = arg2 <= arg1;
+    return result;
+}
+
+// has_bit(int32_t) @ 0x400660
+{
+    return (uint64_t)(arg1 >> 2) & 1;
+}
+
+// pick_call(int32_t) @ 0x400670
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int64_t rbx;
+    (uint8_t)rbx = arg1 <= 0;
+    return (uint64_t)(next_value() << ((uint8_t)rbx & 0x1f));
+}
+

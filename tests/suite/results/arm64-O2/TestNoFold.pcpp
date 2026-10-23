@@ -1,0 +1,59 @@
+// skip_then_count(int32_t) @ 0x4005a0
+{
+    int32_t i = arg1;
+    uint64_t result = 0;
+
+    do
+    {
+        int32_t x0 = next_value();
+
+        result = x0 ? (uint64_t)((uint32_t)result + 1) : (uint64_t)(uint32_t)result;
+
+        i -= x0 ? 1 : 0;
+    } while (i > 0);
+
+    return result;
+}
+
+// init_call_first(int32_t) @ 0x4005e0
+{
+    int32_t x0 = next_value();
+
+    if (next_value() > 0)
+        return (uint64_t)arg1;
+
+    return (uint64_t)x0;
+}
+
+// init_read_first(int32_t) @ 0x400610
+{
+    int32_t _g_state_1 = _g_state;
+
+    if (next_value() > 0)
+        return (uint64_t)arg1;
+
+    return (uint64_t)_g_state_1;
+}
+
+// store_between_calls() @ 0x400640
+{
+    int32_t x0 = next_value();
+    _g_state += 1;
+    return (uint64_t)(next_value() + x0);
+}
+
+// not_less(float, float) @ 0x400678
+{
+    return arg1 >= arg2;
+}
+
+// has_bit(int32_t) @ 0x400684
+{
+    return (uint64_t)(arg1 >> 2) & 1;
+}
+
+// pick_call(int32_t) @ 0x40068c
+{
+    return (uint64_t)(next_value() << (arg1 < 1 ? 1 : 0));
+}
+

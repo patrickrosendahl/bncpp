@@ -58,6 +58,7 @@ TESTS = [
     "TestIncrement",
     "TestLoopConditions",
     "TestSwitch",
+    "TestNoFold",             # shapes the passes above must leave alone or keep in order (bncpp-90)
     # classes: RTTI and vtables (.classes; cpp/rtti.py), one source in four builds
     "TestVirtual",               # classic dyld info
     "TestVirtualChained",        # chained fixups
