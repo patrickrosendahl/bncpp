@@ -184,13 +184,10 @@
 // Owner::reshape(struct Owner* this, int32_t) @ 0x400a10
 {
     void*** result = operator new(0x10);
-    void** const x8;
 
-    x8 = !arg2 ? &data_404290 : &data_404240;
+    void** const x8 = !arg2 ? &data_404290 : &data_404240;
 
-    int64_t x9;
-
-    x9 = arg2 ? 2 : 1;
+    int64_t x9 = arg2 ? 2 : 1;
 
     *(uint64_t*)result = x8;
     result[1] = x9;

@@ -87,15 +87,10 @@
 // make_codec(int32_t) @ 0x4007cc
 {
     void*** result = operator new(8);
-    void** const x8;
 
-    x8 = arg1 == 1 ? &data_404120 : &data_404160;
+    void** const x8 = arg1 == 1 ? &data_404120 : &data_404160;
 
-    void** const x8_1;
-
-    x8_1 = !arg1 ? &data_4040e0 : x8;
-
-    *(uint64_t*)result = x8_1;
+    *(uint64_t*)result = !arg1 ? &data_4040e0 : x8;
     return result;
 }
 
@@ -357,16 +352,8 @@
         v = false;
     }
 
-    void* __offset(
-        std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>,
-        0x14) x8_1;
-
-    if (!z && n == v)
-        x8_1 = *(uint64_t*)((char*)this + 8) + ((uint64_t)x8_2 << 2);
-    else
-        x8_1 = (char*)this + 0x14;
-
-    return (uint64_t)*(uint32_t*)x8_1;
+    return (uint64_t)*(uint32_t*)(!z
+        && n == v ? *(uint64_t*)((char*)this + 8) + ((uint64_t)x8_2 << 2) : (char*)this + 0x14);
 }
 
 // std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x400b48

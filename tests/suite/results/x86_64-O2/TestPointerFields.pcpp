@@ -179,14 +179,8 @@
     int64_t* rdi_1 = *(uint64_t*)((char*)this + 0x10);
     int64_t rax_3 = (*(uint64_t*)(*(uint64_t*)rdi_1 + 0x10))(rdi_1);
     int64_t* rdi_2 = *(uint64_t*)((char*)this + 0x18);
-    int64_t rcx_1;
 
-    if (!rdi_2)
-        rcx_1 = 0;
-    else
-        rcx_1 = (*(uint64_t*)(*(uint64_t*)rdi_2 + 0x10))(rdi_2);
-
-    return rax_3 + rax_1 + rcx_1;
+    return rax_3 + rax_1 + (!rdi_2 ? 0 : (*(uint64_t*)(*(uint64_t*)rdi_2 + 0x10))(rdi_2));
 }
 
 // Owner::reshape(struct Owner* this, int32_t) @ 0x400a60

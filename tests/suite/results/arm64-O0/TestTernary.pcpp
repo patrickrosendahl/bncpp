@@ -1,13 +1,6 @@
 // pick(int32_t, int32_t, int32_t) @ 0x4005a8
 {
-    int32_t var_20;
-
-    if (arg1 <= 0)
-        var_20 = arg3 - next_value();
-    else
-        var_20 = arg2 + next_value();
-
-    return (uint64_t)var_20;
+    return (uint64_t)(arg1 <= 0 ? arg3 - next_value() : arg2 + next_value());
 }
 
 // sign_name(int32_t) @ 0x400618

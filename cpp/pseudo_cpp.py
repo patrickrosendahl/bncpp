@@ -503,21 +503,31 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         if cached is not None:
             return cached
         self.inline = {}
+        self._ternary_stmt = {}  # if instr index -> (value, definition instr index, the if's instr indexes)
         folded_idx, names = set(), {}
         hlil = self.function.hlil
         try:
             for body in self.fold_lists(hlil.root):  # a do-while's body ends in its condition (bncpp-12)
                 plan = {}
-                for k in range(len(body) - 1):  # x++ / ++x (bncpp-11): fold_candidate reads plan["incdec"]
-                    self.plan_incdec(body, k, plan)
+                for k in range(len(body) - 1):  # x++ / ++x (bncpp-11), c ? a : b (bncpp-9): fold_candidate
+                    self.plan_incdec(body, k, plan)  # reads plan["incdec"] / plan["ternary"]
+                    self.plan_ternary(body, k, plan)
                 self.plan_folds(body, 0, len(body) - 1, plan)
                 for k in plan.get("folded", ()):
                     folded_idx.add(body[k].instr_index)
+                for j, (_x, value) in plan.get("ternary", {}).items():
+                    d = body[plan["ternary_def"][j]].instr_index
+                    inner = {i.instr_index for i in walk(body[j]) if i.instr_index < 1 << 63}  # (a NOP's is -1)
+                    if j in plan["folded"]:  # the if's lines go, and `T x = b;` of a conditional move with them
+                        self._ternary_stmt[body[j].instr_index] = (None, d, inner)
+                    else:  # printed where the if was, as `T x = c ? a : b;`
+                        self._ternary_stmt[body[j].instr_index] = (value, d, inner)
             # a folded variable declared apart from its assignment loses its declaration with it
             folded_idx.update(i.instr_index for i in walk(hlil.root)
                               if i.operation == Op.HLIL_VAR_DECLARE and i.var in self.inline)
         except Exception:
             self.inline = {}
+            self._ternary_stmt = {}
             folded_idx = set()
         for var in self.inline:
             try:
@@ -533,13 +543,32 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         read replaced by its value, rendered through the base language and spliced in (recursively, so a chain of
         folds collapses). key: (function start, HLIL instruction index) or None."""
         folded = self._fold_plan()
-        if not folded and not self.inline:
+        if not folded and not self.inline and not self._ternary_stmt:
             return keyed
         start = self.function.start
-        out, blank = [], False
+        own = lambda key: key[1] if key is not None and key[0] == start else None
+        drop, repl = set(), {}  # repl: first line of an if -> (its last line, the `T x = c ? a : b;` line)
         empty = lambda ts: not "".join(t.text for t in ts).strip()
-        for toks, key in keyed:
-            if key is not None and key[0] == start and key[1] in folded:
+        for value, d, inner in self._ternary_stmt.values():
+            # (a blank line carries the key of the statement before it: it stays)
+            at = [n for n, (t, key) in enumerate(keyed) if own(key) in inner and not empty(t)]
+            head = [n for n, (t, key) in enumerate(keyed) if own(key) == d and not empty(t)]
+            if value is None:  # folded into its use: all its lines go (fold_lines keeps one blank separator)
+                drop.update(n for n, (_t, key) in enumerate(keyed) if own(key) == d)
+                lines = [n for n, (_t, key) in enumerate(keyed) if own(key) in inner]
+                if lines:
+                    drop.update(range(lines[0], lines[-1] + 1))
+            elif at and len(head) == 1 and head[0] < at[0]:
+                drop.update(n for n, (_t, key) in enumerate(keyed) if own(key) == d)
+                repl[at[0]] = (at[-1], self._ternary_decl(keyed[head[0]][0], value))
+        out, blank = [], False
+        n = -1
+        while n + 1 < len(keyed):
+            n += 1
+            toks, key = keyed[n]
+            if n in repl:
+                n, toks = repl[n]
+            elif n in drop or own(key) in folded:
                 blank = blank or empty(toks)  # a folded definition: its value moved into a later statement
                 continue
             closing = "".join(t.text for t in toks).strip().startswith("}")
@@ -558,31 +587,56 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             return toks
         seen = seen or set()
         out = []
-        for t in toks:
+        for n, t in enumerate(toks):
             var = self._fold_names.get(t.text) if t.type == TT.LocalVariableToken else None
             if var is None or var in seen or var not in self.inline:
                 out.append(t)
                 continue
-            out.extend(self._render_value(self.inline[var], seen | {var}))
+            # the whole value of a `return v;` / `x = v;` needs no parentheses
+            bare = n + 1 < len(toks) and toks[n + 1].text.startswith(";") and \
+                re.search(r"(?:^|\s)(?:return|=)\s*$", "".join(x.text for x in out[-2:])) is not None
+            out.extend(self._render_value(self.inline[var], seen | {var}, bare))
         return out
 
-    def _render_value(self, value, seen):
+    def _expr_tokens(self, e, seen):
+        """e as the base language prints it, with folded temporaries substituted"""
+        lines = self.base().get_expr_text(e, None, P.TopLevelOperatorPrecedence, False)
+        return self._subst_inline(eh_throw._flat([list(l.tokens) for l in lines]), seen)
+
+    def _render_value(self, value, seen, bare=False):
         """a folded value as tokens: the base language's rendering of the expression, with nested folds
-        substituted and parentheses added unless it is atomic. A synthetic ('incdec', ...) value (bncpp-11)
-        renders as `f++` / `++f`."""
+        substituted and parentheses added unless it is atomic (or bare: the whole of a statement's value). A
+        synthetic ('incdec', ...) value (bncpp-11) renders as `f++` / `++f`, a ('ternary', ...) one (bncpp-9) as
+        `c ? a : b`."""
+        paren = lambda ts: ts if bare or _atomic(ts) else [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")]
         if isinstance(value, tuple) and value[0] == "incdec":
-            _, lvalue, step, pre, _store = value
-            lines = self.base().get_expr_text(lvalue, None, P.TopLevelOperatorPrecedence, False)
-            toks = eh_throw._flat([list(l.tokens) for l in lines])
-            toks = self._subst_inline(toks, seen)
+            _, lvalue, step, pre = value[:4]
+            toks = self._expr_tokens(lvalue, seen)
             if len(toks) != 1:  # a memory lvalue `*(T*)addr` must be grouped: `(*(T*)addr)++`, not `*(T*)addr++`
                 toks = [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
             op = tok(TT.OperationToken, "++" if step == "+" else "--")
             return [op] + toks if pre else toks + [op]
-        lines = self.base().get_expr_text(value, None, P.TopLevelOperatorPrecedence, False)
-        toks = eh_throw._flat([list(l.tokens) for l in lines])
-        toks = self._subst_inline(toks, seen)
-        return toks if _atomic(toks) else [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
+        if isinstance(value, tuple) and value[0] == "ternary":
+            return paren(self._ternary_tokens(value, seen))
+        return paren(self._expr_tokens(value, seen))
+
+    def _ternary_tokens(self, value, seen):
+        _, _x, iff, a, b = value
+        cond, a, b = (self._expr_tokens(e, seen) for e in (iff.condition, a, b))
+        group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] if _top_ternary(ts) else ts
+        return group(cond) + [tok(TT.TextToken, " ? ")] + group(a) + [tok(TT.TextToken, " : ")] + b
+
+    def _ternary_decl(self, head, value):
+        """`T x = c ? a : b;` from the line declaring x (`T x;`) or initializing it (`T x = b;`)"""
+        toks = list(head)
+        cut = next((n for n, t in enumerate(toks) if t.text.strip() == "="), None)
+        if cut is not None:
+            toks = toks[:cut]
+        while toks and toks[-1].text.strip() in ("", ";"):
+            toks.pop()
+        if toks and toks[-1].text.endswith(";"):
+            toks[-1] = tok(toks[-1].type, toks[-1].text[:-1])
+        return toks + [tok(TT.TextToken, " = ")] + self._ternary_tokens(value, set()) + [tok(TT.TextToken, ";")]
 
     def emit_token_lines(self, lines, tokens, statement):
         for i, line in enumerate(_brace_do(lines)):
@@ -614,6 +668,20 @@ def _atomic(toks):
             elif ch in ")]":
                 depth -= 1
     return True
+
+
+def _top_ternary(toks):
+    """the tokens hold a ?: outside any parentheses"""
+    depth = 0
+    for t in toks:
+        for ch in t.text:
+            if ch in "([":
+                depth += 1
+            elif ch in ")]":
+                depth -= 1
+            elif ch == "?" and depth == 0:
+                return True
+    return False
 
 
 def _text(line):

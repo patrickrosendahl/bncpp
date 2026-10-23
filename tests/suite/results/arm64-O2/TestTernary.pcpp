@@ -10,9 +10,7 @@
 
 // sign_name(int32_t) @ 0x4005e8
 {
-    char const* const result;
-
-    result = !arg1 ? "zero" : "positive";
+    char const* const result = !arg1 ? "zero" : "positive";
 
     if (arg1 < 0)
         return "negative";

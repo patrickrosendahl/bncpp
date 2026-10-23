@@ -3,19 +3,13 @@
     int64_t rax;
     int64_t var_28 = rax;
     int32_t rax_1 = next_value();
-    int32_t rbx_2;
 
-    rbx_2 = arg1 > 0 ? arg2 + rax_1 : arg3 - rax_1;
-
-    return (uint64_t)rbx_2;
+    return (uint64_t)(arg1 > 0 ? arg2 + rax_1 : arg3 - rax_1);
 }
 
 // sign_name(int32_t) @ 0x4005d0
 {
-    char const* const result = "positive";
-
-    if (!arg1)
-        result = "zero";
+    char const* const result = !arg1 ? "zero" : "positive";
 
     if (arg1 >= 0)
         return result;

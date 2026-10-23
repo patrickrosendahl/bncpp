@@ -34,6 +34,22 @@ def strip_strings(text):
     return re.sub(r'"(\\.|[^"\\])*"', '""', text)
 
 
+def _strip_offset_types(code):
+    """code with the arguments of BN's pointer-into-a-struct type syntax `__offset(T, 0x14)` dropped: T is a
+    type (`__func<pick_fn(int32_t const*), int32_t (int32_t)>`), its parentheses are no calls"""
+    out, pos = [], 0
+    for m in re.finditer(r"\b__offset\(", code):
+        if m.start() < pos:
+            continue
+        depth, j = 1, m.end()
+        while j < len(code) and depth:
+            depth += {"(": 1, ")": -1}.get(code[j], 0)
+            j += 1
+        out.append(code[pos:m.end()] + ")")
+        pos = j
+    return "".join(out) + code[pos:]
+
+
 def strip_comments(text):
     """line comments and block comments removed (string literals kept)"""
     return re.sub(r'("(?:\\.|[^"\\])*")|//[^\n]*|/\*.*?\*/', lambda m: m.group(1) or "", text, flags=re.S)
@@ -48,7 +64,7 @@ def string_literals(text):
 def called_names(text, ignore=()):
     """the names written in front of '(' (the last component of a qualified name), keywords and ignore (names or
     a regex they fully match) dropped"""
-    code = strip_strings(text)
+    code = _strip_offset_types(strip_strings(text))
     names = set(re.findall(r"(?<![\w$])([A-Za-z_$~][\w$]*)\s*\(", code))
     drop = ignore.fullmatch if hasattr(ignore, "fullmatch") else ignore.__contains__
     return {n for n in names if n not in KEYWORDS and not drop(n)}

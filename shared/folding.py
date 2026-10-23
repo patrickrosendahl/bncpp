@@ -109,6 +109,18 @@ class FoldMixin:
             value = (self.inline or {}).get(e.var)
             if value is not None and not isinstance(value, tuple):
                 return self.eval_nodes(value, stop_var, out)
+            if isinstance(value, tuple) and value[0] == "ternary":
+                # c ? a : b: the condition runs first; a and b only maybe -- their nodes count (a call in either
+                # still runs before what follows), but nothing can be moved into them
+                r = self.eval_nodes(value[2].condition, stop_var, out)
+                if r[1] is not False:
+                    return r
+                for v in value[3:5]:
+                    if stop_var is not None and self.refs(v, stop_var):
+                        return out, None
+                    self.eval_nodes(v, None, out)
+            elif isinstance(value, tuple) and value[0] == "incdec":
+                self.eval_nodes(value[5], None, out)  # f++ is the store to f
             out.append(e)
             return out, False
         # the right operand of a short-circuit && / || is only evaluated when the left allows it
@@ -271,7 +283,65 @@ class FoldMixin:
             if step is None or not is_t(val):
                 return
             pre = True
-        plan.setdefault("incdec", {})[k] = (t, ("incdec", dest, step, pre, k + 1))
+        plan.setdefault("incdec", {})[k] = (t, ("incdec", dest, step, pre, k + 1, st))
+
+    # --- c ? a : b (bncpp-9) ----------------------------------------------------------------------------
+
+    def plan_ternary(self, body, k, plan):
+        """`T x; if (c) x = a; else x = b;` / `T x = b; if (c) x = a;` (a conditional move) with body[k] the
+        declaration / initialization, x set nowhere else and read once more -> plan["ternary"][index of the if] =
+        (x, ("ternary", x, if, a, b)) and plan["ternary_def"][that index] = k. plan_fold folds it into x's use like
+        a temporary; where it cannot, the language prints `T x = c ? a : b;`. a and b: free of side effects or a
+        single call (each only runs on its own branch, as before)."""
+        s = body[k]
+        if k in plan.get("skip", ()):
+            return
+        if s.operation == Op.HLIL_VAR_DECLARE and self.declared(s.var):
+            x, init = s.var, None
+        elif s.operation == Op.HLIL_VAR_INIT and self.def_count(s.dest) == 1:
+            x, init = s.dest, s.src
+        else:
+            return
+        if x in self._addr_taken() or not self.foldable_var(x):
+            return
+        j = k + 1
+        while j < len(body) and self.fold_transparent(body, j, plan):
+            j += 1
+        if j >= len(body) or j in plan.get("ternary", {}) or j in plan.get("skip", ()):
+            return
+        iff = body[j]
+        if iff.operation != Op.HLIL_IF or self.refs(iff.condition, x):
+            return
+        branches = [iff.true] if init is not None else [iff.true, iff.false]
+        if init is not None and iff.false.operation not in (Op.HLIL_NOP,):
+            return
+        values = []
+        for b in branches:
+            items = list(b.body) if b.operation == Op.HLIL_BLOCK else [b]
+            if len(items) != 1 or items[0].operation != Op.HLIL_ASSIGN or \
+                    items[0].dest.operation != Op.HLIL_VAR or items[0].dest.var != x:
+                return
+            v = items[0].src
+            if self.refs(v, x) or not self.ternary_value(v):
+                return
+            values.append(v)
+        if init is not None:
+            # the initial value now runs after the condition, and only when it fails
+            if self.refs(init, x) or not self.pure(init) or not self.pure(iff.condition):
+                return
+            values.append(init)
+        if self.var_count(x) - self.refs(iff, x) != 1:
+            return  # read once besides the assignments
+        plan.setdefault("ternary", {})[j] = (x, ("ternary", x, iff, values[0], values[1]))
+        plan.setdefault("ternary_def", {})[j] = k
+
+    def ternary_value(self, v):
+        """a value a conditional expression may hold: free of side effects, or with a single call as its only one;
+        no conditional inside it (a bool-to-int `c ? 1 : 0` only as the whole value: it reads as `&&` / `||`)"""
+        if any(i.operation == Op.HLIL_BOOL_TO_INT for i in walk(v) if i is not v and i.expr_index != v.expr_index):
+            return False
+        effects = [i for i in self.eval_nodes(v)[0] if self.side_effect(i)]
+        return not effects or (len(effects) == 1 and effects[0].operation == Op.HLIL_CALL)
 
 
 def _continues(body):

@@ -1206,14 +1206,8 @@
 
 // pick_fn(int32_t const*, int32_t, int32_t)::$_0::operator()(struct pick_fn(int32_t const*, int32_t, int32_t)::$_0* this, int32_t) const @ 0x402688
 {
-    int32_t var_1c;
-
-    if (arg2 & 0x80000000 || arg2 >= *(uint32_t*)((char*)this + 8))
-        var_1c = *(uint32_t*)((char*)this + 0xc);
-    else
-        var_1c = *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
-
-    return (uint64_t)var_1c;
+    return (uint64_t)(arg2 & 0x80000000 || arg2 >= *(uint32_t*)((char*)this + 8) ?
+        *(uint32_t*)((char*)this + 0xc) : *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2)));
 }
 
 // std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this, int32_t&&) const @ 0x4026f4
@@ -1397,13 +1391,6 @@
     if (arg2 < *(uint32_t*)this)
         return (uint64_t)*(uint32_t*)this;
 
-    int32_t var_20_1;
-
-    if (arg2 <= *(uint32_t*)((char*)this + 4))
-        var_20_1 = arg2;
-    else
-        var_20_1 = *(uint32_t*)((char*)this + 4);
-
-    return (uint64_t)var_20_1;
+    return (uint64_t)(arg2 <= *(uint32_t*)((char*)this + 4) ? arg2 : *(uint32_t*)((char*)this + 4));
 }
 

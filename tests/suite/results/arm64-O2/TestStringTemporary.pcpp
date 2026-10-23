@@ -15,9 +15,8 @@
     uint64_t x8 = (uint64_t)var_21;
     int32_t x9 = (int32_t)(char)(uint32_t)x8;
     char* var_38;
-    char* x1_1;
 
-    x1_1 = x9 < 0 ? var_38 : &var_38;
+    char* x1_1 = x9 < 0 ? var_38 : &var_38;
 
     uint64_t x2;
     uint64_t var_30;
