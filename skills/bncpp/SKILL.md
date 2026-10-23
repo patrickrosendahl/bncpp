@@ -10,9 +10,10 @@ Documentation: miniwiki project `bncpp` (skill `miniwiki-api`); backlog: minitic
 script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bridge`.
 
 ## Workflow per ticket
-1. `export MINITICK_URL=http://192.168.1.147:8000`; `minitick get -p bncpp N --expand comment`; set it
-   IN PROGRESS (`minitick update -p bncpp N -f status="IN PROGRESS"`). Wiki: `miniwiki --api-url
-   http://192.168.1.147:8001 …`.
+1. `minitick get -p bncpp N --expand comment`; set it IN PROGRESS (`minitick update -p bncpp N -f
+   status="IN PROGRESS"`). Wiki: `miniwiki …`. Both CLIs find their servers through `MINITICK_URL` /
+   `MINIWIKI_API_URL` from the shell profile (set up per machine); if the Bash tool's shell lacks them, use
+   `http://musicmac.local:8000` / `:8001` -- never a numeric LAN address (musicmac's Wi-Fi one rotates).
 2. Read the binary-jvm equivalent first (wiki `reuse-from-binary-jvm.md`).
 3. Change the code; add or extend a suite test (`tests/suite/src/TestX.cpp` + `TESTS` in `suite.py`).
 4. `suite.py build` (if sources changed) → `bn_dev_load.py` → `bn_dump.py` → `suite.py compare --diff`;
