@@ -1,0 +1,32 @@
+// call_once(int32_t) @ 0x4005a0
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    return (uint64_t)(next_value() + arg1);
+}
+
+// arith_once(int32_t, int32_t, int32_t, int32_t) @ 0x4005c0
+{
+    return (uint64_t)(arg2 * arg3 + arg1 - arg4);
+}
+
+// side_effect_between(int32_t) @ 0x4005d0
+{
+    int32_t rax = next_value();
+    log_line("between");
+    return (uint64_t)(rax + arg1);
+}
+
+// two_calls(int32_t) @ 0x400600
+{
+    return (uint64_t)(next_value() - (next_value() + arg1));
+}
+
+// used_twice(int32_t) @ 0x400630
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int32_t rax_1 = next_value();
+    return (uint64_t)(rax_1 * rax_1 + arg1);
+}
+

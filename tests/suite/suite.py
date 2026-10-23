@@ -52,6 +52,7 @@ TESTS = [
     "TestStringTemporary",    # library destructors on the unwind path
     "TestCatchClass",         # the program's own exception classes: throw statements, typed catch objects
     # readability passes (from binary-jvm)
+    "TestFolding",            # fold single-use temporaries into their use, evaluation-order safe (bncpp-13)
     "TestTernary",
     "TestBooleanReturn",
     "TestIncrement",

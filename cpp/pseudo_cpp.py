@@ -18,14 +18,20 @@ from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render, eh_throw
 from ..shared import regions as _regions
+from ..shared.folding import FoldMixin
 from ..shared.hlil import walk
 
 Op = HighLevelILOperation
 P = OperatorPrecedence
 _DEREF_CAST = re.compile(r"^\*\s*\([\w:<> ]+\*\)$")  # '*(uint32_t*)' before a begin_catch
+# a load / field / array read; cpp's reads_memory hook (folding.py: a value that is not pure cannot move past one)
+_READS_MEM = (Op.HLIL_DEREF, Op.HLIL_DEREF_FIELD, Op.HLIL_ARRAY_INDEX, Op.HLIL_STRUCT_FIELD)
+# a node that, evaluated, runs a call or writes memory; folding.py refuses to move a value past one
+_SIDE_EFFECT = (Op.HLIL_CALL, Op.HLIL_TAILCALL, Op.HLIL_SYSCALL, Op.HLIL_ASSIGN, Op.HLIL_VAR_INIT,
+                Op.HLIL_ASSIGN_UNPACK)
 
 
-class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
+class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
     comment_start_string = "// "
     annotation_start_string = "/* "
     annotation_end_string = " */"
@@ -469,7 +475,94 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
         """instr as the built-in language prints it"""
         # BN passes settings with no option set here; handing them on drops Pseudo C's type casts
         lines = self.base().get_expr_text(instr, None, precedence, statement)
-        self.emit_token_lines([t for t, _k in self.throws(lines)], tokens, statement)
+        keyed = self.throws(lines)
+        hlil = self.function.hlil
+        if statement and hlil is not None and hlil.root is not None and instr.expr_index == hlil.root.expr_index:
+            keyed = self.fold_lines(keyed)  # readability passes on the whole function (bncpp-13)
+        self.emit_token_lines([t for t, _k in keyed], tokens, statement)
+
+    # --- readability passes (folding single-use temporaries, bncpp-13) -------------------------------------
+
+    def side_effect(self, i):
+        """FoldMixin hook: the node, evaluated, runs a call or writes memory"""
+        return i.operation in _SIDE_EFFECT
+
+    def reads_memory(self, i):
+        """FoldMixin hook: the node reads memory"""
+        return i.operation in _READS_MEM
+
+    def foldable_var(self, var):
+        """FoldMixin hook: a variable that may fold into its use. Folding runs only on functions with no try
+        regions for now (emit_base), so there are no exception temporaries to protect here."""
+        return True
+
+    def _fold_plan(self):
+        """{instruction index of a folded definition} for this function; fills self.inline (var -> value).
+        Run per HLIL block so a temporary folds into its use within the same block, in order."""
+        cached = getattr(self, "_folded_idx", None)
+        if cached is not None:
+            return cached
+        self.inline = {}
+        folded_idx, names = set(), {}
+        hlil = self.function.hlil
+        try:
+            for blk in walk(hlil.root):
+                if blk.operation != Op.HLIL_BLOCK:
+                    continue
+                body = list(blk.body)
+                plan = {}
+                self.plan_folds(body, 0, len(body) - 1, plan)
+                for k in plan.get("folded", ()):
+                    folded_idx.add(body[k].instr_index)
+        except Exception:
+            self.inline = {}
+            folded_idx = set()
+        for var in self.inline:
+            try:
+                names[var.name] = var
+            except Exception:
+                pass
+        self._fold_names = names  # display name -> variable, for the token splice
+        self._folded_idx = folded_idx
+        return folded_idx
+
+    def fold_lines(self, keyed):
+        """keyed [(tokens, key)] -> the lines with each folded definition dropped and each folded variable's one
+        read replaced by its value, rendered through the base language and spliced in (recursively, so a chain of
+        folds collapses). key: (function start, HLIL instruction index) or None."""
+        folded = self._fold_plan()
+        if not folded and not self.inline:
+            return keyed
+        start = self.function.start
+        out = []
+        for toks, key in keyed:
+            if key is not None and key[0] == start and key[1] in folded:
+                continue  # a folded definition: its value moved into a later statement
+            out.append((self._subst_inline(list(toks)), key))
+        return out
+
+    def _subst_inline(self, toks, seen=None):
+        """replace each LocalVariableToken of a folded variable with its value's tokens (parenthesized unless
+        atomic); seen guards against a (never expected) fold cycle"""
+        if not self.inline:
+            return toks
+        seen = seen or set()
+        out = []
+        for t in toks:
+            var = self._fold_names.get(t.text) if t.type == TT.LocalVariableToken else None
+            if var is None or var in seen or var not in self.inline:
+                out.append(t)
+                continue
+            out.extend(self._render_value(self.inline[var], seen | {var}))
+        return out
+
+    def _render_value(self, value, seen):
+        """a folded value as tokens: the base language's rendering of the expression, with nested folds
+        substituted and parentheses added unless it is atomic"""
+        lines = self.base().get_expr_text(value, None, P.TopLevelOperatorPrecedence, False)
+        toks = eh_throw._flat([list(l.tokens) for l in lines])
+        toks = self._subst_inline(toks, seen)
+        return toks if _atomic(toks) else [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
 
     def emit_token_lines(self, lines, tokens, statement):
         for i, line in enumerate(lines):
@@ -481,6 +574,26 @@ class PseudoCppFunction(TokenMixin, LanguageRepresentationFunction):
             tokens.append(line)
         if statement:
             tokens.new_line()
+
+
+_OPS = set("+ - * / % & | ^ << >> < > <= >= == != && || ? :".split())
+
+
+def _atomic(toks):
+    """the token sequence is a primary expression (a variable, constant, call, index, member access, a cast of
+    one, or already fully parenthesized): it needs no parentheses when spliced into a larger expression. True when
+    there is no binary / ternary operator at the top level (a leading unary at index 0 binds tight enough)."""
+    depth = 0
+    for i, t in enumerate(toks):
+        s = t.text
+        if 0 < i < len(toks) - 1 and depth == 0 and s.strip() in _OPS:
+            return False
+        for ch in s:
+            if ch in "([":
+                depth += 1
+            elif ch in ")]":
+                depth -= 1
+    return True
 
 
 def _text(line):
