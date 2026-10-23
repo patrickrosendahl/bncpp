@@ -1,0 +1,292 @@
+// at_index(std::vector<int32_t> const&, uint64_t) @ 0x4005f8
+{
+    int64_t x8 = *(uint64_t*)arg1;
+
+    if (arg2 < (*(uint64_t*)((char*)arg1 + 8) - x8) >> 2)
+        return (uint64_t)*(uint32_t*)(x8 + (arg2 << 2));
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t lr;
+    int64_t var_8 = lr;
+    std::vector<int32_t>::__throw_out_of_range[abi:nqe210106](arg1);
+    /* no return */
+}
+
+// guarded_at(std::vector<int32_t> const&, uint64_t) @ 0x40061c
+{
+    // exception table (LSDA 0x400a48): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400624..0x400628 -> 0x400630 sub_400630: catch (std::out_of_range) #1
+
+    try
+    {
+        return at_index(arg1, arg2);
+    }
+    catch (std::out_of_range& e)
+    {
+        return 0xffffffff;
+    }
+}
+
+// sub_400630 @ 0x400630
+{
+    // landing pad of guarded_at(std::vector<int32_t> const&, uint64_t) @ 0x40061c
+    //   from 0x400624..0x400628: catch (std::out_of_range) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 0xffffffff;
+}
+
+// tail_of(std::string const&, uint64_t) @ 0x400644
+{
+    std::string const& x20 = arg1;
+    int64_t x8 = (int64_t)*(uint8_t*)((char*)arg1 + 0x17);
+
+    if (x8 & 0x8000000000000000)
+    {
+        x8 = *(uint64_t*)((char*)x20 + 8);
+
+        if (arg2 > x8)
+        {
+            std::string::__throw_out_of_range[abi:nqe210106](arg1);
+            /* no return */
+        }
+
+        x20 = *(uint64_t*)x20;
+    }
+    else if (arg2 > x8)
+    {
+        std::string::__throw_out_of_range[abi:nqe210106](arg1);
+        /* no return */
+    }
+
+    int64_t __len = x8 - arg2;
+
+    if (__len >= 0x7ffffffffffffff7)
+    {
+        std::string::__throw_length_error[abi:nqe210106](arg1);
+        /* no return */
+    }
+
+    char* var_58;
+    int64_t var_50;
+    char result_1;
+    char* x22;
+
+    if (__len >= 0x17)
+    {
+        int64_t x8_1 = __len | 7;
+        uint64_t x23_1;
+
+        x23_1 = x8_1 == 0x17 ? 0x19 : x8_1 + 1;
+
+        char* x0_1 = operator new(x23_1);
+        x22 = x0_1;
+        var_50 = __len;
+        int64_t var_48_1 = x23_1 | 0x8000000000000000;
+        var_58 = x0_1;
+        _memmove(x22, (char*)x20 + arg2, __len);
+    }
+    else
+    {
+        result_1 = (char)(uint32_t)__len;
+        x22 = &var_58;
+
+        if (x8 != arg2)
+            _memmove(x22, (char*)x20 + arg2, __len);
+    }
+
+    x22[__len] = 0;
+    int64_t result = (int64_t)result_1;
+
+    if (result & 0x8000000000000000)
+    {
+        result = var_50;
+        operator delete(var_58);
+    }
+
+    return result;
+}
+
+// guarded_tail(std::string const&, uint64_t) @ 0x400728
+{
+    // exception table (LSDA 0x400a5c): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400730..0x400734 -> 0x40073c sub_40073c: catch (std::logic_error) #1
+
+    try
+    {
+        return tail_of(arg1, arg2);
+    }
+    catch (std::logic_error& e)
+    {
+        return 0;
+    }
+}
+
+// sub_40073c @ 0x40073c
+{
+    // landing pad of guarded_tail(std::string const&, uint64_t) @ 0x400728
+    //   from 0x400730..0x400734: catch (std::logic_error) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 0;
+}
+
+// fail(int32_t) @ 0x400750
+{
+    // exception table (LSDA 0x400a70): 1 of 3 call sites have a landing pad
+    //   0x400784..0x400788 -> 0x4007a0 sub_4007a0: cleanup
+
+    throw std::runtime_error(arg1 < 0xffffff9c ? "far below" : "below");
+}
+
+// sub_4007a0 @ 0x4007a0
+{
+    // landing pad of fail(int32_t) @ 0x400750
+    //   from 0x400784..0x400788: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// checked(int32_t) @ 0x4007b4
+{
+    if (!(arg1 & 0x80000000))
+        return (uint64_t)(arg1 * 3);
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t lr;
+    int64_t var_8 = lr;
+    fail(arg1);
+    /* no return */
+}
+
+// guarded_checked(int32_t) @ 0x4007cc
+{
+    // exception table (LSDA 0x400a80): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4007d4..0x4007d8 -> 0x4007e0 sub_4007e0: catch (std::runtime_error) #1
+
+    try
+    {
+        return checked(arg1);
+    }
+    catch (std::runtime_error& e)
+    {
+        return 0;
+    }
+}
+
+// sub_4007e0 @ 0x4007e0
+{
+    // landing pad of guarded_checked(int32_t) @ 0x4007cc
+    //   from 0x4007d4..0x4007d8: catch (std::runtime_error) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 0;
+}
+
+// guarded_wrong(int32_t) @ 0x4007f4
+{
+    // exception table (LSDA 0x400a94): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4007fc..0x400800 -> 0x400808 sub_400808: catch (std::range_error) #1
+
+    try
+    {
+        return checked(arg1);
+    }
+    catch (std::range_error& e)
+    {
+        return 1;
+    }
+}
+
+// sub_400808 @ 0x400808
+{
+    // landing pad of guarded_wrong(int32_t) @ 0x4007f4
+    //   from 0x4007fc..0x400800: catch (std::range_error) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 1;
+}
+
+// std::vector<int32_t>::__throw_out_of_range[abi:nqe210106](struct std::vector<int32_t>* this) @ 0x40081c
+{
+    char* entry_x1;
+    std::__throw_out_of_range[abi:nqe210106]("vector", entry_x1);
+    /* no return */
+}
+
+// std::__throw_out_of_range[abi:nqe210106](struct std* this, char const*) @ 0x400830
+{
+    // exception table (LSDA 0x400aa8): 1 of 3 call sites have a landing pad
+    //   0x40084c..0x400854 -> 0x40086c sub_40086c: cleanup
+
+    struct std::out_of_range* thrown_exception = ___cxa_allocate_exception(0x10);
+    std::out_of_range::out_of_range[abi:nqe210106](thrown_exception, this);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::out_of_range,
+        std::out_of_range::~out_of_range);
+    /* no return */
+}
+
+// sub_40086c @ 0x40086c
+{
+    // landing pad of std::__throw_out_of_range[abi:nqe210106](struct std* this, char const*) @ 0x400830
+    //   from 0x40084c..0x400854: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::out_of_range::out_of_range[abi:nqe210106](struct std::out_of_range* this, char const*) @ 0x400880
+{
+    *(uint64_t*)std::logic_error::logic_error(this, arg2) = _vtable_for_std::out_of_range + 0x10;
+}
+
+// std::string::__throw_out_of_range[abi:nqe210106](std::string* this) @ 0x4008a4
+{
+    char* entry_x1;
+    std::__throw_out_of_range[abi:nqe210106]("basic_string", entry_x1);
+    /* no return */
+}
+
+// std::string::__throw_length_error[abi:nqe210106](std::string* this) @ 0x4008b8
+{
+    char* entry_x1;
+    std::__throw_length_error[abi:nqe210106]("basic_string", entry_x1);
+    /* no return */
+}
+
+// std::__throw_length_error[abi:nqe210106](struct std* this, char const*) @ 0x4008cc
+{
+    // exception table (LSDA 0x400ab8): 1 of 3 call sites have a landing pad
+    //   0x4008e8..0x4008f0 -> 0x400908 sub_400908: cleanup
+
+    struct std::length_error* thrown_exception = ___cxa_allocate_exception(0x10);
+    std::length_error::length_error[abi:nqe210106](thrown_exception, this);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::length_error,
+        std::length_error::~length_error);
+    /* no return */
+}
+
+// sub_400908 @ 0x400908
+{
+    // landing pad of std::__throw_length_error[abi:nqe210106](struct std* this, char const*) @ 0x4008cc
+    //   from 0x4008e8..0x4008f0: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::length_error::length_error[abi:nqe210106](struct std::length_error* this, char const*) @ 0x40091c
+{
+    *(uint64_t*)std::logic_error::logic_error(this, arg2) = _vtable_for_std::length_error + 0x10;
+}
+

@@ -341,13 +341,14 @@ def _scalar(keys):
     return False
 
 
-def thrown_types(func):
-    """the typeinfos func passes to ___cxa_throw (addresses), from its HLIL"""
-    return list(dict.fromkeys(t for _site, t in throw_sites(func)))
+def thrown_types(func, throwers=None):
+    """the typeinfos func throws (addresses; a std helper's class name), from its HLIL"""
+    return list(dict.fromkeys(t for _site, t in throw_sites(func, throwers)))
 
 
-def throw_sites(func):
-    """[(call address, typeinfo address)] of func's calls to ___cxa_throw, from its HLIL"""
+def throw_sites(func, throwers=None):
+    """[(call address, typeinfo)] of func's calls to ___cxa_throw with a constant typeinfo, from its HLIL; with
+    throwers (throwers()), also its calls to a function that only throws, with that function's types (bncpp-92)"""
     from binaryninja import HighLevelILOperation as Op
     from ..shared.hlil import walk
     out = []
@@ -355,9 +356,45 @@ def throw_sites(func):
     if hlil is None or hlil.root is None:
         return out
     for i in walk(hlil.root):
-        if i.operation in (Op.HLIL_CALL, Op.HLIL_TAILCALL) and str(i.dest).lstrip("_") == "cxa_throw" and \
-                len(i.params) >= 2 and hasattr(i.params[1], "constant") and (i.address, i.params[1].constant) not in out:
-            out.append((i.address, i.params[1].constant))
+        if i.operation not in (Op.HLIL_CALL, Op.HLIL_TAILCALL):
+            continue
+        if str(i.dest).lstrip("_") == "cxa_throw":
+            if len(i.params) >= 2 and hasattr(i.params[1], "constant") and (i.address, i.params[1].constant) not in out:
+                out.append((i.address, i.params[1].constant))
+        elif throwers and i.dest.operation in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT) and i.dest.constant in throwers:
+            out += [(i.address, t) for t in throwers[i.dest.constant] if (i.address, t) not in out]
+    return out
+
+
+def throwers(bv, demangle=None):
+    """{function address: [typeinfo]}: the functions a call to is a throw of known types (bncpp-92) -- the library's
+    helpers by name (std_exceptions.thrower_class: imports, and locals), and local functions BN knows cannot return
+    whose throws all have a constant typeinfo (own wrappers around a throw, libc++'s inline __throw_X helpers),
+    closed over their callers that cannot return either; a scanned typeinfo wins over the name's class.
+    demangle(raw) -> a qualified name, for symbols BN keeps mangled"""
+    named, todo = {}, []
+    for f in bv.functions:
+        name = f.symbol.full_name
+        if demangle is not None and name.lstrip("_").startswith("ZN"):  # BN kept it mangled
+            name = demangle(f.symbol.raw_name) or name
+        cls = std_exceptions.thrower_class(name)
+        if cls is not None:
+            named[f.start] = [cls]
+        if f.name.lstrip("_") == "cxa_throw" or cls is not None:
+            todo += [r.function for r in bv.get_code_refs(f.start) if r.function is not None]
+    out, seen = dict(named), set()
+    while todo:
+        f = todo.pop()
+        if f.start in seen:
+            continue
+        seen.add(f.start)
+        if f.can_return.value:  # (BoolWithConfidence)
+            continue
+        types = thrown_types(f, out)
+        if not types:
+            continue
+        out[f.start] = types
+        todo += [r.function for r in bv.get_code_refs(f.start) if r.function is not None]
     return out
 
 
@@ -384,17 +421,18 @@ def register_command(prefix):
             img = BNImage(self.bv)
             edges = callgraph.edges(self.bv, bncache.Cache(self.bv))
             guards = [h.start for h, _t in landing_pads.terminate_helpers(self.bv)]
-            sites = [a for a, _t in throw_sites(self.func)]
+            thr = throwers(self.bv, img.demangle)
+            sites = [a for a, _t in throw_sites(self.func, thr)]
             from . import rtti, rtti_names
             from .eh_virtual import VirtualCallers
             types = rtti.scan(img)
             labels = rtti_names.labels(types, img.demangle, rtti_names.label_overrides(types, img.symbol_at))
-            t = Trace(self.bv, img, edges, thrown_types(self.func), rtti_bases(img), guards,
+            t = Trace(self.bv, img, edges, thrown_types(self.func, thr), rtti_bases(img), guards,
                       VirtualCallers(self.bv, types, labels))
             t.run(sites=sites) if sites else t.run([self.func.start])  # no throw here: it leaves this function
             t.annotate()
             log_info("%s: exception path from %s (thrown: %s)\n%s" % (
-                prefix, self.func.symbol.full_name, ", ".join(map(str, thrown_types(self.func))) or "unknown",
+                prefix, self.func.symbol.full_name, ", ".join(map(str, thrown_types(self.func, thr))) or "unknown",
                 "\n".join(t.report())))
 
     PluginCommand.register_for_function(

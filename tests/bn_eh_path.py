@@ -2,11 +2,12 @@
 #   bnrun --bndb DB --timeout 600 --env FROM=0x10032b410|name[,…] [--env TI=0x1009d0bb0|typeinfo_for_X[,…]] \
 #         [--env BASES=1] [--env VIRTUAL=0] [--env APPLY=1] tests/bn_eh_path.py
 # bncpp-24: what the functions at FROM throw, followed up the direct callers (cpp/eh_path.py): who catches it,
-# where it terminates, where it leaves the known call graph. TI: the thrown typeinfos (default: the ones FROM
-# passes to ___cxa_throw, starting at those throw sites; none: unknown, every catch (T) is a 'may catch'). BASES=1: base classes from the class
-# scan (slow on big binaries). VIRTUAL=0: direct callers only (default: also the virtual call sites of a function in a
-# vtable, through the X::VTable members BN has references to -- cpp/eh_virtual.py, bncpp-66). Review: .scratch/eh/<binary>.path.review (the report, then one line per call site
-# with the comment APPLY would set). APPLY=1 sets the comments (in RAM; never over another comment).
+# where it terminates, where it leaves the known call graph. TI: the thrown typeinfos (default: the ones FROM passes
+# to ___cxa_throw or to a function that only throws (bncpp-92), starting at those throw sites; none: unknown, every
+# catch (T) is a 'may catch'). BASES=1: base classes from the class scan (slow on big binaries). VIRTUAL=0: direct
+# callers only (default: also the virtual call sites of a function in a vtable, through the X::VTable members BN has
+# references to -- cpp/eh_virtual.py, bncpp-66). Review: .scratch/eh/<binary>.path.review (the report, then one line
+# per call site with the comment APPLY would set). APPLY=1 sets the comments (in RAM; never over another comment).
 import importlib, os, time
 import binaryninja as _bn
 
@@ -44,13 +45,15 @@ for t in (_get("TI") or "").split(","):
     if t:
         _ti.append(int(t, 16) if t.startswith("0x") else t)
 _sites = []
-if not _ti:  # what FROM throws: start at its throw sites (a throw in a catch body decides in its owner's table)
+_img = _bnimage.BNImage(bv)
+_thr = {}
+if not _ti:  # what FROM throws: start at its throw sites (a throw in a catch body decides in its owner's table),
+    _thr = _ep.throwers(bv, _img.demangle)  # calls to functions that only throw included (bncpp-92)
     for a in _from:
         f = bv.get_function_at(a)
-        for site, t in (_ep.throw_sites(f) if f else []):
+        for site, t in (_ep.throw_sites(f, _thr) if f else []):
             _sites.append(site)
             _ti += [t] if t not in _ti else []
-_img = _bnimage.BNImage(bv)
 _edges = _cg.edges(bv, _cache.Cache(bv))
 _bases = _ep.rtti_bases(_img) if _get("BASES") == "1" else None
 _guards = [h.start for h, _t in _lp.terminate_helpers(bv)]
@@ -67,8 +70,9 @@ _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _out = os.path.join(REPO, ".scratch/eh")
 os.makedirs(_out, exist_ok=True)
-_lines = ["thrown: %s; terminate helpers: %s" % (", ".join("%#x" % t if isinstance(t, int) else t for t in _ti) or
-                                                 "unknown", ", ".join("%#x" % g for g in _guards) or "none")]
+_lines = ["thrown: %s; terminate helpers: %s; throwers: %d" % (
+    ", ".join("%#x" % t if isinstance(t, int) else t for t in _ti) or "unknown",
+    ", ".join("%#x" % g for g in _guards) or "none", len(_thr))]
 _lines += _tr.report() + [""] + ["%#x %-10s %s" % (st.site, st.kind, _tr.comment(st)) for st in _tr.all_steps()]
 with open(os.path.join(_out, _name + ".path.review"), "w", encoding="utf-8") as fh:
     fh.write("\n".join(_lines) + "\n")

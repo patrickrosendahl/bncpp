@@ -37,6 +37,37 @@ BASES = {
     "std::bad_optional_access": ("std::exception",),
 }
 
+# the library's throw helpers (bncpp-92): libc++'s inline std::__1::__throw_X (also as members of vector / basic_string
+# ...), libstdc++'s exported std::__throw_X -- a call to one is a throw of the class
+THROWERS = {
+    "__throw_out_of_range": "std::out_of_range",
+    "__throw_out_of_range_fmt": "std::out_of_range",
+    "__throw_length_error": "std::length_error",
+    "__throw_logic_error": "std::logic_error",
+    "__throw_invalid_argument": "std::invalid_argument",
+    "__throw_domain_error": "std::domain_error",
+    "__throw_runtime_error": "std::runtime_error",
+    "__throw_range_error": "std::range_error",
+    "__throw_overflow_error": "std::overflow_error",
+    "__throw_underflow_error": "std::underflow_error",
+    "__throw_regex_error": "std::regex_error",
+    "__throw_system_error": "std::system_error",
+    "__throw_ios_failure": "std::ios_base::failure",
+    "__throw_failure": "std::ios_base::failure",
+    "__throw_format_error": "std::format_error",
+    "__throw_future_error": "std::future_error",
+    "__throw_bad_alloc": "std::bad_alloc",
+    "__throw_bad_array_new_length": "std::bad_array_new_length",
+    "__throw_bad_cast": "std::bad_cast",
+    "__throw_bad_any_cast": "std::bad_any_cast",
+    "__throw_bad_typeid": "std::bad_typeid",
+    "__throw_bad_exception": "std::bad_exception",
+    "__throw_bad_function_call": "std::bad_function_call",
+    "__throw_bad_weak_ptr": "std::bad_weak_ptr",
+    "__throw_bad_optional_access": "std::bad_optional_access",
+    "__throw_bad_variant_access": "std::bad_variant_access",
+}
+
 _PREFIX = re.compile(r"^(?:typeinfo[ _]for[ _]|_*ZTI)")
 
 
@@ -55,6 +86,15 @@ def class_name(key):
         return None
     name = "::".join(p for p in name.split("::") if not p.startswith("__"))  # __1, __fs, __cxx11
     return name if name in BASES else None
+
+
+def thrower_class(name):
+    """the std class a library throw helper throws, by its demangled name (`std::__1::__throw_out_of_range[abi:x]
+    (char const*)`, `std::__1::vector<int>::__throw_out_of_range()`, `std::__throw_bad_alloc()`), else None"""
+    if not isinstance(name, str) or not name.startswith("std::"):
+        return None
+    base = re.sub(r"\[abi:[^\]]*\]", "", name.split("(")[0])
+    return THROWERS.get(base.rsplit("::", 1)[-1])
 
 
 def bases(name):

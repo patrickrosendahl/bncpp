@@ -1,0 +1,25 @@
+guarded_at(std::vector<int32_t> const&, uint64_t)  lsda base+0xd3c  lpstart +0x0  2 call sites
+  +0x1c  .. +0x24  lp +0x34  catch(typeinfo_for_std::out_of_range)
+  +0x24  .. +0x88  unwind
+
+guarded_tail(std::string const&, uint64_t)  lsda base+0xd50  lpstart +0x0  2 call sites
+  +0x1c  .. +0x24  lp +0x34  catch(typeinfo_for_std::logic_error)
+  +0x24  .. +0x84  unwind
+
+fail(int32_t)  lsda base+0xd64  lpstart +0x0  3 call sites
+  +0x0   .. +0x38  unwind
+  +0x38  .. +0x3c  lp +0x58  cleanup
+  +0x3c  .. +0x7c  unwind
+
+guarded_checked(int32_t)  lsda base+0xd74  lpstart +0x0  2 call sites
+  +0x14  .. +0x1c  lp +0x2c  catch(typeinfo_for_std::runtime_error)
+  +0x1c  .. +0x7c  unwind
+
+guarded_wrong(int32_t)  lsda base+0xd88  lpstart +0x0  2 call sites
+  +0x14  .. +0x1c  lp +0x2c  catch(typeinfo_for_std::range_error)
+  +0x1c  .. +0x80  unwind
+
+std::__throw_out_of_range[abi:nqe210106](struct std* this, char const*)  lsda base+0xd9c  lpstart +0x0  3 call sites
+  +0x0   .. +0x20  unwind
+  +0x20  .. +0x24  lp +0x40  cleanup
+  +0x24  .. +0x64  unwind
