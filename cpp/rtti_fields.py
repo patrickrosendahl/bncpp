@@ -235,9 +235,10 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
               it (not vptr / field_* / an override name), kept as it is
     overrides: {(label, offset): (name, type or None)}
     vptr_type: vptr_type(label) -> the type of X's vptr member
-    int_type:  int_type(n) -> an n-byte integer type: an access wider than the gap to the next member (BN types
-               a 16-byte SSE copy of two fields as int128) is narrowed to the widest of 8 / 4 / 2 / 1 bytes that
-               fits; a name without a type the code never accesses (a sub-object whose address is taken) becomes
+    int_type:  int_type(n, like=None) -> an n-byte integer type, signed like 'like' if that is an integer (else unsigned): an access
+               wider than the gap to the next member (BN types a 16-byte SSE copy of two fields as int128) is
+               narrowed to the widest of 8 / 4 / 2 / 1 bytes that fits, keeping the wide access's signedness (BN
+               reports the same field sometimes 4, sometimes 8 bytes wide: bncpp-100); a name without a type the code never accesses (a sub-object whose address is taken) becomes
                a 1-byte placeholder
     widths:    {typeinfo: width of the struct now} -- once a struct has a base structure, BN reports the derived
                class's accesses as the base's too (get_code_refs_for_type_field): a base class keeps its size from
@@ -437,7 +438,7 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
             narrow = m.source == "access" or (m.source == "override" and overrides.get((label, o), (0, 0))[1] is None)
             if int_type is not None and narrow and m.size and m.size > nxt - o > 0:
                 n = next(k for k in (8, 4, 2, 1) if k <= nxt - o)
-                taken[o] = Member(o, m.name, int_type(n), n, m.source)
+                taken[o] = Member(o, m.name, int_type(n, m.type), n, m.source)
         lay.members = [taken[o] for o in offs]
     return out
 

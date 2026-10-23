@@ -67,7 +67,7 @@ struct FnImpl<add_obj(int32_t)::$_0>  (0x10 bytes, from new)  base FnBase @ 0x0
      0x8 field_8                  int32_t  [access]
 struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from new)  base FnBase @ 0x0
      0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
-     0x8 field_8                  uint32_t  [access]
+     0x8 field_8                  int32_t  [access]
      0xc field_c                  uint32_t  [access]
 
 catch clauses 1

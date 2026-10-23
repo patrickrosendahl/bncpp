@@ -50,7 +50,7 @@ struct std::__1::__function::__base<int32_t (int32_t)>  (0x8 bytes, from vptr)
      0x0 vptr                     struct std::__1::__function::__base<int32_t (int32_t)>::VTable*  [vptr]
 struct std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>  (0x10 bytes, from new)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
      0x0 vptr                     struct std::__1::__function::__func<scale_fn(int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
-     0x8 field_8                  uint32_t  [access]
+     0x8 field_8                  int32_t  [access]
      0xc field_c                  int32_t  [access]
 struct std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>  (0x18 bytes, from new)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
      0x0 vptr                     struct std::__1::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]

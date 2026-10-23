@@ -141,6 +141,13 @@ _lap("0 scan")
 # Step 1 starts at the code refs (BN puts one on the MLIL store / call itself) and follows the vars through their
 # definitions / uses: reading every instruction of the referencing functions from Python costs ~50 us each (minutes
 # on SynthV's big functions).
+def _int_like(n, like=None):
+    """An n-byte integer with the signedness of the integer 'like' (unsigned otherwise): a narrowed access keeps
+    the wide one's, whichever width BN reported (bncpp-100)."""
+    signed = like is not None and like.type_class == TypeClass.IntegerTypeClass and bool(like.signed)
+    return Type.int(n, signed)
+
+
 def _mlil_at(m, addr):
     """the MLIL instructions at an address"""
     out, i = [], m.get_instruction_start(addr)
@@ -1017,7 +1024,7 @@ def _plan():
         ev = _evidence(lays) if lays is not None else None
         lays = _fields.layouts(_types, _labels, _sizes, accesses, existing, _parsed,
                                lambda label: Type.pointer(bv.arch, _ref(label + "::VTable")),
-                               lambda n: Type.int(n, False), widths, ev,
+                               _int_like, widths, ev,
                                lambda label: Type.pointer(bv.arch, Type.void() if label is None else _ref(label)))
         now = set((a, p[0], p[1]) for a, lay in lays.items() for p in lay.pointers if p[3] == "typed")
         if ev is not None and now == typed:
