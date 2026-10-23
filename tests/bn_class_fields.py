@@ -30,6 +30,8 @@
 # bncpp-33: fields only helpers touch -- 'this' or '&this->x' passed to a function with an untyped parameter -- come
 # from the helpers' loads / stores (step 2e, cached per walk as section "helpers"; uncached ~8 min on SynthV x86_64), and
 # a float access there types an int32 field BN saw as float.
+# bncpp-32: where no import is named operator new (hashed nlist names), sizes come from the callee voted the
+# allocator over a sample (_find_allocator; cached as section "allocator", the review's first 'allocator:' line).
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
@@ -123,7 +125,7 @@ _types = _rtti.scan(_img)
 _labels = _names.labels(_types, _img.demangle, _names.label_overrides(_types, _img.symbol_at))
 _label_set = set(_labels.values())
 _points = {vt.addr: (a, vt.offset_to_top) for a, t in _types.items() for vt in t.vtables if vt.construction_for is None}
-_new_addrs = set(s.address for n in _OPERATOR_NEW for s in bv.get_symbols_by_name(n))
+_new_addrs = _named_new = set(s.address for n in _OPERATOR_NEW for s in bv.get_symbols_by_name(n))
 _no_vptr = set(a for a, slots in _fields.anchored_bases(_types).items() if slots is None)  # bncpp-31: a field at 0
 # bncpp-55: the class structs come from bn_class_types.py; without them APPLY would type nothing but still give
 # other structs bases on types that do not exist -- refuse before changing anything
@@ -203,11 +205,87 @@ def _new_uses(ssa, var, size, call, sites, seen):
             sites.append((None, u.dest.constant, size, call))
 
 
+def _call_result_of(m, var, seen):
+    """the direct calls with a constant first argument whose result var holds (through copies): [callee]"""
+    if var in seen:
+        return []
+    seen.add(var)
+    out = []
+    for d in m.get_var_definitions(var):
+        if d.operation == Op.MLIL_SET_VAR and d.src.operation == Op.MLIL_VAR:
+            out += _call_result_of(m, d.src.src, seen)
+        elif d.operation == Op.MLIL_CALL and d.dest.operation in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT) \
+                and d.params and d.params[0].operation == Op.MLIL_CONST and var in d.output:
+            out.append(d.dest.constant)
+    return out
+
+
+_ALLOC_SAMPLE = 150  # functions with a vptr store, and as many constructors' callers
+
+
+def _find_allocator():
+    """bncpp-32: where no import is named operator new (an obfuscator hashed the nlist names, bncpp-25), the callee
+    whose result, called with a constant (the size), most often gets a vptr stored at offset 0 (an inlined
+    constructor) or goes to a constructor as 'this' -- over a sample. ({address} or empty, votes, the review line).
+    Our heuristic on BN's data: the review names the pick and the runner-up."""
+    votes, ctors, by_func = {}, [], {}
+    for a in _points:
+        for r in bv.get_code_refs(a):
+            by_func.setdefault(r.function.start, (r.function, set()))[1].add(r.address)
+    for f, addrs in list(by_func.values())[:_ALLOC_SAMPLE]:
+        m = f.mlil
+        if m is None:
+            continue
+        p0 = f.parameter_vars[0] if len(f.parameter_vars) else None
+        for addr in sorted(addrs):
+            for mi in _mlil_at(m, addr):
+                st = _store_site(mi)
+                if st is None:
+                    continue
+                if p0 is not None and _is_this(m, p0, st[0], set()):
+                    ctors.append(f.start)
+                elif st[1] == 0:
+                    for c in set(_call_result_of(m, st[0], set())):
+                        votes[c] = votes.get(c, 0) + 1
+    for c in sorted(set(ctors))[:_ALLOC_SAMPLE]:
+        for r in list(bv.get_code_refs(c))[:4]:
+            m = r.function.mlil if r.function is not None else None
+            for mi in _mlil_at(m, r.address) if m is not None else ():
+                if mi.operation in (Op.MLIL_CALL, Op.MLIL_TAILCALL) and mi.dest.operation == Op.MLIL_CONST_PTR \
+                        and mi.dest.constant == c and mi.params and mi.params[0].operation == Op.MLIL_VAR:
+                    for a in set(_call_result_of(m, mi.params[0].src, set())):
+                        votes[a] = votes.get(a, 0) + 1
+    ranked = sorted(votes.items(), key=lambda kv: -kv[1])
+    if not ranked:
+        return set(), 0, "allocator: none found (no vptr store on a call's result in the sample)"
+    (top, n), second = ranked[0], ranked[1] if len(ranked) > 1 else (None, 0)
+    name = lambda a: (bv.get_symbol_at(a).full_name if bv.get_symbol_at(a) else "%#x" % a)
+    line = "allocator: %s %#x, %d votes (runner-up %s, %d)" % (
+        name(top), top, n, name(second[0]) if second[0] is not None else "none", second[1])
+    if n < 2 or n < 2 * second[1]:
+        return set(), n, line + ": not clear, no sizes from allocations"
+    return {top}, n, line
+
+
 # 1. constructors / destructors (vptr stores on this) and sizes (operator new sites), per function: BN keeps the IL
 # of only analysis.limits.cacheSize (256) functions, so jumping between functions rebuilds it again and again
 _nocache = _env.get("NOCACHE") == "1"
 _cache_file = None if _nocache else _bncache.Cache(bv)
+if not _new_addrs:
+    _got = _cache_file.get("allocator", 1) if _cache_file is not None else None
+    if _got is None:
+        _got = dict(zip(("addrs", "votes", "line"), _find_allocator()))
+        _got["addrs"] = sorted(_got["addrs"])
+        if _cache_file is not None:
+            _cache_file.put("allocator", 1, _got)
+    _new_addrs = set(_got["addrs"])
+    _count("allocator by votes (no operator new name)", _got["votes"] if _new_addrs else 0)
+    _review.append(_got["line"])
+    print(_got["line"])
+    _lap("0 allocator")
 _cache = _cache_file.get("ctors", _CTORS_VERSION) if _limit is None and not _nocache else None
+if _cache is not None and _cache.get("alloc", sorted(_named_new)) != sorted(_new_addrs):
+    _cache = None  # step 1 ran with another allocator (a cache from before bncpp-32 had none in a hashed build)
 if _cache is not None:
     _stores = {int(k, 0): [tuple(x) for x in v] for k, v in _cache["stores"].items()}
     _sites = [tuple(x) for x in _cache["sites"]]
@@ -237,7 +315,7 @@ else:
     _lap("1b il")
     _count("functions scanned", len(_by_func))
     if _limit is None and not _nocache:
-        _cache_file.put("ctors", _CTORS_VERSION, {"sites": _sites,
+        _cache_file.put("ctors", _CTORS_VERSION, {"sites": _sites, "alloc": sorted(_new_addrs),
                                                   "stores": {"%#x" % k: v for k, v in sorted(_stores.items())}})
 _ctors = _fields.ctor_classes(_types, _stores)
 
