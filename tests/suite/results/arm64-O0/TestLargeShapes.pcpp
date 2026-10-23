@@ -1,0 +1,88 @@
+// push_back_check(Ring*) @ 0x4005a8
+{
+    int64_t x8_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) / 8;
+
+    if ((!x8_3 ? 0 : (x8_3 << 6) - 1)
+            == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
+        grow(arg1);
+
+    *(uint64_t*)((char*)arg1 + 0x18) += 1;
+}
+
+// set_bit(Ring*, uint64_t) @ 0x400660
+{
+    int64_t x9_1 = *(uint64_t*)((char*)arg1 + 0x20);
+    uint64_t x10 = arg2 >> 6;
+    *(uint64_t*)(x9_1 + (x10 << 3)) |= 1 << (arg2 & 0x3f);
+}
+
+// count(Ring*, uint32_t) @ 0x4006a0
+{
+    int64_t x9 = *(uint64_t*)((char*)arg1 + 0x28);
+    uint64_t x8_1 = (uint64_t)arg2;
+    *(uint32_t*)(x9 + (x8_1 << 2)) += 1;
+}
+
+// spare(Ring*) @ 0x4006d0
+{
+    int64_t x8_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) / 8;
+
+    if (x8_3 > 8)
+        log_line("big");
+
+    return (x8_3 << 6) - *(uint64_t*)((char*)arg1 + 0x18) - (int64_t)(x8_3 != 0);
+}
+
+// scan(int32_t const*, int32_t, int32_t) @ 0x400754
+{
+    int32_t var_2c = 0;
+    int32_t var_30 = 0;
+    int32_t var_14;
+
+    while (true)
+    {
+        if (var_30 >= arg2)
+        {
+            var_14 = var_2c;
+            break;
+        }
+
+        if (!(arg1[(int64_t)var_30] & 0x80000000))
+        {
+            int32_t var_34_1 = 0;
+
+            while (true)
+            {
+                if (var_34_1 < arg3)
+                {
+                    int32_t x8_8 = arg1[(int64_t)((var_30 + var_34_1) % arg2)];
+
+                    if (x8_8 == 7)
+                        break;
+
+                    if (x8_8 <= 0x64)
+                    {
+                        var_34_1 += 1;
+                        continue;
+                    }
+
+                    var_2c += next_value();
+                }
+
+                var_2c += 1;
+                break;
+            }
+
+            if (var_2c > 0x3e8)
+            {
+                var_14 = 0xffffffff;
+                break;
+            }
+        }
+
+        var_30 += 1;
+    }
+
+    return (uint64_t)var_14;
+}
+

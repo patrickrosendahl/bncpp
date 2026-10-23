@@ -60,6 +60,7 @@ TESTS = [
     "TestSwitch",
     "TestTryFolding",         # the passes in functions with try regions: never across a try block (bncpp-84)
     "TestNoFold",             # shapes the passes above must leave alone or keep in order (bncpp-90)
+    "TestLargeShapes",        # what the passes leave in a large function (bncpp-103: nhv_dddd_proc's shapes)
     # classes: RTTI and vtables (.classes; cpp/rtti.py), one source in four builds
     "TestVirtual",               # classic dyld info
     "TestVirtualChained",        # chained fixups

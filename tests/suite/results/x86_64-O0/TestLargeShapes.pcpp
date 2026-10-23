@@ -1,0 +1,91 @@
+// push_back_check(Ring*) @ 0x4005a0
+{
+    int64_t rax_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) >> 3;
+
+    if ((!rax_3 ? 0 : (rax_3 << 6) - 1)
+            == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
+        grow(arg1);
+
+    *(uint64_t*)((char*)arg1 + 0x18) += 1;
+    return arg1;
+}
+
+// set_bit(Ring*, uint64_t) @ 0x400630
+{
+    int64_t result = *(uint64_t*)((char*)arg1 + 0x20);
+    uint64_t rcx_3 = arg2 >> 6;
+    *(uint64_t*)(result + (rcx_3 << 3)) |= 1 << ((uint8_t)arg2 & 0x3f);
+    return result;
+}
+
+// count(Ring*, uint32_t) @ 0x400670
+{
+    int64_t result = *(uint64_t*)((char*)arg1 + 0x28);
+    uint64_t rcx = (uint64_t)arg2;
+    *(uint32_t*)(result + (rcx << 2)) += 1;
+    return result;
+}
+
+// spare(Ring*) @ 0x4006a0
+{
+    int64_t rax_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) >> 3;
+
+    if (rax_3 > 8)
+        log_line("big");
+
+    return (rax_3 << 6) - *(uint64_t*)((char*)arg1 + 0x18) - (int64_t)(rax_3 != 0);
+}
+
+// scan(int32_t const*, int32_t, int32_t) @ 0x400710
+{
+    int32_t var_24 = 0;
+    int32_t var_28 = 0;
+    int32_t var_c;
+
+    while (true)
+    {
+        if (var_28 >= arg2)
+        {
+            var_c = var_24;
+            break;
+        }
+
+        if (arg1[(int64_t)var_28] >= 0)
+        {
+            int32_t var_2c_1 = 0;
+
+            while (true)
+            {
+                if (var_2c_1 < arg3)
+                {
+                    int32_t rax_8 = arg1[(int64_t)((int64_t)(var_28 + var_2c_1) % arg2)];
+
+                    if (rax_8 == 7)
+                        break;
+
+                    if (rax_8 <= 0x64)
+                    {
+                        var_2c_1 += 1;
+                        continue;
+                    }
+
+                    var_24 += next_value();
+                }
+
+                var_24 += 1;
+                break;
+            }
+
+            if (var_24 > 0x3e8)
+            {
+                var_c = 0xffffffff;
+                break;
+            }
+        }
+
+        var_28 += 1;
+    }
+
+    return (uint64_t)var_c;
+}
+

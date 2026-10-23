@@ -1,0 +1,113 @@
+// push_back_check(Ring*) @ 0x4005a0
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    int64_t rax_1 = *(uint64_t*)((char*)arg1 + 8);
+
+    void* rcx = rax_1
+        != *(uint64_t*)arg1 ? ((rax_1 - *(uint64_t*)arg1) << 3) + 0xffffffffffffffff : nullptr;
+
+    int64_t rax_4 = *(uint64_t*)((char*)arg1 + 0x18);
+
+    if (rcx == *(uint64_t*)((char*)arg1 + 0x10) + rax_4)
+    {
+        grow(arg1);
+        rax_4 = *(uint64_t*)((char*)arg1 + 0x18);
+    }
+
+    *(uint64_t*)((char*)arg1 + 0x18) = rax_4 + 1;
+    return rax_4 + 1;
+}
+
+// set_bit(Ring*, uint64_t) @ 0x4005f0
+{
+    int64_t result = 1 << ((uint8_t)arg2 & 0x3f);
+    int64_t rdx = *(uint64_t*)((char*)arg1 + 0x20);
+    uint64_t rcx_1 = arg2 >> 6;
+    *(uint64_t*)(rdx + (rcx_1 << 3)) |= result;
+    return result;
+}
+
+// count(Ring*, uint32_t) @ 0x400610
+{
+    int64_t result = *(uint64_t*)((char*)arg1 + 0x28);
+    uint64_t rcx = (uint64_t)arg2;
+    *(uint32_t*)(result + (rcx << 2)) += 1;
+    return result;
+}
+
+// spare(Ring*) @ 0x400620
+{
+    int64_t r15 = *(uint64_t*)arg1;
+    int64_t r12 = *(uint64_t*)((char*)arg1 + 8);
+    int64_t r14_1 = r12 - r15;
+
+    if (r14_1 >= 0x41)
+        log_line("big");
+
+    int64_t rax = 0;
+    (uint8_t)rax = r12 != r15;
+    return (r14_1 << 3) - rax - *(uint64_t*)((char*)arg1 + 0x18);
+}
+
+// scan(int32_t const*, int32_t, int32_t) @ 0x400670
+{
+    int64_t rax;
+    int64_t var_38 = rax;
+
+    if (arg2 <= 0)
+        return 0;
+
+    uint64_t rdi = (uint64_t)arg2;
+    int64_t r13_1 = 0;
+    int32_t r12 = 0;
+    uint64_t var_38_1 = rdi;
+
+    do
+    {
+        if (arg1[r13_1] >= 0)
+        {
+            int32_t rcx_1 = (uint32_t)r13_1;
+            int32_t rsi = arg3;
+
+            if (arg3 <= 0)
+            {
+            label_4006a4:
+                r12 += 1;
+            }
+            else
+            {
+                while (true)
+                {
+                    int32_t rax_3 = arg1[(uint64_t)(COMBINE(0, rcx_1) % arg2)];
+
+                    if (rax_3 == 7)
+                        break;
+
+                    if (rax_3 >= 0x65)
+                    {
+                        rdi = var_38_1;
+                        r12 += next_value();
+                        goto label_4006a4;
+                    }
+
+                    rcx_1 += 1;
+
+                    if (rsi-- == 1)
+                        goto label_4006a4;
+                }
+            }
+
+            if (r12 > 0x3e8)
+            {
+                r12 = -1;
+                break;
+            }
+        }
+
+        r13_1 += 1;
+    } while (r13_1 != rdi);
+
+    return (uint64_t)r12;
+}
+
