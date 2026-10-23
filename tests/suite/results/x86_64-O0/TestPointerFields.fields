@@ -7,6 +7,10 @@ ctors/dtors 22
 fields 16
 fields named (override) 0
 functions scanned 23
+helper accesses added 0
+helper entries 78
+helper floats over int 0
+helper walks 80
 params from callers: typed 5
 params with direct callers 9
 pointer fields kept 0

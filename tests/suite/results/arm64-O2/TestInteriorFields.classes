@@ -1,0 +1,12 @@
+typeinfo 0x404058  class mangled 6TagMap
+  vtable 0x404040  offset_to_top 0  3 slots
+    [0] 0x400854 TagMap::~TagMap(struct TagMap* this)
+    [1] 0x400894 TagMap::~TagMap(struct TagMap* this)
+    [2] 0x4008d4 TagMap::kind(struct TagMap* this) const
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400854 TagMap::~TagMap   [now: TagMap::~TagMap(struct TagMap* this)]
+R 0x400894 TagMap::~TagMap [deleting]   [now: TagMap::~TagMap(struct TagMap* this)]
+R 0x4008d4 TagMap::vfunc2   [now: TagMap::kind(struct TagMap* this) const]
+D 0x404030 vtable_for_TagMap   [now: _vtable_for_TagMap]
+D 0x404058 typeinfo_for_TagMap

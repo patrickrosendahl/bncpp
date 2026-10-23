@@ -1,0 +1,31 @@
+classes sized 0
+ctor already typed 2
+ctors/dtors 2
+fields 7
+fields named (override) 0
+functions scanned 6
+helper accesses added 3
+helper entries 6
+helper floats over int 0
+helper walks 10
+params with direct callers 2
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 6
+ptr stores 1
+returns used as objects 0
+rounds 2
+stable 1
+structs 1
+structs with a base 0
+
+struct TagMap  (0x3c bytes, from members)
+     0x0 vptr                     struct TagMap::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+    0x10 field_10                 void*  [access]
+    0x18 field_18                 void*  [access]
+    0x20 field_20                 uint64_t  [access]
+    0x28 field_28                 uint64_t  [access]
+    0x30 field_30                 uint64_t  [access]
+    0x38 field_38                 float  [access]

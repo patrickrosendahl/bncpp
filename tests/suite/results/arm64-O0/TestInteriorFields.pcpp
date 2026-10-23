@@ -1,0 +1,108 @@
+// rehash(void*, uint64_t) @ 0x400648
+{
+    void* x8_2 = *(uint64_t*)arg1;
+
+    if (x8_2)
+        operator delete[](x8_2);
+
+    void* result = operator new[](!(int64_t)((arg2 * 8) >> 0x40) ? arg2 * 8 : -1);
+    *(uint64_t*)arg1 = result;
+    arg1[1] = arg2;
+
+    for (int64_t i = 0; i < arg2; i += 1)
+        *(uint64_t*)(*(uint64_t*)arg1 + (i << 3)) = 0;
+
+    return result;
+}
+
+// insert(void*, int64_t) @ 0x400704
+{
+    int64_t v1_1;
+
+    if (*(uint64_t*)((char*)arg1 + 0x20))
+    {
+        v1_1 = *(uint64_t*)((char*)arg1 + 0x20);
+        (uint32_t)v1_1 = (float)(uint32_t)v1_1;
+        (uint32_t)v1_1 = (uint32_t)v1_1 * *(uint32_t*)((char*)arg1 + 0x38);
+    }
+
+    if (!*(uint64_t*)((char*)arg1 + 0x20)
+            || !((float)(uint32_t)(*(uint64_t*)((char*)arg1 + 0x30) + 1) <= (uint32_t)v1_1))
+        rehash((char*)arg1 + 0x18, (*(uint64_t*)((char*)arg1 + 0x20) << 1) + 1);
+
+    *(uint64_t*)((char*)arg1 + 0x28) = arg2;
+    *(uint64_t*)((char*)arg1 + 0x30) += 1;
+}
+
+// register_keys(void*, int64_t) @ 0x4007b0
+{
+    insert(arg1, arg2);
+    return insert(arg1, arg2 + 1);
+}
+
+// TagMap::TagMap(struct TagMap* this, void*) @ 0x4007ec
+{
+    struct TagMap* this_1 = this;
+    *(uint64_t*)this = &data_404040;
+    *(uint32_t*)((char*)this + 8) = 0;
+    *(uint64_t*)((char*)this + 0x10) = arg2;
+    __builtin_memset((char*)this + 0x18, 0, 0x20);
+    *(uint32_t*)((char*)this + 0x38) = (float)1.f;
+    register_keys(this, 7);
+}
+
+// TagMap::TagMap(struct TagMap* this, void*) @ 0x400854
+{
+    struct TagMap* this_1 = this;
+    TagMap::TagMap(this, arg2);
+}
+
+// make_tagmap(void*) @ 0x400888
+{
+    // exception table (LSDA 0x400a10): 1 of 3 call sites have a landing pad
+    //   0x4008a8..0x4008ac -> 0x4008c0 sub_4008c0: cleanup
+
+    struct TagMap* result = operator new(0x40);
+    TagMap::TagMap(result, arg1);
+    return result;
+}
+
+// sub_4008c0 @ 0x4008c0
+{
+    // landing pad of make_tagmap(void*) @ 0x400888
+    //   from 0x4008a8..0x4008ac: cleanup
+
+    int32_t x1;
+    int32_t arg_c = x1;
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// TagMap::~TagMap(struct TagMap* this) @ 0x4008e4
+{
+    struct TagMap* this_1 = this;
+    TagMap::~TagMap(this);
+}
+
+// TagMap::~TagMap(struct TagMap* this) @ 0x400910
+{
+    TagMap::~TagMap(this);
+    operator delete(this);
+}
+
+// TagMap::kind(struct TagMap* this) const @ 0x400940
+{
+    return (uint64_t)*(uint32_t*)((char*)this + 8);
+}
+
+// TagMap::~TagMap(struct TagMap* this) @ 0x400958
+{
+    struct TagMap* this_1 = this;
+    *(uint64_t*)this = &data_404040;
+    void* x8_1 = *(uint64_t*)((char*)this + 0x18);
+
+    if (x8_1)
+        operator delete[](x8_1);
+}
+

@@ -1,0 +1,12 @@
+typeinfo 0x401058  class mangled 6TagMap  bind __ZTI6TagMap
+  vtable 0x401040  offset_to_top 0  3 slots
+    [0] 0x4008c0 TagMap::~TagMap(struct TagMap* this)
+    [1] 0x4008f0 TagMap::~TagMap(struct TagMap* this)
+    [2] 0x400930 TagMap::kind(struct TagMap* this) const
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x4008c0 TagMap::vfunc0   [now: TagMap::~TagMap(struct TagMap* this)]
+R 0x4008f0 TagMap::vfunc1   [now: TagMap::~TagMap(struct TagMap* this)]
+R 0x400930 TagMap::vfunc2   [now: TagMap::kind(struct TagMap* this) const]
+D 0x401030 vtable_for_TagMap   [now: _vtable_for_TagMap]
+D 0x401058 typeinfo_for_TagMap   [now: _typeinfo_for_TagMap]

@@ -1,0 +1,184 @@
+// rehash(void*, uint64_t) @ 0x400640
+{
+    void* rdi = *(uint64_t*)arg1;
+
+    if (rdi)
+        operator delete[](rdi);
+
+    void* result = operator new[](-((arg2 >> 0x3d ? 1 : 0)) | arg2 << 3);
+    *(uint64_t*)arg1 = result;
+    arg1[1] = arg2;
+
+    if (!arg2)
+        return result;
+
+    result = (uint64_t)(uint32_t)arg2 & 3;
+    int64_t i;
+
+    if (arg2 >= 4)
+    {
+        i = 0;
+
+        do
+        {
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3)) = 0;
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3) + 8) = 0;
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3) + 0x10) = 0;
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3) + 0x18) = 0;
+            i += 4;
+        } while ((arg2 & 0xfffffffffffffffc) != i);
+    }
+    else
+        i = 0;
+
+    if (result)
+    {
+
+        do
+        {
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3)) = 0;
+            i += 1;
+        } while (result-- != 1);
+    }
+
+    return result;
+}
+
+// insert(void*, int64_t) @ 0x400700
+{
+    void* result = *(uint64_t*)((char*)arg1 + 0x20);
+    int64_t rcx_2;
+    float zmm0_1;
+    float zmm1_1;
+
+    if (result)
+    {
+        int64_t rcx_1 = *(uint64_t*)((char*)arg1 + 0x30);
+        rcx_2 = rcx_1 + 1;
+
+        if (rcx_1 + 1 < 0)
+        {
+            zmm0_1 = (float)(((uint64_t)(uint32_t)rcx_2 & 1) | rcx_2 >> 1);
+            zmm0_1 = zmm0_1 + zmm0_1;
+
+            if (result < 0)
+            {
+                zmm1_1 = (float)(((uint64_t)(uint32_t)result & 1) | result >> 1);
+                zmm1_1 = zmm1_1 + zmm1_1;
+            }
+            else
+                zmm1_1 = (float)result;
+        }
+        else
+        {
+            zmm0_1 = (float)rcx_2;
+
+            if (result >= 0)
+                zmm1_1 = (float)result;
+            else
+            {
+                zmm1_1 = (float)(((uint64_t)(uint32_t)result & 1) | result >> 1);
+                zmm1_1 = zmm1_1 + zmm1_1;
+            }
+        }
+    }
+
+    if (!result || !(zmm0_1 <= zmm1_1 * *(uint32_t*)((char*)arg1 + 0x38)))
+    {
+        result = rehash((char*)arg1 + 0x18, (result << 1) + 0x1);
+        rcx_2 = *(uint64_t*)((char*)arg1 + 0x30) + 1;
+    }
+
+    *(uint64_t*)((char*)arg1 + 0x28) = arg2;
+    *(uint64_t*)((char*)arg1 + 0x30) = rcx_2;
+    return result;
+}
+
+// register_keys(void*, int64_t) @ 0x4007a0
+{
+    insert(arg1, arg2);
+    /* tailcall */
+    return insert(arg1, arg2 + 1);
+}
+
+// TagMap::TagMap(struct TagMap* this, void*) @ 0x4007d0
+{
+    *(uint64_t*)this = &_vtable_for_TagMap;
+    *(uint32_t*)((char*)this + 8) = 0;
+    *(uint64_t*)((char*)this + 0x10) = arg2;
+    *(uint128_t*)((char*)this + 0x18) = {0};
+    *(uint128_t*)((char*)this + 0x28) = {0};
+    *(uint32_t*)((char*)this + 0x38) = 0x3f800000;
+    /* tailcall */
+    return register_keys(this, 7);
+}
+
+// TagMap::TagMap(struct TagMap* this, void*) @ 0x400810
+{
+    *(uint64_t*)this = &_vtable_for_TagMap;
+    *(uint32_t*)((char*)this + 8) = 0;
+    *(uint64_t*)((char*)this + 0x10) = arg2;
+    *(uint128_t*)((char*)this + 0x18) = {0};
+    *(uint128_t*)((char*)this + 0x28) = {0};
+    *(uint32_t*)((char*)this + 0x38) = 0x3f800000;
+    /* tailcall */
+    return register_keys(this, 7);
+}
+
+// make_tagmap(void*) @ 0x400850
+{
+    // exception table (LSDA 0x400974): 1 of 3 call sites have a landing pad
+    //   0x400892..0x40089f -> 0x4008a7 sub_4008a7: cleanup
+
+    struct TagMap::VTable** result = operator new(0x40);
+    *(uint64_t*)result = &_vtable_for_TagMap;
+    result[1] = 0;
+    result[2] = arg1;
+    __builtin_memset(&result[3], 0, 0x20);
+    result[7] = 0x3f800000;
+    register_keys(result, 7);
+    return result;
+}
+
+// sub_4008a7 @ 0x4008a7
+{
+    // landing pad of make_tagmap(void*) @ 0x400850
+    //   from 0x400892..0x40089f: cleanup
+
+    operator delete(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// TagMap::~TagMap(struct TagMap* this) @ 0x4008c0
+{
+    *(uint64_t*)this = &_vtable_for_TagMap;
+    void* rdi = *(uint64_t*)((char*)this + 0x18);
+
+    if (!rdi)
+        return;
+
+    /* tailcall */
+    return operator delete[](rdi);
+}
+
+// TagMap::~TagMap(struct TagMap* this) @ 0x4008f0
+{
+    *(uint64_t*)this = &_vtable_for_TagMap;
+    void* rax = *(uint64_t*)((char*)this + 0x18);
+
+    if (!rax)
+        /* tailcall */
+        return operator delete(this);
+
+    void* var_18 = rax;
+    operator delete[](rax);
+    /* tailcall */
+    return operator delete(this);
+}
+
+// TagMap::kind(struct TagMap* this) const @ 0x400930
+{
+    return (uint64_t)*(uint32_t*)((char*)this + 8);
+}
+

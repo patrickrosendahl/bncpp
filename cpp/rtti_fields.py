@@ -36,6 +36,12 @@ X::VTable* vptr; } and 'X* this' on the virtual functions).
               the offset; several classes: their most derived common base at offset 0, unrelated ones: a
               contradiction (the field stays, as 'void*': BN's access type comes from one of the stores). Never
               over a user member or a type from the overrides.
+  helpers     (bncpp-33) a function with an 'X*' parameter that passes it, or an interior pointer 'p + c', to a direct
+              callee whose parameter is untyped: the callee's constant-offset loads and stores through that parameter
+              are X's accesses at c + k, followed through further callees (helper_accesses). BN reports only what goes
+              through 'X*' itself, so fields that only helpers touch (a hash table's counts behind '&this->buckets')
+              were missing; a float load or store there is the evidence that an int32 field BN saw (a store of the
+              constant 0x3f800000) is a float.
 
 Pure Python, no Binary Ninja import: member types are opaque values the caller supplies (BN Type objects).
 """
@@ -171,6 +177,54 @@ def anchored_bases(types):
     return out
 
 
+def helper_accesses(entries, walks, followed, max_depth=4):
+    """{class typeinfo: {offset: (size, float?)}} -- the accesses helpers make for a class (bncpp-33).
+
+    entries:  [(class typeinfo, function, parameter index)]: parameters typed 'X*'
+    walks:    {(function, parameter index): {"acc": [(offset, size, float?)], "calls": [(offset, callee, index)]}} --
+              the loads / stores through the parameter (or 'parameter + offset') and the direct calls it goes to as
+              'parameter + offset'
+    followed: followed(callee, index) -> whether that parameter is a helper's (untyped: a typed one is BN's)
+    An offset several helpers access with different sizes: the most frequent size (a tie: the smallest), float if
+    one of those accesses is; negative offsets are dropped (container_of: not ours to place)"""
+    memo = {}
+
+    def reach(key, seen):
+        """{offset: [(size, float?)]} through the parameter key, its callees included"""
+        if key in memo:
+            return memo[key]
+        out = {}
+        w = walks.get(key)
+        if w is None or key in seen or len(seen) >= max_depth:
+            return out
+        for k, size, flt in w["acc"] or ():
+            out.setdefault(k, []).append((size, flt))
+        for c, callee, j in w["calls"]:
+            if followed(callee, j):
+                for k, xs in reach((callee, j), seen | {key}).items():
+                    out.setdefault(c + k, []).extend(xs)
+        if not seen:
+            memo[key] = out
+        return out
+
+    found = {}
+    for cls, f, i in entries:
+        for c, callee, j in walks.get((f, i), {"calls": []})["calls"]:
+            if followed(callee, j):
+                for k, xs in reach((callee, j), frozenset()).items():
+                    if c + k >= 0:
+                        found.setdefault(cls, {}).setdefault(c + k, []).extend(xs)
+    out = {}
+    for cls, offs in found.items():
+        for off, xs in offs.items():
+            n = {}
+            for size, _flt in xs:
+                n[size] = n.get(size, 0) + 1
+            size = min(n, key=lambda s: (-n[s], s))
+            out.setdefault(cls, {})[off] = (size, any(flt for s, flt in xs if s == size))
+    return out
+
+
 def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_type=None, int_type=None,
             widths=None, pointers=None, ptr_type=None):
     """{class typeinfo: ClassLayout} for every class with a primary vtable or accesses, plus the bases the
@@ -233,6 +287,8 @@ def layouts(types, labels, sizes, accesses, existing=None, overrides=None, vptr_
     for a in [a for a in anchored if anchored[a] is None and a not in cap]:
         del out[a], acc[a]
         classes.remove(a)
+        kept.pop(a, None)  # a struct of it from an earlier run (wider than 8) put it there
+        limit.pop(a, None)
     for a in classes:
         out[a].bases = [(b, off) for b, off in out[a].bases if b in out]
     vptr_class = {a: any(vt.primary for vt in types[a].vtables) or anchored.get(a) is not None

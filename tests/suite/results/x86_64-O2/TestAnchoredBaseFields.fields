@@ -3,6 +3,10 @@ ctors/dtors 0
 fields 3
 fields named (override) 1
 functions scanned 2
+helper accesses added 0
+helper entries 5
+helper floats over int 0
+helper walks 6
 params with direct callers 0
 pointer fields kept 0
 pointer fields typed 0

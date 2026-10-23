@@ -3,9 +3,13 @@ ctor already typed 23
 ctor typed 10
 ctors forwarding 11
 ctors/dtors 33
-fields 8
+fields 9
 fields named (override) 0
 functions scanned 31
+helper accesses added 0
+helper entries 147
+helper floats over int 0
+helper walks 167
 params with direct callers 18
 pointer fields kept 0
 pointer fields typed 0
@@ -63,7 +67,8 @@ struct FnImpl<add_obj(int32_t)::$_0>  (0x10 bytes, from new)  base FnBase @ 0x0
      0x8 field_8                  int32_t  [access]
 struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>  (0x10 bytes, from new)  base FnBase @ 0x0
      0x0 vptr                     struct FnImpl<clamp_obj(int32_t, int32_t)::$_0>::VTable*  [vptr]
-     0x8 field_8                  int64_t  [access]
+     0x8 field_8                  uint32_t  [access]
+     0xc field_c                  uint32_t  [access]
 
 catch clauses 1
 catch clauses: a class of the scan 1

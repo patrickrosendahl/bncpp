@@ -10,6 +10,8 @@
 #            --env ROUNDS=N (APPLY: at most N passes of steps 3+4 until the structs stop changing; default 4;
 #            stopped at N: the line 'not settled after N rounds: X(0x..) ...'),
 #            --env TRACE=L1,L2 (print these structs' shape every round: a struct that does not settle, bncpp-58)
+#            --env HELPER_BUDGET=S (step 2e: stop walking helpers S seconds after the start; the line 'helper walks
+#            pending (budget) N' says how many are left, the cache keeps the rest for the next run)
 # Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
 # the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
 # bncpp-22: constructors / destructors get 'X* this', then the class structs get their size, base subobjects and
@@ -25,11 +27,14 @@
 # bncpp-28: a function whose result the stores or call-site arguments use ('this->eng = make_engine()') gets its
 # return class from its own return statements (step 2d, cached as section "retdescs"; same rules); APPLY types it
 # 'X* f(...)', the review has 'ret' lines.
+# bncpp-33: fields only helpers touch -- 'this' or '&this->x' passed to a function with an untyped parameter -- come
+# from the helpers' loads / stores (step 2e, cached per walk as section "helpers"; uncached ~8 min on SynthV x86_64), and
+# a float access there types an int32 field BN saw as float.
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
 from binaryninja import (BaseStructure, FunctionParameter, MediumLevelILOperation as Op, NamedTypeReferenceClass,
-                         QualifiedName, StructureBuilder, Type, TypeClass)
+                         MediumLevelILInstruction, QualifiedName, SSAVariable, StructureBuilder, Type, TypeClass)
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
 _dev = getattr(_bn, "_cpp_dev", None)
@@ -653,6 +658,7 @@ else:
     if _limit is None and not _nocache:
         _cache_file.put("retdescs", _RETS_VERSION, {"rets": {"%#x" % k: v for k, v in sorted(_ret_descs.items())}})
 _count("returns used as objects", len(_ret_descs))
+
 _new_class = {call: c for (call, _size), c in _fields.new_classes(_sites, _ctors, _types).items()}
 _by_label = {l: a for a, l in _labels.items()}
 
@@ -693,6 +699,165 @@ def _func_classes(fa):
         _fclasses[fa] = None if f is None else (_class_of(f.return_type),
                                                 [_class_of(p.type) for p in f.type.parameters])
     return _fclasses[fa]
+
+
+# 2e. accesses through helpers (bncpp-33): a parameter typed 'X*' passed (or 'p + c') to a direct callee whose
+# parameter is untyped; the callee's loads / stores through it are X's at c + k (cpp/rtti_fields.py helper_accesses).
+# One walk per (function, parameter): along the SSA uses of the parameter and of copies / constant adds of it, never
+# through a phi (a pointer stepped in a loop). Cached per walk (section "helpers"): a walk depends on the function's
+# code only, and the entries (which parameters are 'X*' now) are read anew each run, so a run that types more
+# functions (APPLY) walks just the new ones.
+_HELP_VERSION = 1
+_FLOAT = (TypeClass.FloatTypeClass,)
+_LEAVES = (Op.MLIL_VAR_SSA, Op.MLIL_CONST, Op.MLIL_CONST_PTR, Op.MLIL_IMPORT, Op.MLIL_FLOAT_CONST,
+           Op.MLIL_ADDRESS_OF, Op.MLIL_VAR_SSA_FIELD, Op.MLIL_VAR_ALIASED, Op.MLIL_EXTERN_PTR)
+
+
+def _is_float(t):
+    return t is not None and t.type_class in _FLOAT
+
+
+def _walk(f, i, acc=True):
+    """{"acc": [(offset, size, float?)], "calls": [(offset, callee, index)]} through parameter i of f; acc=False:
+    the calls only ("acc" None: an entry's own accesses are BN's)"""
+    out = {"acc": [] if acc else None, "calls": []}
+    m = f.mlil
+    pv = list(f.parameter_vars)
+    if m is None or i >= len(pv):
+        return out
+    ssa = m.ssa_form
+    v0 = SSAVariable(pv[i], 0)
+    track, todo = {v0: 0}, [v0]
+
+    def at(e):
+        """the offset an address expression has from a tracked variable, else None"""
+        if e.operation == Op.MLIL_VAR_SSA and e.src in track:
+            return track[e.src]
+        if e.operation == Op.MLIL_ADD and e.left.operation == Op.MLIL_VAR_SSA and e.left.src in track \
+                and e.right.operation == Op.MLIL_CONST:
+            return track[e.left.src] + e.right.constant
+        return None
+
+    def loads(e, parent_float, found, depth=0):
+        """the loads through a tracked variable in an expression (MLIL nests them: 'if (*(p + 8) == 0)'); by hand,
+        not traverse(): its detailed_operands made the walk 15x slower than building the IL"""
+        o = e.operation
+        if o in (Op.MLIL_LOAD_SSA, Op.MLIL_LOAD_STRUCT_SSA):
+            k = at(e.src)
+            if k is not None:
+                k += e.offset if o == Op.MLIL_LOAD_STRUCT_SSA else 0
+                found.append((k, e.size, parent_float or _is_float(e.expr_type)))
+                return
+        if o in _LEAVES or depth > 6:
+            return
+        for x in e.operands:
+            if isinstance(x, MediumLevelILInstruction):
+                loads(x, False, found, depth + 1)
+            elif isinstance(x, list):
+                for y in x:
+                    if isinstance(y, MediumLevelILInstruction):
+                        loads(y, False, found, depth + 1)
+
+    seen = set()
+    while todo:
+        v = todo.pop()
+        for u in ssa.get_ssa_var_uses(v):
+            if u.instr_index in seen:
+                continue
+            seen.add(u.instr_index)
+            o = u.operation
+            if acc and o in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+                k = at(u.dest)
+                if k is not None:
+                    k += u.offset if o == Op.MLIL_STORE_STRUCT_SSA else 0
+                    out["acc"].append((k, u.size, _is_float(u.src.expr_type)))
+            if o == Op.MLIL_SET_VAR_SSA:
+                k = at(u.src)
+                if k is not None and u.dest not in track:
+                    track[u.dest] = k
+                    todo.append(u.dest)
+                    seen.discard(u.instr_index)
+                    continue
+            if o in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA) and u.dest.operation == Op.MLIL_CONST_PTR:
+                for j, p in enumerate(u.params):
+                    k = at(p)
+                    if k is not None:
+                        out["calls"].append((k, u.dest.constant, j))
+            if acc and o in (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA):
+                for p in u.params:
+                    loads(p, False, out["acc"])
+            elif acc and o == Op.MLIL_SET_VAR_SSA:
+                loads(u.src, _is_float(u.dest.var.type), out["acc"])
+            elif acc and o in (Op.MLIL_STORE_SSA, Op.MLIL_STORE_STRUCT_SSA):
+                loads(u.src, False, out["acc"])
+                loads(u.dest, False, out["acc"])
+            elif acc and o in (Op.MLIL_IF, Op.MLIL_RET, Op.MLIL_JUMP_TO, Op.MLIL_JUMP):
+                for x in u.operands:
+                    if isinstance(x, MediumLevelILInstruction):
+                        loads(x, False, out["acc"])
+                    elif isinstance(x, list):
+                        for y in x:
+                            if isinstance(y, MediumLevelILInstruction):
+                                loads(y, False, out["acc"])
+    if acc:
+        out["acc"] = sorted(set(out["acc"]))
+    out["calls"] = sorted(set(out["calls"]))
+    return out
+
+
+def _class_params(f):
+    """[(class, index)] of f's parameters typed 'X*'"""
+    return [(c, i) for i, p in enumerate(f.type.parameters) for c in [_class_of(p.type)] if c is not None]
+
+
+def _followed(callee, j):
+    """a helper's parameter: a local function outside the vtables whose parameter j is not typed 'X*'"""
+    if callee in _virtual:
+        return False
+    fc = _func_classes(callee)
+    return fc is not None and j < len(fc[1]) and fc[1][j] is None
+
+
+_hcache = _cache_file.get("helpers", _HELP_VERSION) if _limit is None and not _nocache else None
+_walks = {tuple(int(x, 0) for x in k.split(":")): {"acc": None if w["acc"] is None else [tuple(a) for a in w["acc"]],
+                                                   "calls": [tuple(c) for c in w["calls"]]}
+          for k, w in ((_hcache or {}).get("walks") or {}).items()}
+_walked = [len(_walks)]
+_help_deadline = _t0 + float(_env.get("HELPER_BUDGET") or 1e9)
+
+
+_local_calls = {}
+
+
+def _calls_local(fa):
+    """f calls a local function outside the vtables (BN's call sites, no IL): else no walk of its parameters"""
+    if fa not in _local_calls:
+        f = bv.get_function_at(fa)
+        _local_calls[fa] = f is not None and any(c not in _virtual and bv.get_function_at(c) is not None
+                                                 for c in f.callee_addresses)
+    return _local_calls[fa]
+
+
+def _helper_accesses():
+    """{class: {offset: (size, float?)}} with the parameters typed now; walks the ones not in the cache"""
+    entries = [(c, f.start, i) for f in bv.functions for c, i in _class_params(f)][:_limit]
+    todo = [(f, i, False) for _c, f, i in entries if _calls_local(f)]
+    while todo:
+        if time.time() > _help_deadline:  # HELPER_BUDGET: the rest in the next run (the cache keeps what is done)
+            _counts["helper walks pending (budget)"] = len(set((fa, i) for fa, i, _a in todo))
+            break
+        fa, i, acc = todo.pop()
+        key = (fa, i)
+        if key not in _walks or (acc and _walks[key]["acc"] is None):
+            f = bv.get_function_at(fa)
+            _walks[key] = _walk(f, i, acc) if f is not None else {"acc": [], "calls": []}
+        todo += [(h, j, True) for _k, h, j in _walks[key]["calls"]
+                 if ((h, j) not in _walks or _walks[(h, j)]["acc"] is None) and _followed(h, j)]
+    if len(_walks) > _walked[0] and _limit is None and not _nocache:
+        _walked[0] = len(_walks)
+        _cache_file.put("helpers", _HELP_VERSION, {"walks": {"%#x:%d" % k: {"acc": w["acc"], "calls": w["calls"]}
+                                                             for k, w in sorted(_walks.items())}})
+    return entries, _fields.helper_accesses(entries, _walks, _followed)
 
 
 def _resolve(d, lays):
@@ -815,8 +980,30 @@ def _plan():
         except Exception:
             continue
         accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0 or a in _no_vptr}
-    # pointer fields to a fixpoint: a field typed 'Y*' types the loads from it, whose stores are evidence in turn
     _fclasses.clear()
+    # the helpers' accesses (bncpp-33): offsets BN did not report, and float evidence for an int BN typed
+    t_help = time.time()
+    entries, helpers = _helper_accesses()
+    t_help = int(time.time() - t_help)
+    h_added = h_float = 0
+    h_review = []
+    for a, offs in helpers.items():
+        if a not in accesses:
+            continue
+        for off, (size, flt) in sorted(offs.items()):
+            if off == 0 and a not in _no_vptr:
+                continue
+            ty = Type.float(size) if flt and size in (4, 8) else Type.int(size, False)
+            now = accesses[a].get(off)
+            if now is None:
+                accesses[a][off] = (size, ty)
+                h_added += 1
+                h_review.append("helper %s %#x %s: added" % (_labels[a], off, ty))
+            elif flt and size in (4, 8) and now[0] == size and now[1].type_class == TypeClass.IntegerTypeClass:
+                accesses[a][off] = (size, ty)
+                h_float += 1
+                h_review.append("helper %s %#x %s: over %s" % (_labels[a], off, ty, now[1]))
+    # pointer fields to a fixpoint: a field typed 'Y*' types the loads from it, whose stores are evidence in turn
     t_ptr = time.time()
     lays, typed = None, None
     for _i in range(8):
@@ -831,7 +1018,9 @@ def _plan():
         typed = now
     _count("s 3 pointer fixpoint", int(time.time() - t_ptr))
     # 4. the structs; the parameters typed from their callers (bncpp-28)
-    counts, review, defs, shape = {}, [], [], []
+    counts, review, defs, shape = {}, h_review, [], []
+    counts.update({"helper entries": len(entries), "helper walks": len(_walks), "helper accesses added": h_added,
+                   "helper floats over int": h_float, "s 2e helpers": t_help})
     params = []
     for fa, i in sorted(_param_args):
         f = bv.get_function_at(fa)
