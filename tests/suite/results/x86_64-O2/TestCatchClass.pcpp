@@ -37,17 +37,15 @@
     }
     catch (IoError& e)
     {
-        uint64_t rbx_1 =
-            (uint64_t)((*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e) + *(uint32_t*)((char*)&e + 0x18));
         /* tailcall */
-        return sub_40077e(rbx_1);
+        return sub_40077e((uint64_t)((*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e)
+            + *(uint32_t*)((char*)&e + 0x18)));
     }
     catch (AppError& e)
     {
         _puts(*(uint64_t*)((char*)&e + 0x10));
-        uint64_t rbx_4 = (uint64_t)*(uint32_t*)((char*)&e + 8);
         /* tailcall */
-        return sub_40077e(rbx_4);
+        return sub_40077e((uint64_t)*(uint32_t*)((char*)&e + 8));
     }
     int64_t entry_rbp;
     int64_t entry_r14;

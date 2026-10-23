@@ -104,8 +104,14 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         self._fvars = {}  # pad start -> eh_render.frame_vars
         self._handlers = {id(r): self.plan_handlers(r) for r in regions}
         self._in_loop = set()  # regions placed inside a compound statement (handlers end at the continuation)
+        self._zones = {}  # statement expr index -> the innermost try run it is printed in (folds stay in one)
+        self._compound = set()  # statements printed around a planned body (their lines are cut up)
+        self._runs = 0
         items = self.plan_block(instr, regions)  # a one-statement function's root is that statement
-        return items if _has_try(items) else None
+        if not _has_try(items):
+            self._zones, self._compound = {}, set()
+            return None
+        return self.fold_items(items)
 
     def stmt_lines(self, block):
         """(statements of block, per statement Pseudo C's lines of it as [(tokens, instr index)]); a blank line goes
@@ -161,6 +167,10 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 k += 1
                 continue
             i, j, r = runs[k]
+            self._runs += 1
+            zone = self._runs
+            for st in stmts[i:j + 1]:  # an inner run (planned below) overwrites it
+                self._zones[st.expr_index] = zone
             inner = [x for x in regions if x is not r and r.start <= x.start and x.end <= r.end]
             sub = groups[i:j + 1]
             last = list(sub[-1])
@@ -205,6 +215,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 closes = pos < len(lines) and _text(lines[pos]).startswith("}")  # do { } while (c);
             segs.append(("body", self.plan_block(body, regs), levels, closes))
         segs.append(("lines", lines[pos:]))
+        self._compound.add(st.expr_index)
         return ("compound", segs)
 
     def cont(self, region):
@@ -298,6 +309,30 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 out.append((pf, st))
         return out
 
+    def fold_items(self, items):
+        """the plan with its lines through fold_lines (bncpp-84): consecutive statements as one list (a conditional
+        move's declaration and its if stay together), a compound statement's own lines piece by piece"""
+        start, out, run = self.function.start, [], []
+
+        def flush():
+            if run:
+                keyed = self.fold_lines([(t, (start, i) if i is not None else None) for t, i in run])
+                out.append(("stmt", [(t, k[1] if k is not None else None) for t, k in keyed]))
+                del run[:]
+        for it in items:
+            if it[0] == "stmt":
+                run.extend(it[1])
+                continue
+            flush()
+            if it[0] == "compound":
+                out.append(("compound", [(s[0], self.fold_items([("stmt", s[1])])[0][1] if s[1] else s[1])
+                                         if s[0] == "lines" else (s[0], self.fold_items(s[1])) + tuple(s[2:])
+                                         for s in it[1]]))
+            else:
+                out.append((it[0], self.fold_items(it[1])) + tuple(it[2:]))
+        flush()
+        return out
+
     def emit_items(self, items, tokens):
         for it in items:
             if it[0] == "stmt":
@@ -370,18 +405,32 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
     def emit_catch_body(self, plumb, var, tokens, pad):
         """the statements of a catch body from the pad's (or the functions it tail-calls') Pseudo C lines; all lines
-        first, so a throw's allocation and construction are seen with it (cpp/eh_throw.py)"""
-        lrs, keyed, plans = {}, [], {}
+        first, so a throw's allocation and construction are seen with it (cpp/eh_throw.py). The readability passes
+        run on each function's run of lines (bncpp-84) before the exception object and the owner's slots are named,
+        so a folded value gets them too."""
+        lrs, runs, plans = {}, [], {}  # runs: [(function, [statement], [(tokens, key)])], None for `throw;`
         for s in plumb.stmts:
             if _key(s) in plumb.rethrow:
-                keyed.append((None, None))  # `throw;`
+                runs.append(None)
                 continue
             f = s.function.source_function  # the pad, or a function its handler tail-calls (bncpp-64)
             lr = lrs.get(f.start) or lrs.setdefault(f.start, f.language_representation(BASE_LANGUAGE))
-            for t, k in self.throws(lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True), f, False):
+            lines = self.throws(lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True), f, False)
+            if runs and runs[-1] is not None and runs[-1][0].start == f.start:
+                runs[-1][1].append(s)
+                runs[-1][2].extend(lines)
+            else:
+                runs.append((f, [s], list(lines)))
+            plans[f.start] = self._throws[f.start]
+        keyed = []
+        for run in runs:
+            if run is None:
+                keyed.append((None, None))  # `throw;`
+                continue
+            f, _stmts, lines = run
+            for t, k in self.catch_folds(f, plumb).fold_lines(lines):
                 t = self.frame_tokens(t, pad, f)
                 keyed.append((self.catch_tokens(t, plumb.names, var) if var is not None else t, k))
-            plans[f.start] = self._throws[f.start]
         lines = []
         for t, _k in eh_throw.rewrite(keyed, plans):
             if t is None:
@@ -395,6 +444,32 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 lines.append(t)
         if lines:
             self.emit_token_lines(lines, tokens, True)
+
+    def catch_folds(self, func, plumb):
+        """the fold plan for func's statements in a catch body (bncpp-84): only variables that are read and written
+        nowhere else in func, not the exception's and not a throw's (eh_throw works on the lines unfolded)"""
+        shown = {i.instr_index for s in plumb.stmts if _key(s) not in plumb.rethrow
+                 and s.function.source_function.start == func.start for i in walk(s)}
+        cache = getattr(self, "_catch_folds", None)
+        if cache is None:
+            cache = self._catch_folds = {}
+        key = (func.start, frozenset(shown))
+        if key not in cache:
+            throw = set()
+            for t in self._throws.get(func.start, {}).values():
+                throw |= {t.at} | t.drop
+            protect = set()
+            for i in walk(func.hlil.root) if func.hlil is not None else ():
+                v = i.var if i.operation in (Op.HLIL_VAR, Op.HLIL_VAR_DECLARE) else \
+                    i.dest if i.operation == Op.HLIL_VAR_INIT else None
+                if v is not None and (i.instr_index not in shown or i.instr_index in throw):
+                    protect.add(v)
+            protect |= {v for v in func.vars if v.name in plumb.names}
+            # the hidden ___cxa_end_catch() ends the handler: C++ evaluates `return v;` before it, so v may move past
+            end = {i.instr_index for i in walk(func.hlil.root) if i.instr_index not in shown and
+                   i.operation == Op.HLIL_CALL and eh_render.callee(i) == "cxa_end_catch"} if func.hlil else set()
+            cache[key] = _CatchFolds(func, protect, end)
+        return cache[key]
 
     def frame_tokens(self, toks, pad, func):
         """a catch body line from func (the pad or a function it tail-calls) with the owner's stack slots it
@@ -492,8 +567,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         return i.operation in _READS_MEM
 
     def foldable_var(self, var):
-        """FoldMixin hook: a variable that may fold into its use. Folding runs only on functions with no try
-        regions for now (emit_base), so there are no exception temporaries to protect here."""
+        """FoldMixin hook: a variable that may fold into its use. This function's own code has no exception
+        temporaries to protect (they live in the landing-pad functions; their catch bodies fold through
+        _CatchFolds, which does)."""
         return True
 
     def _fold_plan(self):
@@ -506,13 +582,26 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         self._ternary_stmt = {}  # if instr index -> (value, definition instr index, the if's instr indexes)
         folded_idx, names = set(), {}
         hlil = self.function.hlil
+        zones, compound = getattr(self, "_zones", {}), getattr(self, "_compound", set())
         try:
             for body in self.fold_lists(hlil.root):  # a do-while's body ends in its condition (bncpp-12)
                 plan = {}
                 for k in range(len(body) - 1):  # x++ / ++x (bncpp-11), c ? a : b (bncpp-9): fold_candidate
                     self.plan_incdec(body, k, plan)  # reads plan["incdec"] / plan["ternary"]
                     self.plan_ternary(body, k, plan)
-                self.plan_folds(body, 0, len(body) - 1, plan)
+                # nothing moves into, out of or across a try run (bncpp-84): one fold plan per stretch of the body
+                # in one run, or outside all of them
+                zone = [zones.get(st.expr_index) for st in body]
+                for k in [k for k in plan.get("incdec", {}) if zone[k] != zone[k + 1]]:
+                    del plan["incdec"][k]
+                for j in [j for j, d in plan.get("ternary_def", {}).items()
+                          if zone[j] != zone[d] or body[j].expr_index in compound]:
+                    del plan["ternary"][j], plan["ternary_def"][j]
+                lo = 0
+                for hi in range(len(body)):
+                    if hi == len(body) - 1 or zone[hi + 1] != zone[hi]:
+                        self.plan_folds(body, lo, hi, plan)
+                        lo = hi + 1
                 for k in plan.get("folded", ()):
                     folded_idx.add(body[k].instr_index)
                 for j, (_x, value) in plan.get("ternary", {}).items():
@@ -608,9 +697,11 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if var is None or var in seen or var not in self.inline:
                 out.append(t)
                 continue
-            # the whole value of a `return v;` / `x = v;` needs no parentheses
-            bare = n + 1 < len(toks) and toks[n + 1].text.startswith(";") and \
-                re.search(r"(?:^|\s)(?:return|=)\s*$", "".join(x.text for x in out[-2:])) is not None
+            # the whole value of a `return v;` / `x = v;` or a whole call argument needs no parentheses
+            after = toks[n + 1].text.lstrip() if n + 1 < len(toks) else ""
+            before = "".join(x.text for x in out[-2:])
+            bare = (after.startswith(";") and re.search(r"(?:^|\s)(?:return|=)\s*$", before) is not None) or \
+                (after[:1] in (")", ",") and before.rstrip()[-1:] in ("(", ","))
             out.extend(self._render_value(self.inline[var], seen | {var}, bare))
         return out
 
@@ -924,6 +1015,25 @@ def _indent(line):
 def _has_try(items):
     return any(it[0] == "try" or (it[0] == "compound" and any(s[0] == "body" and _has_try(s[1]) for s in it[1]))
                for it in items)
+
+
+class _CatchFolds(PseudoCppFunction):
+    """PseudoCppFunction's readability passes on a catch body's lines from func (the landing pad or a function its
+    handler tail-calls), with no language representation of its own (bncpp-84); protect: the variables that must
+    not fold; end_catch: the instruction indexes of the hidden ___cxa_end_catch() calls (nothing in between)"""
+    function = hlil = None  # plain attributes here, not the API's properties
+
+    def __init__(self, func, protect, end_catch):
+        self.function, self.hlil, self._protect, self._end_catch = func, func.hlil, protect, end_catch
+
+    def __del__(self):
+        pass  # no core handle to free
+
+    def foldable_var(self, var):
+        return var not in self._protect
+
+    def fold_transparent(self, body, j, plan):
+        return body[j].instr_index in self._end_catch or super().fold_transparent(body, j, plan)
 
 
 class PseudoCppFunctionType(LanguageRepresentationFunctionType):

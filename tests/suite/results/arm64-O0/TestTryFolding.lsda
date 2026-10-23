@@ -1,0 +1,17 @@
+inc_inside(int32_t)  lsda base+0x95c  lpstart +0x0  2 call sites
+  +0x14  .. +0x18  lp +0x34  catch(typeinfo_for_int32_t)
+  +0x18  .. +0x8c  unwind
+
+move_inside(int32_t, int32_t, int32_t)  lsda base+0x970  lpstart +0x0  2 call sites
+  +0x1c  .. +0x20  lp +0x48  catch(typeinfo_for_int32_t)
+  +0x20  .. +0xa8  unwind
+
+move_across(int32_t, int32_t, int32_t)  lsda base+0x984  lpstart +0x0  4 call sites
+  +0x24  .. +0x28  lp +0x48  catch(typeinfo_for_int32_t)
+  +0x28  .. +0x78  unwind
+  +0x78  .. +0x84  lp +0xa4  cleanup
+  +0x84  .. +0xc0  unwind
+
+inc_in_catch(int32_t)  lsda base+0x9a4  lpstart +0x0  2 call sites
+  +0x14  .. +0x1c  lp +0x2c  catch(typeinfo_for_int32_t)
+  +0x1c  .. +0x90  unwind

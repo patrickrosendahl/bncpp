@@ -476,8 +476,7 @@
     }
     catch (Err& e)
     {
-        int64_t result = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
-        return result;
+        return (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
     }
     /* no return */
 }

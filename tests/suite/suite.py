@@ -58,6 +58,7 @@ TESTS = [
     "TestIncrement",
     "TestLoopConditions",
     "TestSwitch",
+    "TestTryFolding",         # the passes in functions with try regions: never across a try block (bncpp-84)
     "TestNoFold",             # shapes the passes above must leave alone or keep in order (bncpp-90)
     # classes: RTTI and vtables (.classes; cpp/rtti.py), one source in four builds
     "TestVirtual",               # classic dyld info
