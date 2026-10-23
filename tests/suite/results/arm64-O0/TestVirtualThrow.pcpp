@@ -1,0 +1,216 @@
+// Job::run(struct Job* this, int32_t) @ 0x400698
+{
+    // exception table (LSDA 0x400bf4): 1 of 3 call sites have a landing pad
+    //   0x4006c8..0x4006d4 -> 0x4006f0 sub_4006f0: cleanup
+
+    struct Job* this_1 = this;
+
+    if (arg2 <= 2)
+        return (uint64_t)(arg2 << 1);
+
+    throw std::runtime_error("too big");
+}
+
+// sub_4006f0 @ 0x4006f0
+{
+    // landing pad of Job::run(struct Job* this, int32_t) @ 0x400698
+    //   from 0x4006c8..0x4006d4: cleanup
+
+    int32_t x1;
+    int32_t arg_14 = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Task::guarded(struct Task* this, int32_t) @ 0x400728
+{
+    // exception table (LSDA 0x400c04): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x40074c..0x400754 -> 0x400768 sub_400768: catch (std::runtime_error) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    try
+    {
+        int32_t var_14 = (*(uint64_t*)(*(uint64_t*)this + 0x10))(this, (uint64_t)arg2) + 1;
+    }
+    catch (std::runtime_error& e)
+    {
+        var_14 = 0xffffffff;
+        /* tailcall */
+        return sub_4007a4(arg3);
+    }
+    /* tailcall */
+    return sub_4007a4(&var_10, var_10);
+}
+
+// sub_400768 @ 0x400768
+{
+    // landing pad of Task::guarded(struct Task* this, int32_t) @ 0x400728
+    //   from 0x40074c..0x400754: catch (std::runtime_error) #1
+
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    void* arg_10 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 4) = 0xffffffff;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4007a4(arg3);
+}
+
+// sub_4007a4 @ 0x4007a4
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// Task::unguarded(struct Task* this, int32_t) @ 0x4007bc
+{
+    return (uint64_t)((*(uint64_t*)(*(uint64_t*)this + 0x10))(this, (uint64_t)arg2) + 2);
+}
+
+// make_task(int32_t) @ 0x4007f4
+{
+    if (!arg1)
+    {
+        struct Job* x0_2 = operator new(8);
+        Idle::Idle(x0_2);
+        return x0_2;
+    }
+
+    struct Job* x0 = operator new(8);
+    Job::Job(x0);
+    return x0;
+}
+
+// Job::Job(struct Job* this) @ 0x400858
+{
+    struct Job* this_1 = this;
+    Job::Job(this);
+}
+
+// Idle::Idle(struct Idle* this) @ 0x400884
+{
+    struct Idle* this_1 = this;
+    Idle::Idle(this);
+}
+
+// drive(Task*, int32_t) @ 0x4008b0
+{
+    // exception table (LSDA 0x400c18): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4008d4..0x4008dc -> 0x4008ec sub_4008ec: catch (...) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    try
+    {
+        int32_t var_14 = (*(uint64_t*)(*(uint64_t*)arg1 + 0x20))(arg1, (uint64_t)arg2);
+    }
+    catch (...)
+    {
+        int32_t x1;
+        int32_t var_34 = x1;
+        var_14 = 0xfffffffe;
+        /* tailcall */
+        return sub_400914(arg2);
+    }
+    /* tailcall */
+    return sub_400914(&var_10, var_10);
+}
+
+// sub_4008ec @ 0x4008ec
+{
+    // landing pad of drive(Task*, int32_t) @ 0x4008b0
+    //   from 0x4008d4..0x4008dc: catch (...) #1
+
+    int32_t x1;
+    int32_t arg_c = x1;
+    ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg2 - 4) = 0xfffffffe;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400914(arg2);
+}
+
+// sub_400914 @ 0x400914
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// Task::~Task(struct Task* this) @ 0x400924
+{
+    struct Task* this_1 = this;
+    trap(1);
+}
+
+// Task::~Task(struct Task* this) @ 0x400938
+{
+    struct Task* this_1 = this;
+    trap(1);
+}
+
+// Job::~Job(struct Job* this) @ 0x400944
+{
+    struct Job* this_1 = this;
+    Job::~Job(this);
+}
+
+// Job::~Job(struct Job* this) @ 0x400970
+{
+    Job::~Job(this);
+    operator delete(this);
+}
+
+// Job::Job(struct Job* this) @ 0x4009a0
+{
+    Task::Task(this);
+    *(uint64_t*)this = &_vtable_for_Job{for `Task'};
+}
+
+// Task::Task(struct Task* this) @ 0x4009dc
+{
+    *(uint64_t*)this = &_vtable_for_Task;
+}
+
+// Idle::Idle(struct Idle* this) @ 0x400a00
+{
+    Task::Task(this);
+    *(uint64_t*)this = &data_4040d8;
+}
+
+// Idle::~Idle(struct Idle* this) @ 0x400a3c
+{
+    struct Idle* this_1 = this;
+    Idle::~Idle(this);
+}
+
+// Idle::~Idle(struct Idle* this) @ 0x400a68
+{
+    Idle::~Idle(this);
+    operator delete(this);
+}
+
+// Idle::run(struct Idle* this, int32_t) @ 0x400a98
+{
+    struct Idle* this_1 = this;
+    return (uint64_t)arg2;
+}
+
+// Idle::~Idle(struct Idle* this) @ 0x400ab0
+{
+    struct Idle* this_1 = this;
+}
+
+// Task::~Task(struct Task* this) @ 0x400adc
+{
+    return;
+}
+
+// Job::~Job(struct Job* this) @ 0x400af0
+{
+    struct Job* this_1 = this;
+}
+

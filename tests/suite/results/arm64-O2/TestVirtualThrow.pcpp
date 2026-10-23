@@ -1,0 +1,113 @@
+// Job::run(struct Job* this, int32_t) @ 0x400698
+{
+    // exception table (LSDA 0x4008c0): 1 of 3 call sites have a landing pad
+    //   0x4006c8..0x4006d4 -> 0x4006dc sub_4006dc: cleanup
+
+    if (arg2 < 3)
+        return (uint64_t)(arg2 << 1);
+
+    struct std::runtime_error* x0_1 = ___cxa_allocate_exception(0x10);
+    Job::run .cold.1(x0_1, std::runtime_error::runtime_error(x0_1, "too big"));
+    /* no return */
+}
+
+// sub_4006dc @ 0x4006dc
+{
+    // landing pad of Job::run(struct Job* this, int32_t) @ 0x400698
+    //   from 0x4006c8..0x4006d4: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Task::guarded(struct Task* this, int32_t) @ 0x4006f0
+{
+    // exception table (LSDA 0x4008d0): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400700..0x400704 -> 0x400710 sub_400710: catch (std::runtime_error) #1
+
+    try
+    {
+        return (uint64_t)((*(uint64_t*)(*(uint64_t*)this + 0x10))() + 1);
+    }
+    catch (std::runtime_error& e)
+    {
+        return 0xffffffff;
+    }
+}
+
+// sub_400710 @ 0x400710
+{
+    // landing pad of Task::guarded(struct Task* this, int32_t) @ 0x4006f0
+    //   from 0x400700..0x400704: catch (std::runtime_error) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 0xffffffff;
+}
+
+// Task::unguarded(struct Task* this, int32_t) @ 0x400724
+{
+    return (uint64_t)((*(uint64_t*)(*(uint64_t*)this + 0x10))() + 2);
+}
+
+// make_task(int32_t) @ 0x400744
+{
+    struct Task::Job::VTable** result = operator new(8);
+
+    *(uint64_t*)result = !arg1 ? &data_4040d8 : &_vtable_for_Job{for `Task'};
+    return result;
+}
+
+// drive(Task*, int32_t) @ 0x400788
+{
+    // exception table (LSDA 0x4008e4): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400798..0x40079c -> 0x4007a4 sub_4007a4: catch (...) #1
+
+    try
+    {
+        return (*(uint64_t*)(*(uint64_t*)arg1 + 0x20))();
+    }
+    catch (...)
+    {
+        return 0xfffffffe;
+    }
+}
+
+// sub_4007a4 @ 0x4007a4
+{
+    // landing pad of drive(Task*, int32_t) @ 0x400788
+    //   from 0x400798..0x40079c: catch (...) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return 0xfffffffe;
+}
+
+// Job::~Job(struct Job* this) @ 0x4007b8
+{
+    return;
+}
+
+// Job::~Job(struct Job* this) @ 0x4007bc
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Idle::run(struct Idle* this, int32_t) @ 0x4007c0
+{
+    return arg2;
+}
+
+// Task::~Task(struct Task* this) @ 0x4007c8
+{
+    trap(1);
+}
+
+// Job::run .cold.1(struct Job* this, int32_t) @ 0x4007cc
+{
+    ___cxa_throw(this, typeinfo_for_std::runtime_error, std::runtime_error::~runtime_error);
+    /* no return */
+}
+

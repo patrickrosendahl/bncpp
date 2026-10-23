@@ -1,0 +1,12 @@
+Job::run(struct Job* this, int32_t)  lsda base+0x8c0  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x3c  lp +0x44  cleanup
+  +0x3c  .. +0x58  unwind
+
+Task::guarded(struct Task* this, int32_t)  lsda base+0x8d0  lpstart +0x0  2 call sites
+  +0x10  .. +0x14  lp +0x20  catch(typeinfo_for_std::runtime_error)
+  +0x14  .. +0x34  unwind
+
+drive(Task*, int32_t)  lsda base+0x8e4  lpstart +0x0  2 call sites
+  +0x10  .. +0x14  lp +0x1c  catch(...)
+  +0x14  .. +0x30  unwind

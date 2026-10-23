@@ -14,8 +14,10 @@ the personality's decision is repeated:
   tail        a tail jump: the caller's frame is gone, the exception goes on to the owner's callers
   rethrown    caught by a handler that rethrows (`throw;`): the same exception goes on from the rethrow call
               (bncpp-70); a handler that throws another exception starts a second path with that type
-Functions on the path without direct callers are the frontier (entry points, or reached only indirectly: virtual
-calls, function pointers -- not followed yet).
+Functions on the path without direct callers go on to their virtual callers where a vcallers hook gives them
+(bncpp-66, cpp/eh_virtual.py: the calls through the X::VTable members of the slots holding the function; steps
+marked 'virtual'). Functions with neither are the frontier (entry points, or reached only through function
+pointers, or through receivers BN has no class type for).
 
 Prototype: the offline catch_bfs.py of 2026-10-12 (bncpp session, copied into synVbasic's scripts): the same
 walk over objdump and the file's own tables; here BN's call graph (shared/callgraph.py) and cpp/bnimage.py.
@@ -29,17 +31,19 @@ PREFIX = "[eh] "  # our comments; any other comment at the address is the user's
 
 
 class Step:
-    __slots__ = ("kind", "site", "owner", "via", "pad", "clause")
+    __slots__ = ("kind", "site", "owner", "via", "pad", "clause", "virtual")
 
-    def __init__(self, kind, site, owner, via, pad=None, clause=None):
+    def __init__(self, kind, site, owner, via, pad=None, clause=None, virtual=False):
         self.kind, self.site, self.owner, self.via = kind, site, owner, via  # via: the callee on the path
         self.pad, self.clause = pad, clause  # clause: [Clause] for caught / may catch
+        self.virtual = virtual  # a virtual call of via (bncpp-66)
 
 
 class Trace:
-    def __init__(self, bv, img, edges, thrown=(), bases=None, guards=()):
+    def __init__(self, bv, img, edges, thrown=(), bases=None, guards=(), vcallers=None):
         """thrown: the typeinfos thrown (addresses or names; empty: unknown); bases(ti) -> the typeinfos of its
-        bases (addresses / names), None when not known; guards: addresses of terminate helpers"""
+        bases (addresses / names), None when not known; guards: addresses of terminate helpers; vcallers(fn) ->
+        [(call address, caller, tail?)]: its virtual call sites (cpp/eh_virtual.py), None: direct calls only"""
         from ..shared import callgraph
         self.bv, self.img = bv, img
         self.callers = callgraph.index(edges)[0]
@@ -47,6 +51,7 @@ class Trace:
         self.tables = _lsda.parse_all(img)
         self.bases = bases
         self.guards = set(guards)
+        self.vcallers = vcallers
         self.thrown = [self.keys(t) for t in thrown]
         self.steps, self.frontier, self.seen = [], [], set()
         self.paths, self.depth = [], 0  # paths: [(catching step, throw site, typeinfo, Trace)] (bncpp-70)
@@ -55,7 +60,7 @@ class Trace:
         """a trace of another exception over the same binary (the tables and the call graph shared)"""
         t = Trace.__new__(Trace)
         t.bv, t.img, t.callers, t.starts, t.tables = self.bv, self.img, self.callers, self.starts, self.tables
-        t.bases, t.guards = self.bases, self.guards
+        t.bases, t.guards, t.vcallers = self.bases, self.guards, self.vcallers
         t.thrown = [t.keys(x) for x in thrown]
         t.steps, t.frontier, t.seen, t.paths, t.depth = [], [], set(), [], self.depth + 1
         return t
@@ -222,17 +227,19 @@ class Trace:
                 queue.append(fn)
         while queue:
             fn = queue.popleft()
-            sites = self.callers.get(fn, [])
+            sites = {site: None for site, _caller in self.callers.get(fn, [])}  # a site BN lists twice: once
+            for site, _caller, tail in (self.vcallers(fn) if self.vcallers is not None else ()):
+                sites.setdefault(site, tail)  # virtual: tail from the IL (an indirect call has no branch target)
             if not sites:
                 self.frontier.append(fn)
                 continue
-            for site in sorted({site for site, _caller in sites}):  # a site BN lists under two callers once
+            for site, vtail in sorted(sites.items()):
                 own = self.owner(site)
-                if self.is_tail(site):
+                if (self.is_tail(site) if vtail is None else vtail):
                     kind, cs, clause = "tail", None, None
                 else:
                     kind, cs, clause = self.decide(own, site)
-                st = Step(kind, site, own, fn, cs.landing_pad if cs else None, clause)
+                st = Step(kind, site, own, fn, cs.landing_pad if cs else None, clause, vtail is not None)
                 self.steps.append(st)
                 self.after_step(st, cs, queue)
         done = set()
@@ -251,7 +258,7 @@ class Trace:
 
     def comment(self, st):
         from .eh_comments import clause_text
-        via = self.name(st.via)
+        via = self.name(st.via) + (" (virtual call)" if st.virtual else "")
         if st.kind in ("caught", "may catch", "rethrown"):
             # caught: the clause that takes it last, any earlier ones could have (bases unknown)
             return PREFIX + "%s %s from %s: landing pad %#x" % (
@@ -272,12 +279,17 @@ class Trace:
         count = {}
         for st in self.steps:
             count[st.kind] = count.get(st.kind, 0) + 1
-        out = ["functions on the path: %d; %s; frontier (no direct callers): %d" % (
+        nv = sum(1 for st in self.steps if st.virtual)
+        members = getattr(self.vcallers, "members", None)
+        nvt = sum(1 for fn in self.frontier if fn in members) if members is not None else 0
+        out = ["functions on the path: %d; %s%s; frontier (no callers): %d%s" % (
             len(self.seen), ", ".join("%s %d" % kv for kv in sorted(count.items())) or "no callers",
-            len(self.frontier))]
+            "; virtual call sites %d" % nv if nv else "", len(self.frontier),
+            " (%d in a vtable: no virtual call through a typed receiver)" % nvt if nvt else "")]
         for st in self.steps:
             if st.kind in ("caught", "may catch", "terminates", "rethrown"):
-                out.append("  %-10s %#x in %s  %s" % (st.kind, st.site, self.name(st.owner), self.comment(st)))
+                out.append("  %-10s %#x in %s  %s" % (st.kind + ("*" if st.virtual else ""), st.site,
+                                                      self.name(st.owner), self.comment(st)))
         if self.frontier:
             out.append("  frontier: " + " ".join(self.name(a) for a in self.frontier))
         for st, site, ti, sub in self.paths:
@@ -373,7 +385,12 @@ def register_command(prefix):
             edges = callgraph.edges(self.bv, bncache.Cache(self.bv))
             guards = [h.start for h, _t in landing_pads.terminate_helpers(self.bv)]
             sites = [a for a, _t in throw_sites(self.func)]
-            t = Trace(self.bv, img, edges, thrown_types(self.func), rtti_bases(img), guards)
+            from . import rtti, rtti_names
+            from .eh_virtual import VirtualCallers
+            types = rtti.scan(img)
+            labels = rtti_names.labels(types, img.demangle, rtti_names.label_overrides(types, img.symbol_at))
+            t = Trace(self.bv, img, edges, thrown_types(self.func), rtti_bases(img), guards,
+                      VirtualCallers(self.bv, types, labels))
             t.run(sites=sites) if sites else t.run([self.func.start])  # no throw here: it leaves this function
             t.annotate()
             log_info("%s: exception path from %s (thrown: %s)\n%s" % (

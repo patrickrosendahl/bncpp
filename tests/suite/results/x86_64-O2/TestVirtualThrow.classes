@@ -1,0 +1,38 @@
+typeinfo 0x401068  class mangled 4Task
+  vtable 0x401040  offset_to_top 0  5 slots
+    [0] 0x4007b0 Task::~Task(struct Task* this)
+    [1] 0x4007b0 Task::~Task(struct Task* this)
+    [2] pure
+    [3] 0x4006e0 Task::guarded(struct Task* this, int32_t)
+    [4] 0x400710 Task::unguarded(struct Task* this, int32_t)
+typeinfo 0x4010b0  si    mangled 3Job
+  base 0x401068 4Task
+  vtable 0x401088  offset_to_top 0  5 slots
+    [0] 0x400780 Job::~Job(struct Job* this)
+    [1] 0x400790 Job::~Job(struct Job* this)
+    [2] 0x400690 Job::run(struct Job* this, int32_t)
+    [3] 0x4006e0 Task::guarded(struct Task* this, int32_t)
+    [4] 0x400710 Task::unguarded(struct Task* this, int32_t)
+typeinfo 0x401100  si    mangled 4Idle  bind __ZTI4Idle
+  base 0x401068 4Task
+  vtable 0x4010d8  offset_to_top 0  5 slots
+    [0] 0x400780 Job::~Job(struct Job* this)
+    [1] 0x400790 Job::~Job(struct Job* this)
+    [2] 0x4007a0 Idle::run(struct Idle* this, int32_t)
+    [3] 0x4006e0 Task::guarded(struct Task* this, int32_t)
+    [4] 0x400710 Task::unguarded(struct Task* this, int32_t)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400690 Job::vfunc2   [now: Job::run(struct Job* this, int32_t)]
+R 0x4006e0 Task::vfunc3   [now: Task::guarded(struct Task* this, int32_t)]
+R 0x400710 Task::vfunc4   [now: Task::unguarded(struct Task* this, int32_t)]
+C 0x400780 virtual in unrelated classes: Job[0], Idle[0]
+C 0x400790 virtual in unrelated classes: Job[1], Idle[1]
+R 0x4007a0 Idle::vfunc2   [now: Idle::run(struct Idle* this, int32_t)]
+R 0x4007b0 Task::~Task   [now: Task::~Task(struct Task* this)]
+D 0x401030 vtable_for_Task   [now: _vtable_for_Task]
+D 0x401068 typeinfo_for_Task   [now: _typeinfo_for_Task]
+D 0x401078 vtable_for_Job   [now: _vtable_for_Job]
+D 0x4010b0 typeinfo_for_Job   [now: _typeinfo_for_Job]
+D 0x4010c8 vtable_for_Idle   [now: _vtable_for_Idle]
+D 0x401100 typeinfo_for_Idle   [now: _typeinfo_for_Idle]

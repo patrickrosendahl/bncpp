@@ -71,6 +71,7 @@ TESTS = [
     "TestClosure",               # lambdas in std::function / a function object vs same-shaped classes (bncpp-23)
     "TestAnchoredBaseFields",    # polymorphic anchored base with fields as the second base (bncpp-58/59)
     "TestInteriorFields",        # fields reached only through untyped helpers / an interior pointer; floats (bncpp-33)
+    "TestVirtualThrow",          # exception path through virtual calls (bncpp-66; checked by hand with bn_eh_path.py)
     # names hashed like SynthV's raw slices
     "TestCatchAllHashed",        # clang's terminate helper and std::terminate unnamed: guards found anyway (bncpp-71)
 ]

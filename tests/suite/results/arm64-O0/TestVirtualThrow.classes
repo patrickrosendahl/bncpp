@@ -1,0 +1,41 @@
+typeinfo 0x404068  class mangled 4Task
+  vtable 0x404040  offset_to_top 0  5 slots
+    [0] 0x400924 Task::~Task(struct Task* this)
+    [1] 0x400938 Task::~Task(struct Task* this)
+    [2] pure
+    [3] 0x400728 Task::guarded(struct Task* this, int32_t)
+    [4] 0x4007bc Task::unguarded(struct Task* this, int32_t)
+typeinfo 0x4040b0  si    mangled 3Job
+  base 0x404068 4Task
+  vtable 0x404088  offset_to_top 0  5 slots
+    [0] 0x400944 Job::~Job(struct Job* this)
+    [1] 0x400970 Job::~Job(struct Job* this)
+    [2] 0x400698 Job::run(struct Job* this, int32_t)
+    [3] 0x400728 Task::guarded(struct Task* this, int32_t)
+    [4] 0x4007bc Task::unguarded(struct Task* this, int32_t)
+typeinfo 0x404100  si    mangled 4Idle
+  base 0x404068 4Task
+  vtable 0x4040d8  offset_to_top 0  5 slots
+    [0] 0x400a3c Idle::~Idle(struct Idle* this)
+    [1] 0x400a68 Idle::~Idle(struct Idle* this)
+    [2] 0x400a98 Idle::run(struct Idle* this, int32_t)
+    [3] 0x400728 Task::guarded(struct Task* this, int32_t)
+    [4] 0x4007bc Task::unguarded(struct Task* this, int32_t)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400698 Job::vfunc2   [now: Job::run(struct Job* this, int32_t)]
+R 0x400728 Task::vfunc3   [now: Task::guarded(struct Task* this, int32_t)]
+R 0x4007bc Task::vfunc4   [now: Task::unguarded(struct Task* this, int32_t)]
+R 0x400924 Task::~Task   [now: Task::~Task(struct Task* this)]
+R 0x400938 Task::~Task [deleting]   [now: Task::~Task(struct Task* this)]
+R 0x400944 Job::~Job   [now: Job::~Job(struct Job* this)]
+R 0x400970 Job::~Job [deleting]   [now: Job::~Job(struct Job* this)]
+R 0x400a3c Idle::~Idle   [now: Idle::~Idle(struct Idle* this)]
+R 0x400a68 Idle::~Idle [deleting]   [now: Idle::~Idle(struct Idle* this)]
+R 0x400a98 Idle::vfunc2   [now: Idle::run(struct Idle* this, int32_t)]
+D 0x404030 vtable_for_Task   [now: _vtable_for_Task]
+D 0x404068 typeinfo_for_Task   [now: _typeinfo_for_Task]
+D 0x404078 vtable_for_Job   [now: _vtable_for_Job]
+D 0x4040b0 typeinfo_for_Job   [now: _typeinfo_for_Job]
+D 0x4040c8 vtable_for_Idle   [now: _vtable_for_Idle]
+D 0x404100 typeinfo_for_Idle

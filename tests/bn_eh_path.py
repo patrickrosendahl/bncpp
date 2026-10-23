@@ -1,10 +1,11 @@
 # Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
 #   bnrun --bndb DB --timeout 600 --env FROM=0x10032b410|name[,…] [--env TI=0x1009d0bb0|typeinfo_for_X[,…]] \
-#         [--env BASES=1] [--env APPLY=1] tests/bn_eh_path.py
+#         [--env BASES=1] [--env VIRTUAL=0] [--env APPLY=1] tests/bn_eh_path.py
 # bncpp-24: what the functions at FROM throw, followed up the direct callers (cpp/eh_path.py): who catches it,
 # where it terminates, where it leaves the known call graph. TI: the thrown typeinfos (default: the ones FROM
 # passes to ___cxa_throw, starting at those throw sites; none: unknown, every catch (T) is a 'may catch'). BASES=1: base classes from the class
-# scan (slow on big binaries). Review: .scratch/eh/<binary>.path.review (the report, then one line per call site
+# scan (slow on big binaries). VIRTUAL=0: direct callers only (default: also the virtual call sites of a function in a
+# vtable, through the X::VTable members BN has references to -- cpp/eh_virtual.py, bncpp-66). Review: .scratch/eh/<binary>.path.review (the report, then one line per call site
 # with the comment APPLY would set). APPLY=1 sets the comments (in RAM; never over another comment).
 import importlib, os, time
 import binaryninja as _bn
@@ -53,7 +54,14 @@ _img = _bnimage.BNImage(bv)
 _edges = _cg.edges(bv, _cache.Cache(bv))
 _bases = _ep.rtti_bases(_img) if _get("BASES") == "1" else None
 _guards = [h.start for h, _t in _lp.terminate_helpers(bv)]
-_tr = _ep.Trace(bv, _img, _edges, _ti, _bases, _guards)
+_vc = None
+if _get("VIRTUAL", "1") != "0":
+    _rtti = importlib.import_module(_p + ".cpp.rtti")
+    _rn = importlib.import_module(_p + ".cpp.rtti_names")
+    _ev = importlib.import_module(_p + ".cpp.eh_virtual")
+    _types = _rtti.scan(_img)
+    _vc = _ev.VirtualCallers(bv, _types, _rn.labels(_types, _img.demangle, _rn.label_overrides(_types, _img.symbol_at)))
+_tr = _ep.Trace(bv, _img, _edges, _ti, _bases, _guards, _vc)
 _tr.run(sites=_sites) if _sites else _tr.run(_from)
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name

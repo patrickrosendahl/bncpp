@@ -1,0 +1,29 @@
+classes sized 2
+ctor already typed 5
+ctors forwarding 2
+ctors/dtors 5
+fields 0
+fields named (override) 0
+functions scanned 5
+helper accesses added 0
+helper entries 19
+helper floats over int 0
+helper walks 14
+params with direct callers 0
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 5
+ptr stores 0
+returns used as objects 0
+rounds 2
+stable 1
+structs 3
+structs with a base 2
+
+struct Task  (0x8 bytes, from derived)
+     0x0 vptr                     struct Task::VTable*  [vptr]
+struct Job  (0x8 bytes, from new)  base Task @ 0x0
+     0x0 vptr                     struct Job::VTable*  [vptr]
+struct Idle  (0x8 bytes, from new)  base Task @ 0x0
+     0x0 vptr                     struct Idle::VTable*  [vptr]
