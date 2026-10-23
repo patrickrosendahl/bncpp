@@ -207,7 +207,8 @@ COUNTERS = {
     "temps": re.compile(r"\b(?:entry_)?%s(?:_\d+)?\b|\bvar_[0-9a-f]+(?:_\d+)?\b|\b(?:x|w|r)\d+_\d+\b" % _REG),
     "gotos": re.compile(r"\bgoto\b"),
     "labels": re.compile(r"^\s*label_\w+:", re.M),
-    "while_true": re.compile(r"\bwhile \(true\)|\bdo\s*$", re.M),
+    # a `do` without a `{` on the next line is Pseudo C's brace-less form (a braced do-while is no flaw, bncpp-83)
+    "while_true": re.compile(r"\bwhile \(true\)|\bdo[ \t]*\n(?![ \t]*\{)", re.M),
     "tailcalls": re.compile(r"/\* tailcall \*/"),
     "plumbing": re.compile(r"(?<![\w$])_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|"
                            r"Unwind_Resume|clang_call_terminate)\s*\("),
