@@ -4,8 +4,9 @@
 #   bnrun --bndb-save DB                                                         # then persist, path-scoped
 # The class scan (cpp/rtti.py) through BN, named by cpp/rtti_names.py, as annotate directives (R:/D:/C:) into
 # .scratch/classes/<binary>.directives. Applying never overwrites what someone named or wrote: a function is
-# renamed only while its name is BN's (auto symbol, sub_...), a data symbol only where there is none or an auto
-# one, a comment only where there is none. Every skip is counted. One exception: a function still carrying our own
+# renamed only while its name is BN's own (no symbol: sub_..., or BN's auto thunk name j_...) -- a symbol from the
+# binary is auto too and is kept (bncpp-94: Job::run(int) had become Job::vfunc2) --, a data symbol only where
+# there is none or an auto one, a comment only where there is none. Every skip is counted. One exception: a function still carrying our own
 # placeholder Owner::vfuncN from an earlier apply takes a better name for the same owner (bncpp-23: operator()).
 # A vtable slot is a function entry by definition: a slot target BN has no function at gets one (bncpp-30: tiny
 # functions such as a lone 'ret' or a tail jump; arm64 SynthV 210), then its name -- only in executable code. The
@@ -56,6 +57,13 @@ def _note(action, d, now=""):
     _review.append("%-5s %s:%#x:%s%s" % (action, d[0], d[1], d[2], "   [now: %s]" % now if now else ""))
 
 
+def _bn_name(f):
+    # BN's own name: no symbol at the address (sub_...) or BN's thunk name (auto j_...); every other auto symbol
+    # comes from the binary (exports, demangled locals, stubs such as _objc_msgSend$x)
+    s = bv.get_symbol_at(f.start)
+    return s is None or (s.auto and s.raw_name.startswith("j_"))
+
+
 def _shape(f):
     return (f.start, f.total_bytes, len(f.basic_blocks))
 
@@ -83,6 +91,10 @@ for _kind, _addr, _text in _dirs:
             continue
         if not _f.symbol.auto:
             _count("R kept (named)")
+            _note("keep", (_kind, _addr, _text), _f.name)
+            continue
+        if not _bn_name(_f):
+            _count("R kept (binary symbol)")
             _note("keep", (_kind, _addr, _text), _f.name)
             continue
         _count("R rename")

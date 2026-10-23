@@ -12,7 +12,7 @@
 # function's type as user-set, give BN's own inference as the baseline (only types that differ are protected):
 #   bnrun --bndb RAW_BINARY --timeout 120 --env DUMP_TYPES=F tests/bn_class_types.py   (a fresh view)
 #   bnrun --bndb DB ... --env BASELINE=F tests/bn_class_types.py
-import importlib, os, time
+import importlib, os, re, time
 import binaryninja as _bn
 from binaryninja import FunctionParameter, NamedTypeReferenceClass, QualifiedName, StructureBuilder, Type
 
@@ -51,8 +51,19 @@ def _protected(f):
 
 
 def _user_name(addr):
+    # a user's name, else the method name of a symbol from the binary (bncpp-94: Job::run(int) -> member 'run');
+    # BN's own names (no symbol: sub_..., auto j_...) and non-identifiers (~Task, operator()) give None
     f = bv.get_function_at(addr)
-    return f.name if f is not None and not f.symbol.auto else None
+    if f is None:
+        return None
+    if not f.symbol.auto:
+        return f.name
+    s = bv.get_symbol_at(addr)
+    if s is None or s.raw_name.startswith("j_"):
+        return None
+    d = _img.demangle(s.raw_name)
+    m = d.rsplit("::", 1)[-1] if d else None
+    return m if m and re.fullmatch(r"[A-Za-z_]\w*", m) else None
 
 
 _img = _bnimage.BNImage(bv)

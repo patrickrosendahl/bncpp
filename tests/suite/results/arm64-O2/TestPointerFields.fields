@@ -74,7 +74,7 @@ struct Circle  (0x10 bytes, from members)  base Shape @ 0x0
      0x0 vptr                     struct Circle::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
 
-apply param 0x400b7c Harbor::vfunc2 arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
-apply param 0x400bdc Dock::vfunc2 arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
+apply param 0x400b7c __ZN6Harbor6attachEPv arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
+apply param 0x400bdc __ZN4Dock6attachEPv arg2: Engine  (Engine vptr; 0 call sites unresolved)   [now: void*]
 apply ret   0x4008b4 __Z15make_engine_rawv: Engine  (Engine vptr; 0 returns unresolved)   [now: struct Engine::VTable**]
 apply ret   0x4008f4 __Z12engine_againv: Engine  (Engine callee; 0 returns unresolved)   [now: struct Engine::VTable**]

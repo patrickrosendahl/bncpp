@@ -77,5 +77,5 @@ struct Circle  (0x10 bytes, from new)  base Shape @ 0x0
 apply param 0x400930 __ZN9FastBlockC1EPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
 apply param 0x400f50 __ZN9FastBlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
 apply param 0x400fa0 __ZN5BlockC2EPv arg2: Engine  (Engine caller; 0 call sites unresolved)   [now: void*]
-apply param 0x4012a0 Harbor::vfunc2 arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
-apply param 0x401390 Dock::vfunc2 arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
+apply param 0x4012a0 __ZN6Harbor6attachEPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
+apply param 0x401390 __ZN4Dock6attachEPv arg2: Engine  (Engine new; 0 call sites unresolved)   [now: void*]
