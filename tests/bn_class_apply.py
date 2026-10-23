@@ -7,6 +7,10 @@
 # renamed only while its name is BN's (auto symbol, sub_...), a data symbol only where there is none or an auto
 # one, a comment only where there is none. Every skip is counted. One exception: a function still carrying our own
 # placeholder Owner::vfuncN from an earlier apply takes a better name for the same owner (bncpp-23: operator()).
+# A vtable slot is a function entry by definition: a slot target BN has no function at gets one (bncpp-30: tiny
+# functions such as a lone 'ret' or a tail jump; arm64 SynthV 210), then its name -- only in executable code. The
+# review says whether it lies inside another function's body; APPLY reports the neighbours (the function containing
+# it, the one before it) whose shape (size, blocks) the new function changed.
 import importlib, os, re, time
 import binaryninja as _bn
 
@@ -52,12 +56,24 @@ def _note(action, d, now=""):
     _review.append("%-5s %s:%#x:%s%s" % (action, d[0], d[1], d[2], "   [now: %s]" % now if now else ""))
 
 
+def _shape(f):
+    return (f.start, f.total_bytes, len(f.basic_blocks))
+
+
+_created, _neighbours = [], {}
 for _kind, _addr, _text in _dirs:
     if _kind == "R":
         _f = bv.get_function_at(_addr)
         if _f is None:
-            _count("R no function")
-            _note("skip", (_kind, _addr, _text), "no function")
+            if not bv.is_offset_executable(_addr):
+                _count("R no function, not code")
+                _note("skip", (_kind, _addr, _text), "no function, not executable")
+                continue
+            _in = bv.get_functions_containing(_addr) or []
+            _count("R create function" + (" (inside another)" if _in else ""))
+            _note("apply", (_kind, _addr, _text), "no function: create%s" % (
+                " (inside %s)" % ", ".join(f.name for f in _in) if _in else ""))
+            _created.append((_addr, _text, _in))  # created after the loop: neighbours first, before any change
             continue
         if not _f.symbol.auto and _own_placeholder(_f.name, _text):
             _count("R upgrade (own placeholder)")
@@ -97,6 +113,24 @@ for _kind, _addr, _text in _dirs:
                 _f.set_comment_at(_addr, _text)
             if not _fs:
                 bv.set_comment_at(_addr, _text)
+if _apply and _created:
+    for _addr, _text, _in in _created:
+        _prev = bv.get_previous_function_start_before(_addr)
+        for _n in _in + ([bv.get_function_at(_prev)] if _prev is not None else []):
+            if _n is not None:
+                _neighbours.setdefault(_n.start, _shape(_n))
+    for _addr, _text, _in in _created:
+        bv.create_user_function(_addr)
+        bv.define_user_symbol(_bn.Symbol(_bn.SymbolType.FunctionSymbol, _addr, _text))
+    bv.update_analysis_and_wait()
+    _counts["R created, function there now"] = sum(1 for a, _t, _i in _created if bv.get_function_at(a) is not None)
+    for _a, _was in sorted(_neighbours.items()):
+        _n = bv.get_function_at(_a)
+        _now = _shape(_n) if _n is not None else None
+        if _now != _was:
+            _count("R create: neighbour changed")
+            _review.append("note  neighbour %#x %s: (start, bytes, blocks) %s -> %s" % (
+                _a, _n.name if _n is not None else "-", _was, _now))
 with open(_out[:-len(".directives")] + ".names.review", "w", encoding="utf-8") as _fh:
     _fh.write("\n".join(_review) + "\n")
 print("%d typeinfos, %d directives -> %s (+ .names.review)" % (len(_types), len(_dirs), _out))
