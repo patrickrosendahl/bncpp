@@ -511,6 +511,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                     continue
                 body = list(blk.body)
                 plan = {}
+                for k in range(len(body) - 1):  # x++ / ++x (bncpp-11): fold_candidate reads plan["incdec"]
+                    self.plan_incdec(body, k, plan)
                 self.plan_folds(body, 0, len(body) - 1, plan)
                 for k in plan.get("folded", ()):
                     folded_idx.add(body[k].instr_index)
@@ -558,7 +560,17 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
     def _render_value(self, value, seen):
         """a folded value as tokens: the base language's rendering of the expression, with nested folds
-        substituted and parentheses added unless it is atomic"""
+        substituted and parentheses added unless it is atomic. A synthetic ('incdec', ...) value (bncpp-11)
+        renders as `f++` / `++f`."""
+        if isinstance(value, tuple) and value[0] == "incdec":
+            _, lvalue, step, pre, _store = value
+            lines = self.base().get_expr_text(lvalue, None, P.TopLevelOperatorPrecedence, False)
+            toks = eh_throw._flat([list(l.tokens) for l in lines])
+            toks = self._subst_inline(toks, seen)
+            if len(toks) != 1:  # a memory lvalue `*(T*)addr` must be grouped: `(*(T*)addr)++`, not `*(T*)addr++`
+                toks = [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
+            op = tok(TT.OperationToken, "++" if step == "+" else "--")
+            return [op] + toks if pre else toks + [op]
         lines = self.base().get_expr_text(value, None, P.TopLevelOperatorPrecedence, False)
         toks = eh_throw._flat([list(l.tokens) for l in lines])
         toks = self._subst_inline(toks, seen)

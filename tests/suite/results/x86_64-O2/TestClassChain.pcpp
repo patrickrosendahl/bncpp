@@ -2,9 +2,7 @@
 {
     int64_t rax;
     int64_t var_18 = rax;
-    int32_t registered_1 = registered;
-    registered = registered_1 + 1;
-    *(uint64_t*)(&registry + (((uint64_t)registered_1 & 0xf) << 3)) = arg1;
+    *(uint64_t*)(&registry + (((uint64_t)registered++ & 0xf) << 3)) = arg1;
     int64_t entry_rdx;
     int64_t entry_rsi;
     int64_t result = (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))(arg1, entry_rsi, entry_rdx, &registry);

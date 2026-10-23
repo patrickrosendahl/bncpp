@@ -35,7 +35,7 @@
 {
     Shape::Shape(this);
     *(uint64_t*)this = &data_404020;
-    *(uint64_t*)((char*)this + 8) = (double)1.0;
+    *(uint64_t*)((char*)this + 8) = (double)1.;
 }
 
 // Shape::Shape(struct Shape* this) @ 0x400638

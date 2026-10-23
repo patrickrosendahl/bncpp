@@ -1,8 +1,6 @@
 // enlist(Worker*) @ 0x400690
 {
-    int32_t registered_1 = registered;
-    registered = registered_1 + 1;
-    *(uint64_t*)(&registry + ((int64_t)(registered_1 & 0xf) << 3)) = arg1;
+    *(uint64_t*)(&registry + ((int64_t)(registered++ & 0xf) << 3)) = arg1;
     *(uint32_t*)((char*)arg1 + 8) += (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))(arg1);
     return arg1;
 }
@@ -96,14 +94,14 @@
     *(uint64_t*)this = &_vtable_for_Worker;
     *(uint32_t*)((char*)this + 8) = 0;
     void* __offset(Worker, 0x10) var_18 = (char*)this + 0x10;
-    bool cond:0_1;
+    bool cond0_1;
 
     do
     {
         *(uint64_t*)var_18 = 0;
-        cond:0_1 = (char*)var_18 + 8 != (char*)this + 0x30;
+        cond0_1 = (char*)var_18 + 8 != (char*)this + 0x30;
         var_18 += 8;
-    } while (cond:0_1);
+    } while (cond0_1);
     enlist(this);
 }
 
@@ -180,14 +178,14 @@
     Driver::Driver(this);
     *(uint64_t*)this = &_vtable_for_NoteGroup{for `Worker'};
     void* __offset(NoteGroup, 0x38) var_28 = (char*)this + 0x38;
-    bool cond:0_1;
+    bool cond0_1;
 
     do
     {
         *(uint64_t*)var_28 = 0;
-        cond:0_1 = (char*)var_28 + 8 != (char*)this + 0x78;
+        cond0_1 = (char*)var_28 + 8 != (char*)this + 0x78;
         var_28 += 8;
-    } while (cond:0_1);
+    } while (cond0_1);
     enlist(this);
 }
 

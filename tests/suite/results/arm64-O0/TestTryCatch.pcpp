@@ -33,9 +33,7 @@
 
 // next_value() @ 0x400724
 {
-    uint64_t result = (uint64_t)(next_value()::n + 1);
-    next_value()::n = (uint32_t)result;
-    return result;
+    return ++next_value()::n;
 }
 
 // Guard::Guard(struct Guard* this, char const*) @ 0x400738

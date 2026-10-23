@@ -1,15 +1,11 @@
 // post_increment() @ 0x4003c0
 {
-    uint64_t counter_1 = (uint64_t)counter;
-    counter = (uint32_t)counter_1 + 1;
-    return counter_1;
+    return counter++;
 }
 
 // pre_increment() @ 0x4003e0
 {
-    uint64_t result = (uint64_t)(counter + 1);
-    counter = (uint32_t)result;
-    return result;
+    return ++counter;
 }
 
 // fill(int32_t) @ 0x400400
@@ -18,9 +14,7 @@
 
     while (i < 0x10)
     {
-        int32_t i_1 = i;
-        i = i_1 + 1;
-        *(uint32_t*)(&table + ((int64_t)i_1 << 2)) = arg1;
+        *(uint32_t*)(&table + ((int64_t)i++ << 2)) = arg1;
     }
 }
 

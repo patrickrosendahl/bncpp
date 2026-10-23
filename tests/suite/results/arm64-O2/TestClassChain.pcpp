@@ -1,8 +1,6 @@
 // enlist(Worker*) @ 0x400698
 {
-    uint64_t registered_1 = (uint64_t)registered;
-    registered = (uint32_t)registered_1 + 1;
-    *(uint64_t*)(&registry + ((registered_1 & 0xf) << 3)) = arg1;
+    *(uint64_t*)(&registry + ((registered++ & 0xf) << 3)) = arg1;
     int64_t result = (*(uint64_t*)(*(uint64_t*)arg1 + 0x10))();
     *(uint32_t*)((char*)arg1 + 8) += (uint32_t)result;
     return result;

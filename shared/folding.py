@@ -216,8 +216,9 @@ class FoldMixin:
 
     def plan_incdec(self, body, k, plan):
         """`t = f; f = t + 1; use(t)` (post) / `t = f + 1; f = t; use(t)` (pre), f a local or a store target ->
-        plan["incdec"][k] = (t, ("incdec", load of f, "+"/"-", pre, store index)); plan_fold then folds it into
-        the use as f++ / ++f and drops the store with it."""
+        plan["incdec"][k] = (t, ("incdec", f as an lvalue, "+"/"-", pre, store index)); plan_fold then folds it
+        into the use as f++ / ++f and drops the store with it. Native HLIL wraps a load / temporary in zx / sx /
+        low_part / an offset-0 field (the register is wider than the value), so the matching strips those."""
         if k + 1 > len(body) - 1:
             return
         s, st = body[k], body[k + 1]
@@ -230,17 +231,18 @@ class FoldMixin:
         if st.operation != Op.HLIL_ASSIGN:
             return
         dest, val = st.dest, st.src
-        same = lambda e: _same_lvalue(dest, e)
-        is_t = lambda e: e.operation == Op.HLIL_VAR and e.var == t
-        step = _unit_step(val, is_t)
-        if step is not None and same(s.src):
-            load, pre = s.src, False
+        is_t = lambda e: _strip(e).operation == Op.HLIL_VAR and _strip(e).var == t
+        # post: t = f ; f = t + 1 -- the definition copies f, the store writes f + 1 back
+        step = _unit_step(_strip(val), is_t)
+        if step is not None and _same_lvalue(dest, s.src):
+            pre = False
         else:
-            step = _unit_step(s.src, same)
+            # pre: t = f + 1 ; f = t -- the definition is f + 1, the store copies it back to f
+            step = _unit_step(_strip(s.src), lambda e: _same_lvalue(dest, e))
             if step is None or not is_t(val):
                 return
-            load, pre = s.src.left, True
-        plan.setdefault("incdec", {})[k] = (t, ("incdec", load, step, pre, k + 1))
+            pre = True
+        plan.setdefault("incdec", {})[k] = (t, ("incdec", dest, step, pre, k + 1))
 
 
 def _is_bool(e):
@@ -251,13 +253,18 @@ def _is_bool(e):
 
 
 def _strip(e):
-    while e.operation in _WRAPS:
+    """e without the zx / sx / low_part wraps, and without the offset-0 field read native HLIL uses for the low
+    part of a wider variable (`(uint32_t)x` of a uint64_t x is STRUCT_FIELD(x, 0))"""
+    while e.operation in _WRAPS or (e.operation == Op.HLIL_STRUCT_FIELD and e.offset == 0 and
+                                    e.src.operation == Op.HLIL_VAR):
         e = e.src
     return e
 
 
 def _same_lvalue(a, b):
-    """a and b are the same simple lvalue (a local, or a load of the same constant address)"""
+    """a and b are the same simple lvalue (a local, or a load of the same constant address), ignoring the
+    zx / sx / low_part a native load / store may wrap it in"""
+    a, b = _strip(a), _strip(b)
     if a.operation == Op.HLIL_VAR and b.operation == Op.HLIL_VAR:
         return a.var == b.var
     if a.operation == Op.HLIL_DEREF and b.operation == Op.HLIL_DEREF:

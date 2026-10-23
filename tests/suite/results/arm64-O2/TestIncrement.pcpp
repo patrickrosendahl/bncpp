@@ -1,15 +1,11 @@
 // post_increment() @ 0x4003d0
 {
-    uint64_t counter_1 = (uint64_t)counter;
-    counter = (uint32_t)counter_1 + 1;
-    return counter_1;
+    return counter++;
 }
 
 // pre_increment() @ 0x4003e4
 {
-    uint64_t result = (uint64_t)(counter + 1);
-    counter = (uint32_t)result;
-    return result;
+    return ++counter;
 }
 
 // fill(int32_t) @ 0x4003f8
