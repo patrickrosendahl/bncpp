@@ -707,8 +707,14 @@ def _func_classes(fa):
 # through a phi (a pointer stepped in a loop). Cached per walk (section "helpers"): a walk depends on the function's
 # code only, and the entries (which parameters are 'X*' now) are read anew each run, so a run that types more
 # functions (APPLY) walks just the new ones.
-_HELP_VERSION = 1
+_HELP_VERSION = 2  # 2: float operations make their nested loads floats (bncpp-105)
 _FLOAT = (TypeClass.FloatTypeClass,)
+# operations whose operands are floats (not INT_TO_FLOAT: an int operand): a load nested in them is a float even
+# where BN types the load itself as an int ('zmm1 = zmm1 f* [rax + 0x38].d', bncpp-105)
+_FLOAT_OPS = frozenset((Op.MLIL_FADD, Op.MLIL_FSUB, Op.MLIL_FMUL, Op.MLIL_FDIV, Op.MLIL_FSQRT, Op.MLIL_FNEG,
+                        Op.MLIL_FABS, Op.MLIL_FLOOR, Op.MLIL_CEIL, Op.MLIL_FTRUNC, Op.MLIL_ROUND_TO_INT,
+                        Op.MLIL_FLOAT_CONV, Op.MLIL_FLOAT_TO_INT, Op.MLIL_FCMP_E, Op.MLIL_FCMP_NE, Op.MLIL_FCMP_LT,
+                        Op.MLIL_FCMP_LE, Op.MLIL_FCMP_GE, Op.MLIL_FCMP_GT, Op.MLIL_FCMP_O, Op.MLIL_FCMP_UO))
 _LEAVES = (Op.MLIL_VAR_SSA, Op.MLIL_CONST, Op.MLIL_CONST_PTR, Op.MLIL_IMPORT, Op.MLIL_FLOAT_CONST,
            Op.MLIL_ADDRESS_OF, Op.MLIL_VAR_SSA_FIELD, Op.MLIL_VAR_ALIASED, Op.MLIL_EXTERN_PTR)
 
@@ -750,13 +756,14 @@ def _walk(f, i, acc=True):
                 return
         if o in _LEAVES or depth > 6:
             return
+        fl = o in _FLOAT_OPS
         for x in e.operands:
             if isinstance(x, MediumLevelILInstruction):
-                loads(x, False, found, depth + 1)
+                loads(x, fl, found, depth + 1)
             elif isinstance(x, list):
                 for y in x:
                     if isinstance(y, MediumLevelILInstruction):
-                        loads(y, False, found, depth + 1)
+                        loads(y, fl, found, depth + 1)
 
     seen = set()
     while todo:

@@ -9,7 +9,7 @@ functions scanned 13
 helper accesses added 0
 helper entries 20
 helper floats over int 0
-helper walks 22
+helper walks 10
 params from callers: typed 2
 params with direct callers 2
 pointer fields kept 0
