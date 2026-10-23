@@ -29,10 +29,17 @@ def _func_addr(a):
     if a.startswith("0x"):
         return int(a, 16)
     plain = lambda n: n.lstrip("_").split("(")[0]  # '_may_throw', 'may_throw(int32_t)' -> 'may_throw'
-    funcs = sorted((f for f in bv.functions if plain(f.name) == a or plain(f.symbol.full_name) == a),
-                   key=lambda f: f.start)
+    # every symbol at the start, the auto one too: bn_class_apply.py's user name (Job::vfunc2) hides
+    # Job::run (bncpp-99)
+    names = lambda f, raw=True: set(plain(n) for sym in bv.get_symbols(f.start)
+                                    for n in ((sym.raw_name,) if raw else ()) + (sym.full_name, sym.short_name))
+    want = plain(a)
+    funcs = sorted((f for f in bv.functions if want in names(f)), key=lambda f: f.start)
     if not funcs:
-        raise ValueError("FROM: no function %r" % a)
+        near = sorted(set(n for f in bv.functions for n in names(f, False)
+                          if any(p in n for p in want.split("::") if p)))[:8]
+        raise ValueError("FROM: no function %r (compared raw, full and short names of all symbols at a function "
+                         "start, without leading '_' and parameters); similar: %s" % (a, near or "none"))
     return funcs[0].start
 
 
