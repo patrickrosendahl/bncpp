@@ -26,7 +26,7 @@ comparison; not checked). ref-lsda decodes the same tables from the files themse
 only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
 and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
 """
-import difflib, filecmp, os, re, shutil, subprocess, sys
+import difflib, filecmp, hashlib, os, re, shutil, struct, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -97,6 +97,48 @@ def variant_name(arch, opt):
     return "%s-O%d" % (arch, opt)
 
 
+def fix_uuid(dylib):
+    """set a thin 64-bit Mach-O's LC_UUID to an MD5 of the file (UUID zeroed, code signature left out), then
+    rehash the linker's ad-hoc signature in place (codesign would replace it with a larger one and grow
+    __LINKEDIT)"""
+    with open(dylib, "rb") as fh:
+        b = bytearray(fh.read())
+    assert struct.unpack_from("<I", b, 0)[0] == 0xfeedfacf, dylib
+    off, uuid_at, sig_at = 32, None, len(b)
+    for _ in range(struct.unpack_from("<I", b, 16)[0]):
+        cmd, size = struct.unpack_from("<II", b, off)
+        if cmd == 0x1b:  # LC_UUID
+            uuid_at = off + 8
+        elif cmd == 0x1d:  # LC_CODE_SIGNATURE: dataoff
+            sig_at = struct.unpack_from("<I", b, off + 8)[0]
+        off += size
+    b[uuid_at:uuid_at + 16] = bytes(16)
+    u = bytearray(hashlib.md5(bytes(b[:sig_at])).digest())
+    u[6] = (u[6] & 0x0f) | 0x30  # RFC 4122 version 3 (name-based, MD5), like ld's own UUIDs
+    u[8] = (u[8] & 0x3f) | 0x80
+    b[uuid_at:uuid_at + 16] = u
+    # SuperBlob (big-endian) -> CodeDirectory: the code-slot hashes are per page up to codeLimit; an ad-hoc
+    # directory is not itself signed, so new page hashes are all it needs (x86_64: ld signs nothing)
+    magic, _, count = struct.unpack_from(">III", b, sig_at) if sig_at < len(b) else (0xfade0cc0, 0, 0)
+    assert magic == 0xfade0cc0, dylib
+    for i in range(count):
+        _, blob = struct.unpack_from(">II", b, sig_at + 12 + 8 * i)
+        cd = sig_at + blob
+        if struct.unpack_from(">I", b, cd)[0] != 0xfade0c02:  # CSMAGIC_CODEDIRECTORY
+            continue
+        hash_off, _, _, n_slots, code_limit = struct.unpack_from(">IIIII", b, cd + 16)
+        hash_size, hash_type, _, page_log2 = struct.unpack_from(">BBBB", b, cd + 36)
+        assert hash_type == 2 and hash_size == 32, dylib  # SHA-256
+        page = 1 << page_log2
+        for s in range(n_slots):
+            at = cd + hash_off + 32 * s
+            b[at:at + 32] = hashlib.sha256(bytes(b[s * page:min((s + 1) * page, code_limit)])).digest()
+    with open(dylib, "wb") as fh:
+        fh.write(b)
+    if count:
+        subprocess.run(["codesign", "-v", dylib], check=True)
+
+
 def build(names):
     for arch, opt in VARIANTS:
         out = os.path.join(BIN, variant_name(arch, opt))
@@ -108,6 +150,10 @@ def build(names):
             subprocess.run(["clang++", "-arch", arch, "-std=c++17", "-O%d" % opt, "-fexceptions", "-dynamiclib"]
                            + flags + ["-install_name", "@rpath/%s.dylib" % t, "-o", dylib,
                                       os.path.join(SRC, src + ".cpp")], check=True)
+            if opt == 0:
+                # at -O0 the driver passes ld -no_deduplicate, which gives a random LC_UUID: every rebuild would
+                # rewrite the tracked dylib (bncpp-114). A UUID from the content keeps rebuilds byte-identical.
+                fix_uuid(dylib)
             if hashed:
                 names_ = hashed if hashed is not True else subprocess.run(
                     ["nm", "-u", dylib], capture_output=True, text=True, check=True).stdout.split()
