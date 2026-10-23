@@ -1,0 +1,124 @@
+// Batch::flush(struct Batch* this, int32_t) @ 0x400690
+{
+    // exception table (LSDA 0x400894): 1 of 3 call sites have a landing pad
+    //   0x4006b0..0x4006bf -> 0x4006c7 sub_4006c7: cleanup
+
+    if (arg2 >= 0)
+        return (uint64_t)(arg2 + (int32_t)(arg2 << 1));
+
+    struct std::logic_error* rax_1 = ___cxa_allocate_exception(0x10);
+    Batch::flush .cold.1(rax_1, std::logic_error::logic_error(rax_1, "negative"));
+    /* no return */
+}
+
+// sub_4006c7 @ 0x4006c7
+{
+    // landing pad of Batch::flush(struct Batch* this, int32_t) @ 0x400690
+    //   from 0x4006b0..0x4006bf: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_work(int32_t) @ 0x4006e0
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct Work::Spool::VTable* const rbx_1;
+
+    if (arg1 <= 1)
+    {
+        if (!arg1)
+            return nullptr;
+
+        rbx_1 = &_vtable_for_Batch{for `Work'};
+    }
+    else
+        rbx_1 = &_vtable_for_Spool{for `Work'};
+
+    struct Work::Spool::VTable** result = operator new(8);
+    *(uint64_t*)result = rbx_1;
+    return result;
+}
+
+// try_flush(Work*, int32_t) @ 0x400720
+{
+    // exception table (LSDA 0x4008a4): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x40074e..0x400757 -> 0x400764 sub_400764: catch (std::logic_error) #1, cleanup, cleanup
+
+    int64_t entry_rbp;
+    int64_t entry_r14;
+
+    if (!arg1)
+        /* tailcall */
+        return sub_40075d(0, entry_r14, entry_rbp);
+
+    int64_t* rax = ___dynamic_cast(arg1, typeinfo_for_Work, &_typeinfo_for_Batch, 0);
+
+    if (!rax)
+        /* tailcall */
+        return sub_40075d(0, entry_r14, entry_rbp);
+
+    try
+    {
+        /* tailcall */
+        return sub_40075d((*(uint64_t*)(*(uint64_t*)rax + 0x18))(rax, (uint64_t)arg2), entry_r14,
+            entry_rbp);
+    }
+    catch (std::logic_error& e)
+    {
+        /* tailcall */
+        return sub_40075d(0xfffffffd);
+    }
+}
+
+// sub_40075d @ 0x40075d
+{
+    return (uint64_t)arg1;
+}
+
+// sub_400764 @ 0x400764
+{
+    // landing pad of try_flush(Work*, int32_t) @ 0x400720
+    //   from 0x40074e..0x400757: catch (std::logic_error) #1, cleanup, cleanup
+
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    ___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40075d(0xfffffffd);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x400790
+{
+    return;
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x4007a0
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Batch::run(struct Batch* this, int32_t) @ 0x4007b0
+{
+    return (uint64_t)(arg2 + 1);
+}
+
+// Spool::flush(struct Spool* this, int32_t) @ 0x4007c0
+{
+    return (uint64_t)arg2;
+}
+
+// Batch::flush .cold.1(struct Batch* this, int32_t) @ 0x4007d0
+{
+    ___cxa_throw(this, typeinfo_for_std::logic_error, std::logic_error::~logic_error);
+    /* no return */
+}
+

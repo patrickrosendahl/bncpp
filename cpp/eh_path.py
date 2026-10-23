@@ -419,7 +419,8 @@ def register_command(prefix):
             from . import landing_pads
             from .bnimage import BNImage
             img = BNImage(self.bv)
-            edges = callgraph.edges(self.bv, bncache.Cache(self.bv))
+            cache = bncache.Cache(self.bv)
+            edges = callgraph.edges(self.bv, cache)
             guards = [h.start for h, _t in landing_pads.terminate_helpers(self.bv)]
             thr = throwers(self.bv, img.demangle)
             sites = [a for a, _t in throw_sites(self.func, thr)]
@@ -428,7 +429,7 @@ def register_command(prefix):
             types = rtti.scan(img)
             labels = rtti_names.labels(types, img.demangle, rtti_names.label_overrides(types, img.symbol_at))
             t = Trace(self.bv, img, edges, thrown_types(self.func, thr), rtti_bases(img), guards,
-                      VirtualCallers(self.bv, types, labels))
+                      VirtualCallers(self.bv, types, labels, cache))
             t.run(sites=sites) if sites else t.run([self.func.start])  # no throw here: it leaves this function
             t.annotate()
             log_info("%s: exception path from %s (thrown: %s)\n%s" % (

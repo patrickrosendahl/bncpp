@@ -1,0 +1,194 @@
+// Batch::flush(struct Batch* this, int32_t) @ 0x400690
+{
+    // exception table (LSDA 0x400b08): 1 of 3 call sites have a landing pad
+    //   0x4006b9..0x4006c5 -> 0x4006de sub_4006de: cleanup
+
+    struct Batch* this_1 = this;
+
+    if (arg2 >= 0)
+        return (uint64_t)(arg2 * 3);
+
+    throw std::logic_error("negative");
+}
+
+// sub_4006de @ 0x4006de
+{
+    // landing pad of Batch::flush(struct Batch* this, int32_t) @ 0x400690
+    //   from 0x4006b9..0x4006c5: cleanup
+
+    int64_t rdi_1 = *(uint64_t*)((char*)arg5 - 0x28);
+    *(uint64_t*)((char*)arg5 - 0x18) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
+    ___cxa_free_exception(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
+    /* no return */
+}
+
+// make_work(int32_t) @ 0x400710
+{
+    if (arg1 > 1)
+    {
+        struct Spool* rax_1 = operator new(8);
+        Spool::Spool(rax_1);
+        return rax_1;
+    }
+
+    if (!arg1)
+        return nullptr;
+
+    struct Batch* rax_3 = operator new(8);
+    Batch::Batch(rax_3);
+    return rax_3;
+}
+
+// Spool::Spool(struct Spool* this) @ 0x400780
+{
+    Spool::Spool(this);
+}
+
+// Batch::Batch(struct Batch* this) @ 0x4007a0
+{
+    Batch::Batch(this);
+}
+
+// try_flush(Work*, int32_t) @ 0x4007c0
+{
+    // exception table (LSDA 0x400b18): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400823..0x400825 -> 0x400832 sub_400832: catch (std::logic_error) #1
+
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int64_t* rbp_1 = &var_8;
+    int64_t* var_50;
+
+    if (!arg1)
+        var_50 = nullptr;
+    else
+        var_50 = ___dynamic_cast(arg1, typeinfo_for_Work, &_typeinfo_for_Batch, 0);
+
+    if (!var_50)
+    {
+        int32_t var_c_1 = 0;
+        /* tailcall */
+        return sub_40086c(rbp_1, var_8);
+    }
+
+    try
+    {
+        int32_t var_c = (*(uint64_t*)(*(uint64_t*)var_50 + 0x18))(var_50, (uint64_t)arg2);
+    }
+    catch (std::logic_error& e)
+    {
+        var_40 = &e;
+        var_c = 0xfffffffd;
+        /* tailcall */
+        return sub_40086c(arg5);
+    }
+    /* tailcall */
+    return sub_40086c(rbp_1, var_8);
+}
+
+// sub_400832 @ 0x400832
+{
+    // landing pad of try_flush(Work*, int32_t) @ 0x4007c0
+    //   from 0x400823..0x400825: catch (std::logic_error) #1
+
+    *(uint64_t*)((char*)arg5 - 0x28) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x2c) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x2c) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x28));
+        /* no return */
+    }
+
+    *(uint64_t*)((char*)arg5 - 0x38) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x28));
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffd;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40086c(arg5);
+}
+
+// sub_40086c @ 0x40086c
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x400880
+{
+    Batch::~Batch(this);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x4008a0
+{
+    Batch::~Batch(this);
+    operator delete(this);
+}
+
+// Batch::run(struct Batch* this, int32_t) @ 0x4008d0
+{
+    struct Batch* this_1 = this;
+    return (uint64_t)(arg2 + 1);
+}
+
+// Spool::Spool(struct Spool* this) @ 0x4008f0
+{
+    Batch::Batch(this);
+    *(uint64_t*)this = &_vtable_for_Spool{for `Work'};
+}
+
+// Batch::Batch(struct Batch* this) @ 0x400930
+{
+    Work::Work(this);
+    *(uint64_t*)this = &_vtable_for_Batch{for `Work'};
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x400970
+{
+    Spool::~Spool(this);
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x400990
+{
+    Spool::~Spool(this);
+    operator delete(this);
+}
+
+// Spool::flush(struct Spool* this, int32_t) @ 0x4009c0
+{
+    struct Spool* this_1 = this;
+    return (uint64_t)arg2;
+}
+
+// Work::Work(struct Work* this) @ 0x4009d0
+{
+    *(uint64_t*)this = &_vtable_for_Work;
+}
+
+// Work::~Work(struct Work* this) @ 0x4009f0
+{
+    struct Work* this_1 = this;
+    trap(6);
+}
+
+// Work::~Work(struct Work* this) @ 0x400a00
+{
+    struct Work* this_1 = this;
+    trap(6);
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x400a10
+{
+    Batch::~Batch(this);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x400a30
+{
+    return;
+}
+
+// Work::~Work(struct Work* this) @ 0x400a50
+{
+    struct Work* this_1 = this;
+}
+

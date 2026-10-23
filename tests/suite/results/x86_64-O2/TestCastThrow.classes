@@ -1,0 +1,27 @@
+typeinfo 0x401038  class mangled 4Work  bind __ZTI4Work
+typeinfo 0x401048  si    mangled 5Batch
+  base 0x401038 4Work
+  vtable 0x401070  offset_to_top 0  4 slots
+    [0] 0x400790 Batch::~Batch(struct Batch* this)
+    [1] 0x4007a0 Batch::~Batch(struct Batch* this)
+    [2] 0x4007b0 Batch::run(struct Batch* this, int32_t)
+    [3] 0x400690 Batch::flush(struct Batch* this, int32_t)
+typeinfo 0x4010c0  si    mangled 5Spool  bind __ZTI5Spool
+  base 0x401048 5Batch
+  vtable 0x4010a0  offset_to_top 0  4 slots
+    [0] 0x400790 Batch::~Batch(struct Batch* this)
+    [1] 0x4007a0 Batch::~Batch(struct Batch* this)
+    [2] 0x4007b0 Batch::run(struct Batch* this, int32_t)
+    [3] 0x4007c0 Spool::flush(struct Spool* this, int32_t)
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400690 Batch::vfunc3   [now: Batch::flush(struct Batch* this, int32_t)]
+R 0x400790 Batch::~Batch   [now: Batch::~Batch(struct Batch* this)]
+R 0x4007a0 Batch::~Batch [deleting]   [now: Batch::~Batch(struct Batch* this)]
+R 0x4007b0 Batch::vfunc2   [now: Batch::run(struct Batch* this, int32_t)]
+R 0x4007c0 Spool::vfunc3   [now: Spool::flush(struct Spool* this, int32_t)]
+D 0x401038 typeinfo_for_Work   [now: _typeinfo_for_Work]
+D 0x401048 typeinfo_for_Batch   [now: _typeinfo_for_Batch]
+D 0x401060 vtable_for_Batch   [now: _vtable_for_Batch]
+D 0x401090 vtable_for_Spool   [now: _vtable_for_Spool]
+D 0x4010c0 typeinfo_for_Spool   [now: _typeinfo_for_Spool]

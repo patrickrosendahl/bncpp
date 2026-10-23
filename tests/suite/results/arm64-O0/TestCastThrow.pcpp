@@ -1,0 +1,194 @@
+// Batch::flush(struct Batch* this, int32_t) @ 0x400698
+{
+    // exception table (LSDA 0x400bec): 1 of 3 call sites have a landing pad
+    //   0x4006c4..0x4006d0 -> 0x4006ec sub_4006ec: cleanup
+
+    struct Batch* this_1 = this;
+
+    if (!(arg2 & 0x80000000))
+        return (uint64_t)(arg2 * 3);
+
+    throw std::logic_error("negative");
+}
+
+// sub_4006ec @ 0x4006ec
+{
+    // landing pad of Batch::flush(struct Batch* this, int32_t) @ 0x400698
+    //   from 0x4006c4..0x4006d0: cleanup
+
+    int32_t x1;
+    int32_t arg_14 = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// make_work(int32_t) @ 0x400728
+{
+    if (arg1 > 1)
+    {
+        struct Spool* x0 = operator new(8);
+        Spool::Spool(x0);
+        return x0;
+    }
+
+    if (!arg1)
+        return nullptr;
+
+    struct Spool* x0_2 = operator new(8);
+    Batch::Batch(x0_2);
+    return x0_2;
+}
+
+// Spool::Spool(struct Spool* this) @ 0x4007a4
+{
+    struct Spool* this_1 = this;
+    Spool::Spool(this);
+}
+
+// Batch::Batch(struct Batch* this) @ 0x4007d0
+{
+    struct Batch* this_1 = this;
+    Batch::Batch(this);
+}
+
+// try_flush(Work*, int32_t) @ 0x4007fc
+{
+    // exception table (LSDA 0x400bfc): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400874..0x40087c -> 0x40088c sub_40088c: catch (std::logic_error) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t* fp_1 = &var_10;
+    int64_t* var_58;
+
+    if (!arg1)
+        var_58 = nullptr;
+    else
+        var_58 = ___dynamic_cast(arg1, &typeinfo_for_Work, &typeinfo_for_Batch, 0);
+
+    if (!var_58)
+    {
+        int32_t var_14_1 = 0;
+        /* tailcall */
+        return sub_4008d0(fp_1, var_10);
+    }
+
+    try
+    {
+        int32_t var_14 = (*(uint64_t*)(*(uint64_t*)var_58 + 0x18))(var_58, (uint64_t)arg2);
+    }
+    catch (std::logic_error& e)
+    {
+        var_14 = 0xfffffffd;
+        /* tailcall */
+        return sub_4008d0(arg3);
+    }
+    /* tailcall */
+    return sub_4008d0(fp_1, var_10);
+}
+
+// sub_40088c @ 0x40088c
+{
+    // landing pad of try_flush(Work*, int32_t) @ 0x4007fc
+    //   from 0x400874..0x40087c: catch (std::logic_error) #1
+
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    void* arg_18 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 4) = 0xfffffffd;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_4008d0(arg3);
+}
+
+// sub_4008d0 @ 0x4008d0
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x4008e8
+{
+    struct Batch* this_1 = this;
+    Batch::~Batch(this);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x400914
+{
+    Batch::~Batch(this);
+    operator delete(this);
+}
+
+// Batch::run(struct Batch* this, int32_t) @ 0x400944
+{
+    struct Batch* this_1 = this;
+    return (uint64_t)(arg2 + 1);
+}
+
+// Spool::Spool(struct Spool* this) @ 0x400960
+{
+    Batch::Batch(this);
+    *(uint64_t*)this = &data_404098;
+}
+
+// Batch::Batch(struct Batch* this) @ 0x40099c
+{
+    Work::Work(this);
+    *(uint64_t*)this = &data_404068;
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x4009d8
+{
+    struct Spool* this_1 = this;
+    Spool::~Spool(this);
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x400a04
+{
+    Spool::~Spool(this);
+    operator delete(this);
+}
+
+// Spool::flush(struct Spool* this, int32_t) @ 0x400a34
+{
+    struct Spool* this_1 = this;
+    return (uint64_t)arg2;
+}
+
+// Work::Work(struct Work* this) @ 0x400a4c
+{
+    *(uint64_t*)this = &data_4040e0;
+}
+
+// Work::~Work(struct Work* this) @ 0x400a70
+{
+    struct Work* this_1 = this;
+    trap(1);
+}
+
+// Work::~Work(struct Work* this) @ 0x400a84
+{
+    struct Work* this_1 = this;
+    trap(1);
+}
+
+// Spool::~Spool(struct Spool* this) @ 0x400a90
+{
+    struct Spool* this_1 = this;
+    Batch::~Batch(this);
+}
+
+// Batch::~Batch(struct Batch* this) @ 0x400abc
+{
+    struct Batch* this_1 = this;
+}
+
+// Work::~Work(struct Work* this) @ 0x400ae8
+{
+    return;
+}
+

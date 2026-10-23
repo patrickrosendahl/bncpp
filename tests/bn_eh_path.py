@@ -6,8 +6,11 @@
 # to ___cxa_throw or to a function that only throws (bncpp-92), starting at those throw sites; none: unknown, every
 # catch (T) is a 'may catch'). BASES=1: base classes from the class scan (slow on big binaries). VIRTUAL=0: direct
 # callers only (default: also the virtual call sites of a function in a vtable, through the X::VTable members BN has
-# references to -- cpp/eh_virtual.py, bncpp-66). Review: .scratch/eh/<binary>.path.review (the report, then one line
-# per call site with the comment APPLY would set). APPLY=1 sets the comments (in RAM; never over another comment).
+# references to and on dynamic_cast results -- cpp/eh_virtual.py, bncpp-66 / bncpp-95). Review:
+# .scratch/eh/<binary>.path.review (the report, then one line per call site with the comment APPLY would set).
+# CAST_BUDGET: seconds for the dynamic_cast callers not cached yet (default 120; SynthV: ~4.5 min in all, so a few
+# runs -- the report says how many are done).
+# APPLY=1 sets the comments (in RAM; never over another comment).
 import importlib, os, time
 import binaryninja as _bn
 
@@ -61,7 +64,8 @@ if not _ti:  # what FROM throws: start at its throw sites (a throw in a catch bo
         for site, t in (_ep.throw_sites(f, _thr) if f else []):
             _sites.append(site)
             _ti += [t] if t not in _ti else []
-_edges = _cg.edges(bv, _cache.Cache(bv))
+_cache_file = _cache.Cache(bv)
+_edges = _cg.edges(bv, _cache_file)
 _bases = _ep.rtti_bases(_img) if _get("BASES") == "1" else None
 _guards = [h.start for h, _t in _lp.terminate_helpers(bv)]
 _vc = None
@@ -70,7 +74,8 @@ if _get("VIRTUAL", "1") != "0":
     _rn = importlib.import_module(_p + ".cpp.rtti_names")
     _ev = importlib.import_module(_p + ".cpp.eh_virtual")
     _types = _rtti.scan(_img)
-    _vc = _ev.VirtualCallers(bv, _types, _rn.labels(_types, _img.demangle, _rn.label_overrides(_types, _img.symbol_at)))
+    _vc = _ev.VirtualCallers(bv, _types, _rn.labels(_types, _img.demangle, _rn.label_overrides(_types, _img.symbol_at)),
+                             _cache_file, float(_get("CAST_BUDGET", "120")))
 _tr = _ep.Trace(bv, _img, _edges, _ti, _bases, _guards, _vc)
 _tr.run(sites=_sites) if _sites else _tr.run(_from)
 _name = os.path.basename(bv.file.original_filename)
@@ -85,6 +90,8 @@ with open(os.path.join(_out, _name + ".path.review"), "w", encoding="utf-8") as 
     fh.write("\n".join(_lines) + "\n")
 _done, _skipped = _tr.annotate(apply=_get("APPLY") == "1")
 print("\n".join(_tr.report()))
+if _vc is not None and _vc.cast_progress is not None and _vc.cast_progress[0] < _vc.cast_progress[1]:
+    print("dynamic_cast callers: %d of %d analysed (CAST_BUDGET); run again for the rest" % _vc.cast_progress)
 print("%s %d comments, %d skipped (another comment there); review %s (%.1f s)" % (
     "set" if _get("APPLY") == "1" else "would set", _done, _skipped, os.path.join(_out, _name + ".path.review"),
     time.time() - _t0))

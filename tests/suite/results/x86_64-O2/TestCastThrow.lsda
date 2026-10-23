@@ -1,0 +1,8 @@
+Batch::flush(struct Batch* this, int32_t)  lsda base+0x894  lpstart +0x0  3 call sites
+  +0x0   .. +0x20  unwind
+  +0x20  .. +0x2f  lp +0x37  cleanup
+  +0x2f  .. +0x4a  unwind
+
+try_flush(Work*, int32_t)  lsda base+0x8a4  lpstart +0x0  2 call sites
+  +0x2e  .. +0x37  lp +0x44  catch(typeinfo_for_std::logic_error), cleanup, cleanup
+  +0x37  .. +0x62  unwind
