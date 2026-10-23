@@ -6,7 +6,8 @@ the personality's decision is repeated:
   caught      a catch clause takes the type (catch (...), the thrown type, a base of it)
   terminates  the clause is a terminate guard (catch (...) whose pad calls clang's terminate helper: a noexcept
               boundary, not a handler), or the call has no call-site entry although the owner has an LSDA
-  may catch   catch (T) where the thrown type is unknown or its bases are not in the binary (an imported typeinfo)
+  may catch   catch (T) where the thrown type is unknown or its bases are not in the binary (an imported typeinfo
+              other than the std exceptions, whose hierarchy is built in: cpp/std_exceptions.py, bncpp-69)
               -- reported, and the path goes on
   cleanup     only cleanups (destructors) -- the exception goes on to the owner's callers
   unwind      no landing pad / no LSDA -- goes on
@@ -20,7 +21,7 @@ walk over objdump and the file's own tables; here BN's call graph (shared/callgr
 import bisect
 from collections import deque
 
-from . import lsda as _lsda, unwind_info
+from . import lsda as _lsda, std_exceptions, unwind_info
 
 PREFIX = "[eh] "  # our comments; any other comment at the address is the user's and stays
 
@@ -50,7 +51,8 @@ class Trace:
     # --- types -----------------------------------------------------------------------------------------------
 
     def keys(self, t):
-        """the names and addresses a typeinfo goes by (an import slot's symbol, a local typeinfo's address)"""
+        """the names and addresses a typeinfo goes by (an import slot's symbol, a local typeinfo's address; a std
+        exception also by its class name, cpp/std_exceptions.py)"""
         out = {t}
         if isinstance(t, int):
             s = self.bv.get_symbol_at(t)
@@ -59,17 +61,22 @@ class Trace:
             target = self.img.pointer_target(t)
             if isinstance(target, str):
                 out.add(target)
-        else:
+        elif std_exceptions.bases(t) is None:
             out |= set(self.img.symbol_keys(t))
+        out |= {n for n in map(std_exceptions.class_name, list(out)) if n is not None}
         return out
 
     def ancestors(self, t, depth=0):
-        """keys of every base of t (transitively); None if t's bases are not known"""
-        if self.bases is None or depth > 16:
+        """keys of every base of t (transitively); None if t's bases are not known. Bases from the class scan
+        (self.bases), or for a std exception (an import) from the standard's hierarchy"""
+        if depth > 16:
             return None
-        bs = self.bases(t)
+        bs = self.bases(t) if self.bases is not None else None
         if bs is None:
-            return None
+            std = [std_exceptions.bases(n) for n in self.keys(t) if std_exceptions.bases(n) is not None]
+            if not std:
+                return None
+            bs = list(std[0])
         out = set()
         for b in bs:
             out |= self.keys(b)
@@ -90,9 +97,9 @@ class Trace:
             if _scalar(ck) or _scalar(tk):
                 continue  # a fundamental or pointer type has no bases and is no base: exact match only
             anc = None
-            for k in tk:
-                if isinstance(k, int):
-                    anc = self.ancestors(k)
+            for k in sorted(tk, key=lambda k: not isinstance(k, int)):  # an address first: the class scan's
+                anc = self.ancestors(k)
+                if anc is not None:
                     break
             if anc is None:
                 unknown = True
