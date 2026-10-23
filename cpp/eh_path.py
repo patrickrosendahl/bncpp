@@ -12,6 +12,8 @@ the personality's decision is repeated:
   cleanup     only cleanups (destructors) -- the exception goes on to the owner's callers
   unwind      no landing pad / no LSDA -- goes on
   tail        a tail jump: the caller's frame is gone, the exception goes on to the owner's callers
+  rethrown    caught by a handler that rethrows (`throw;`): the same exception goes on from the rethrow call
+              (bncpp-70); a handler that throws another exception starts a second path with that type
 Functions on the path without direct callers are the frontier (entry points, or reached only indirectly: virtual
 calls, function pointers -- not followed yet).
 
@@ -47,6 +49,16 @@ class Trace:
         self.guards = set(guards)
         self.thrown = [self.keys(t) for t in thrown]
         self.steps, self.frontier, self.seen = [], [], set()
+        self.paths, self.depth = [], 0  # paths: [(catching step, throw site, typeinfo, Trace)] (bncpp-70)
+
+    def child(self, thrown):
+        """a trace of another exception over the same binary (the tables and the call graph shared)"""
+        t = Trace.__new__(Trace)
+        t.bv, t.img, t.callers, t.starts, t.tables = self.bv, self.img, self.callers, self.starts, self.tables
+        t.bases, t.guards = self.bases, self.guards
+        t.thrown = [t.keys(x) for x in thrown]
+        t.steps, t.frontier, t.seen, t.paths, t.depth = [], [], set(), [], self.depth + 1
+        return t
 
     # --- types -----------------------------------------------------------------------------------------------
 
@@ -149,17 +161,61 @@ class Trace:
             return "may catch", cs, maybe
         return "cleanup", cs, None
 
+    def handler_throws(self, owner, cs, clause):
+        """(rethrow sites, [(throw site, typeinfo)]) of the handler of clause: the landing pad's code with the
+        selector fixed to the clause (eh_render.specialize, as the try/catch rendering splits it)"""
+        from .eh_render import callee, specialize
+        from ..shared.hlil import walk
+        pf = self.bv.get_function_at(cs.landing_pad)
+        if pf is None or clause.type_index is None:
+            return [], []
+        try:
+            h = specialize(pf, clause.type_index, sum(c.kind == c.CATCH for c in cs.clauses),
+                           self.bv.get_function_at(owner))
+        except Exception:
+            return [], []
+        rethrows, throws = [], []
+        for st in (h.stmts[h.before:] if h is not None else ()):  # (before the dispatch: the unwind cleanups)
+            for i in walk(st):
+                name = callee(i)
+                if name == "cxa_rethrow" and i.address not in rethrows:
+                    rethrows.append(i.address)
+                elif name == "cxa_throw" and len(i.params) >= 2 and hasattr(i.params[1], "constant") and \
+                        (i.address, i.params[1].constant) not in throws:
+                    throws.append((i.address, i.params[1].constant))
+        return rethrows, throws
+
+    def throw_site(self, site, queue, via=None):
+        """the exception leaves a throw (or rethrow) call at site: its owner's table decides first"""
+        if site in self.done_sites:
+            return
+        self.done_sites.add(site)
+        own = self.owner(site)
+        kind, cs, clause = self.decide(own, site)
+        st = Step(kind, site, own, via if via is not None else own, cs.landing_pad if cs else None, clause)
+        self.steps.append(st)
+        self.after_step(st, cs, queue)
+
+    def after_step(self, st, cs, queue):
+        """go on from a step: to the owner's callers, or on from the handler that caught it -- a rethrow sends the
+        same exception on from the rethrow site ('rethrown'), a new throw starts a second path (bncpp-70)"""
+        if st.kind == "caught":
+            rethrows, throws = self.handler_throws(st.owner, cs, st.clause[-1])
+            if rethrows:
+                st.kind = "rethrown"
+                for site in rethrows:
+                    self.throw_site(site, queue, st.owner)
+            self.pending += [(st, site, ti) for site, ti in throws]
+        elif st.kind in ("tail", "unwind", "cleanup", "may catch") and st.owner not in self.seen:
+            self.seen.add(st.owner)
+            queue.append(st.owner)
+
     def run(self, starts=(), sites=()):
         """starts: functions the exception leaves (their callers decide); sites: throw sites (the call to
         ___cxa_throw decides in its own owner's table first -- a throw in a catch body or inside a try)"""
-        queue, self.seen = deque(), set()
+        queue, self.seen, self.done_sites, self.pending = deque(), set(), set(), []
         for site in sites:
-            own = self.owner(site)
-            kind, cs, clause = self.decide(own, site)
-            self.steps.append(Step(kind, site, own, own, cs.landing_pad if cs else None, clause))
-            if kind in ("unwind", "cleanup", "may catch") and own not in self.seen:
-                self.seen.add(own)
-                queue.append(own)
+            self.throw_site(site, queue)
         for fn in starts:
             if fn not in self.seen:
                 self.seen.add(fn)
@@ -176,10 +232,15 @@ class Trace:
                     kind, cs, clause = "tail", None, None
                 else:
                     kind, cs, clause = self.decide(own, site)
-                self.steps.append(Step(kind, site, own, fn, cs.landing_pad if cs else None, clause))
-                if kind in ("tail", "unwind", "cleanup", "may catch") and own not in self.seen:
-                    self.seen.add(own)
-                    queue.append(own)
+                st = Step(kind, site, own, fn, cs.landing_pad if cs else None, clause)
+                self.steps.append(st)
+                self.after_step(st, cs, queue)
+        done = set()
+        for st, site, ti in self.pending:  # handlers that throw another exception: one more trace each
+            if (site, ti) in done or self.depth >= 3:
+                continue
+            done.add((site, ti))
+            self.paths.append((st, site, ti, self.child([ti]).run(sites=[site])))
         return self
 
     # --- output ----------------------------------------------------------------------------------------------
@@ -191,11 +252,12 @@ class Trace:
     def comment(self, st):
         from .eh_comments import clause_text
         via = self.name(st.via)
-        if st.kind in ("caught", "may catch"):
+        if st.kind in ("caught", "may catch", "rethrown"):
             # caught: the clause that takes it last, any earlier ones could have (bases unknown)
             return PREFIX + "%s %s from %s: landing pad %#x" % (
-                "caught by" if st.kind == "caught" else "may be caught by", " or ".join(
-                    clause_text(c) for c in st.clause), via, st.pad)
+                {"caught": "caught by", "may catch": "may be caught by",
+                 "rethrown": "caught and rethrown (throw;) by"}[st.kind],
+                " or ".join(clause_text(c) for c in st.clause), via, st.pad)
         if st.kind == "terminates":
             if st.pad is None:
                 return PREFIX + "terminates: no call-site entry for this call (exception from %s)" % via
@@ -214,17 +276,32 @@ class Trace:
             len(self.seen), ", ".join("%s %d" % kv for kv in sorted(count.items())) or "no callers",
             len(self.frontier))]
         for st in self.steps:
-            if st.kind in ("caught", "may catch", "terminates"):
+            if st.kind in ("caught", "may catch", "terminates", "rethrown"):
                 out.append("  %-10s %#x in %s  %s" % (st.kind, st.site, self.name(st.owner), self.comment(st)))
         if self.frontier:
             out.append("  frontier: " + " ".join(self.name(a) for a in self.frontier))
+        for st, site, ti, sub in self.paths:
+            s = self.bv.get_symbol_at(ti)
+            out.append("  then: the handler in %s (landing pad %#x) throws %s at %#x:" % (
+                self.name(st.owner), st.pad, s.full_name if s is not None else "%#x" % ti, site))
+            out += ["    " + line for line in sub.report()]
+        return out
+
+    def all_steps(self):
+        """the steps of this path and of the paths its handlers start"""
+        out = list(self.steps)
+        for _st, _site, _ti, sub in self.paths:
+            out += sub.all_steps()
         return out
 
     def annotate(self, apply=True):
-        """our comment at every call site on the path (in the function BN has there); never over another comment.
-        Returns (set, skipped)"""
-        done, skipped = 0, 0
-        for st in self.steps:
+        """our comment at every call site on the path (in the function BN has there), the first path's where
+        two meet; never over another comment. Returns (set, skipped)"""
+        done, skipped, seen = 0, 0, set()
+        for st in self.all_steps():
+            if st.site in seen:
+                continue
+            seen.add(st.site)
             funcs = [f for f in self.bv.get_functions_containing(st.site) if f.start <= st.site]
             if not funcs:
                 continue

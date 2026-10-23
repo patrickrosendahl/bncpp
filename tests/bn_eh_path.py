@@ -61,7 +61,7 @@ _out = os.path.join(REPO, ".scratch/eh")
 os.makedirs(_out, exist_ok=True)
 _lines = ["thrown: %s; terminate helpers: %s" % (", ".join("%#x" % t if isinstance(t, int) else t for t in _ti) or
                                                  "unknown", ", ".join("%#x" % g for g in _guards) or "none")]
-_lines += _tr.report() + [""] + ["%#x %-10s %s" % (st.site, st.kind, _tr.comment(st)) for st in _tr.steps]
+_lines += _tr.report() + [""] + ["%#x %-10s %s" % (st.site, st.kind, _tr.comment(st)) for st in _tr.all_steps()]
 with open(os.path.join(_out, _name + ".path.review"), "w", encoding="utf-8") as fh:
     fh.write("\n".join(_lines) + "\n")
 _done, _skipped = _tr.annotate(apply=_get("APPLY") == "1")
