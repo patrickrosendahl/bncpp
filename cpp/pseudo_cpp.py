@@ -536,6 +536,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 pass
         self._fold_names = names  # display name -> variable, for the token splice
         self._folded_idx = folded_idx
+        self._bool_rets = {}  # return instr index -> `return b;` (bncpp-10)
+        try:
+            for i in walk(hlil.root):
+                if i.operation == Op.HLIL_RET:
+                    line = self._bool_return(i, set())
+                    if line is not None:
+                        self._bool_rets[i.instr_index] = line
+        except Exception:
+            self._bool_rets = {}
         return folded_idx
 
     def fold_lines(self, keyed):
@@ -543,7 +552,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         read replaced by its value, rendered through the base language and spliced in (recursively, so a chain of
         folds collapses). key: (function start, HLIL instruction index) or None."""
         folded = self._fold_plan()
-        if not folded and not self.inline and not self._ternary_stmt:
+        if not folded and not self.inline and not self._ternary_stmt and not self._bool_rets:
             return keyed
         start = self.function.start
         own = lambda key: key[1] if key is not None and key[0] == start else None
@@ -561,6 +570,13 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             elif at and len(head) == 1 and head[0] < at[0]:
                 drop.update(n for n, (_t, key) in enumerate(keyed) if own(key) == d)
                 repl[at[0]] = (at[-1], self._ternary_decl(keyed[head[0]][0], value))
+        for idx, line in self._bool_rets.items():
+            at = [n for n, (t, key) in enumerate(keyed) if own(key) == idx and not empty(t)]
+            if len(at) == 1 and at[0] not in repl:
+                toks = keyed[at[0]][0]
+                indent = "".join(t.text for t in toks)
+                indent = indent[:len(indent) - len(indent.lstrip())]
+                repl[at[0]] = (at[0], ([tok(TT.TextToken, indent)] if indent else []) + line)
         out, blank = [], False
         n = -1
         while n + 1 < len(keyed):
@@ -620,7 +636,97 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             return paren(self._ternary_tokens(value, seen))
         return paren(self._expr_tokens(value, seen))
 
+    # --- booleans (bncpp-10): c ? 1 : 0 -> c, c ? x : 0 -> c && x, `return (uint64_t)b & 1;` -> `return b;` ----
+
+    def _bool_tokens(self, e, seen, neg=False):
+        """e (an HLIL expression or a folded ('ternary', ...) value) as a C boolean expression -- an int that is 0 or
+        1 -- negated with neg; None when e's value is not known to be 0 / 1"""
+        if isinstance(e, tuple):
+            return self._ternary_bool(e, seen, neg) if e[0] == "ternary" else None
+        o = e.operation
+        if o == Op.HLIL_VAR and e.var in (self.inline or {}) and e.var not in seen:
+            return self._bool_tokens(self.inline[e.var], seen | {e.var}, neg)
+        if o in (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART):  # widening a 0 / 1 keeps it
+            return self._bool_tokens(e.src, seen, neg)
+        if o == Op.HLIL_AND and e.right.operation == Op.HLIL_CONST and e.right.constant == 1:
+            return self._bool_tokens(e.left, seen, neg)  # b & 1 of a boolean b
+        if o == Op.HLIL_BOOL_TO_INT:
+            return self._cond_tokens(e.src, seen, neg)
+        if o == Op.HLIL_NOT and e.size == 0:
+            return self._cond_tokens(e.src, seen, not neg)
+        if o in _CMP or o in _FCMP or (o in (Op.HLIL_AND, Op.HLIL_OR) and e.size == 0):
+            return self._cond_tokens(e, seen, neg)
+        return None
+
+    def _cond_tokens(self, c, seen, neg=False):
+        """the condition c (of an if, a bool-to-int) as a 0 / 1 value, negated with neg"""
+        if c.operation in (Op.HLIL_CMP_NE, Op.HLIL_CMP_E) and c.right.operation == Op.HLIL_CONST and \
+                c.right.constant == 0:
+            # Pseudo C prints `x != 0` as `x` and `x == 0` as `!x`: right only when x is 0 / 1 itself
+            inner = self._bool_tokens(c.left, seen, neg == (c.operation == Op.HLIL_CMP_NE))
+            if inner is not None:
+                return inner
+            if neg == (c.operation == Op.HLIL_CMP_E):  # x != 0, spelled out
+                return self._cmp0(self._expr_tokens(c.left, seen), "!=")
+        toks = self._expr_tokens(c, seen)
+        boolean = c.operation in _CMP or c.operation in _FCMP or c.size == 0
+        if not neg:
+            return toks if boolean else self._cmp0(toks, "!=")
+        swapped = _invert_cmp(toks) if c.operation in _CMP else None  # (not a float one: NaN)
+        if swapped is not None:
+            return swapped
+        if not boolean:
+            return self._cmp0(toks, "==")
+        return [tok(TT.OperationToken, "!")] + (toks if _atomic(toks) and not toks[0].text.startswith("!") else
+                                                 [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")])
+
+    @staticmethod
+    def _cmp0(toks, op):
+        """`x != 0` / `x == 0`, x parenthesized unless it binds tighter than a comparison"""
+        if not _atomic(toks):
+            toks = [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
+        return toks + [tok(TT.TextToken, " %s " % op), tok(TT.IntegerToken, "0")]
+
+    def _ternary_bool(self, value, seen, neg=False):
+        """c ? a : b with a or b a 0 / 1 constant and the other one boolean, as && / || / ! (else None)"""
+        _, _x, iff, a, b = value
+        ka, kb = (_bool_const(v) for v in (a, b))
+        c = iff.condition
+        if ka is not None and kb is not None:
+            return None if ka == kb else self._cond_tokens(c, seen, neg != (ka == 0))  # c ? 1 : 0 / c ? 0 : 1
+        if ka is None and kb is None:
+            return None
+        const, other, c_neg = (ka, b, ka == 0) if ka is not None else (kb, a, kb == 1)
+        # c ? 1 : x -> c || x, c ? 0 : x -> !c && x, c ? x : 1 -> !c || x, c ? x : 0 -> c && x; negated by De Morgan
+        is_or = (const == 1) != neg
+        left = self._cond_tokens(c, seen, c_neg != neg)
+        right = self._bool_tokens(other, seen, neg)
+        if right is None:
+            return None
+        group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] \
+            if _top_op(ts, ("||",) if not is_or else ()) or _top_ternary(ts) else ts
+        return group(left) + [tok(TT.OperationToken, " || " if is_or else " && ")] + group(right)
+
+    def _bool_return(self, ret, seen):
+        """`return b;` for a return whose value is a boolean behind a widening / `& 1` (`return (uint64_t)var_1 & 1;`
+        with var_1 = `c ? 1 : 0`), else None"""
+        if len(ret.src) != 1:
+            return None
+        v = ret.src[0]
+        while v.operation in (Op.HLIL_ZX, Op.HLIL_SX) or (v.operation == Op.HLIL_AND and
+                                                          v.right.operation == Op.HLIL_CONST and v.right.constant == 1):
+            v = v.src if v.operation != Op.HLIL_AND else v.left
+        if not (v.operation == Op.HLIL_VAR and v.var in (self.inline or {})) and v.operation != Op.HLIL_BOOL_TO_INT:
+            return None  # a plain variable / comparison: nothing is known to be 0 / 1 that Pseudo C does not show
+        toks = self._bool_tokens(v, seen)
+        if toks is None:
+            return None
+        return [tok(TT.KeywordToken, "return"), tok(TT.TextToken, " ")] + toks + [tok(TT.TextToken, ";")]
+
     def _ternary_tokens(self, value, seen):
+        simple = self._ternary_bool(value, seen)
+        if simple is not None:
+            return simple
         _, _x, iff, a, b = value
         cond, a, b = (self._expr_tokens(e, seen) for e in (iff.condition, a, b))
         group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] if _top_ternary(ts) else ts
@@ -668,6 +774,48 @@ def _atomic(toks):
             elif ch in ")]":
                 depth -= 1
     return True
+
+
+_CMP = (Op.HLIL_CMP_E, Op.HLIL_CMP_NE, Op.HLIL_CMP_SLT, Op.HLIL_CMP_ULT, Op.HLIL_CMP_SLE, Op.HLIL_CMP_ULE,
+        Op.HLIL_CMP_SGE, Op.HLIL_CMP_UGE, Op.HLIL_CMP_SGT, Op.HLIL_CMP_UGT)
+_FCMP = (Op.HLIL_FCMP_E, Op.HLIL_FCMP_NE, Op.HLIL_FCMP_LT, Op.HLIL_FCMP_LE, Op.HLIL_FCMP_GE, Op.HLIL_FCMP_GT,
+         Op.HLIL_FCMP_O, Op.HLIL_FCMP_UO)
+_INVERSE = {"<": ">=", ">=": "<", ">": "<=", "<=": ">", "==": "!=", "!=": "=="}
+
+
+def _invert_cmp(toks):
+    """a comparison's tokens with its one top-level comparison operator inverted (`a <= b` -> `a > b`), keeping
+    the operands as the base language printed them (casts included); None without exactly one"""
+    at, depth = [], 0
+    for n, t in enumerate(toks):
+        if depth == 0 and t.text.strip() in _INVERSE:
+            at.append(n)
+        if depth == 0 and t.text.strip() in ("&&", "||", "?", ":"):
+            return None
+        depth += t.text.count("(") + t.text.count("[") - t.text.count(")") - t.text.count("]")
+    if len(at) != 1:
+        return None
+    t = toks[at[0]]
+    out = list(toks)
+    out[at[0]] = tok(t.type, t.text.replace(t.text.strip(), _INVERSE[t.text.strip()]))
+    return out
+
+
+def _bool_const(v):
+    """0 / 1 when v is that integer constant, else None"""
+    if v.operation == Op.HLIL_CONST and v.constant in (0, 1):
+        return v.constant
+    return None
+
+
+def _top_op(toks, ops):
+    """one of ops (operator texts) occurs outside any parentheses"""
+    depth = 0
+    for t in toks:
+        if depth == 0 and t.text.strip() in ops:
+            return True
+        depth += t.text.count("(") + t.text.count("[") - t.text.count(")") - t.text.count("]")
+    return False
 
 
 def _top_ternary(toks):

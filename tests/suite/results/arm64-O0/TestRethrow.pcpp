@@ -262,7 +262,7 @@
 
 // std::string::__is_long[abi:nqe210106](std::string* this) const @ 0x4009f4
 {
-    return (uint64_t)((uint32_t)*(uint8_t*)((char*)this + 0x17) >> 7 ? 1 : 0);
+    return ((uint32_t)*(uint8_t*)((char*)this + 0x17) >> 7) != 0;
 }
 
 // std::string::size[abi:nqe210106](std::string* this) const @ 0x400a18

@@ -1,10 +1,10 @@
 // is_small(int32_t) @ 0x400338
 {
-    return (uint64_t)(arg1 <= 0xa ? 1 : 0) & 1;
+    return arg1 <= 0xa;
 }
 
 // in_range(int32_t, int32_t, int32_t) @ 0x400388
 {
-    return (uint64_t)(arg1 >= arg2 ? (arg1 <= arg3 ? 1 : 0) : 0) & 1;
+    return arg1 >= arg2 && arg1 <= arg3;
 }
 

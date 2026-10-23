@@ -861,7 +861,7 @@
 
 // std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* this, uint64_t) @ 0x401d34
 {
-    return (uint64_t)(!(this & 0x8000000000000000) ? 1 : 0);
+    return !(this & 0x8000000000000000);
 }
 
 // std::function<int32_t (int32_t)>::function<scale_fn(int32_t, int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, scale_fn(int32_t, int32_t)::$_0) @ 0x401d50

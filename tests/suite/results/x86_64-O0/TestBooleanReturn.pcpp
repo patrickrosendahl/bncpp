@@ -1,6 +1,6 @@
 // is_small(int32_t) @ 0x400330
 {
-    char var_9 = arg1 <= 0xa ? 1 : 0;
+    char var_9 = arg1 <= 0xa;
 
     int64_t result;
     (uint8_t)result = var_9;

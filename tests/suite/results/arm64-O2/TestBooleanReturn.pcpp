@@ -1,6 +1,6 @@
 // is_small(int32_t) @ 0x400338
 {
-    return (uint64_t)(arg1 < 0xb ? 1 : 0);
+    return arg1 < 0xb;
 }
 
 // in_range(int32_t, int32_t, int32_t) @ 0x400344
@@ -22,6 +22,6 @@
         v = false;
     }
 
-    return (uint64_t)(z || n != v ? 1 : 0);
+    return z || n != v;
 }
 
