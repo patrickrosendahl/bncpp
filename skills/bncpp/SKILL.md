@@ -34,8 +34,9 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
 - BN 6.1 resolves Mach-O binds through the nlist names: where an obfuscator hashed them (SynthV), the typeinfo
   vptr binds and some imports are gone and BN's RTTI finds 0 vtables (bncpp-25). `cpp/rtti.py` falls back to the
   layout; check any change with `tests/ref_class_scan.py --compare` (0 missing, structure ≤ 2 on SynthV).
-- `f.has_user_type` can be True for every function of a `.bndb` (synVbasic's), though nobody set types: protect
-  only types that differ from BN's fresh inference (`bn_class_types.py` `BASELINE` / `DUMP_TYPES`).
+- `f.has_user_type` is True for every function of any `.bndb` that went through a database round trip, though
+  nobody set types (a BN bug, bncpp-29, `tests/repro_user_types/`; analysis still re-infers them): protect only types
+  that differ from BN's fresh inference (`bn_class_types.py` `BASELINE` / `DUMP_TYPES`).
 - A named type reference (a data var's type) has no `.members`: resolve it (`bv.get_type_by_name`).
 - `C:` comments inside a function are function-level (`f.get_comment_at(addr)`), as in the bridge's annotate.py;
   `bv.get_comment_at` / `bv.address_comments` / `f.comment` don't see them -- verify with the right one.
