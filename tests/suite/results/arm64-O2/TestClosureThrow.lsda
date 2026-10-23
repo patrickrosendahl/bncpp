@@ -1,0 +1,34 @@
+guarded_apply(int32_t)  lsda base+0x10e0  lpstart +0x0  4 call sites
+  +0x3c  .. +0x44  lp +0xa0  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x44  .. +0xe4  unwind
+  +0xe4  .. +0xe8  lp +0xf0  cleanup
+  +0xe8  .. +0xfc  unwind
+
+guarded_forward(int32_t)  lsda base+0x1104  lpstart +0x0  4 call sites
+  +0x38  .. +0x40  lp +0x98  catch(typeinfo_for_std::logic_error), cleanup, cleanup
+  +0x40  .. +0xdc  unwind
+  +0xdc  .. +0xe0  lp +0xe8  cleanup
+  +0xe0  .. +0xf4  unwind
+
+Worker::set(struct Worker* this, std::function<void ()>)  lsda base+0x1128  lpstart +0x0  2 call sites
+  +0x0   .. +0x7c  unwind
+  +0x7c  .. +0x84  lp +0x94  catch(...)
+
+Worker::work(struct Worker* this)  lsda base+0x113c  lpstart +0x0  2 call sites
+  +0x18  .. +0x2c  lp +0x30  catch(typeinfo_for_std::runtime_error)
+  +0x2c  .. +0x44  unwind
+
+std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)  lsda base+0x1150  lpstart +0x0  3 call sites
+  +0x0   .. +0x38  unwind
+  +0x38  .. +0x44  lp +0x4c  cleanup
+  +0x44  .. +0x60  unwind
+
+std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)  lsda base+0x1160  lpstart +0x0  3 call sites
+  +0x0   .. +0x2c  unwind
+  +0x2c  .. +0x38  lp +0x40  cleanup
+  +0x38  .. +0x54  unwind
+
+std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)  lsda base+0x1170  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x3c  lp +0x44  cleanup
+  +0x3c  .. +0x58  unwind

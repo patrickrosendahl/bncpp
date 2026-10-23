@@ -1,8 +1,9 @@
 """Who catches what a function throws (bncpp-24): the exception's path up the direct call graph.
 
 From the throwing functions, every direct call to a function on the path is looked up in the caller's LSDA (the
-owner: the compact-unwind function containing the call, so a pad or a piece BN split off counts as its owner) and
-the personality's decision is repeated:
+owner: the compact-unwind function containing the call, so a pad or a piece BN split off counts as its owner -- but
+compact unwind merges neighbours with the same encoding, so a named BN function, or one called from outside the
+entry, inside it is its own owner, bncpp-109) and the personality's decision is repeated:
   caught      a catch clause takes the type (catch (...), the thrown type, a base of it)
   terminates  the clause is a terminate guard (catch (...) whose pad calls clang's terminate helper: a noexcept
               boundary, not a handler), or the call has no call-site entry although the owner has an LSDA
@@ -16,8 +17,9 @@ the personality's decision is repeated:
               (bncpp-70); a handler that throws another exception starts a second path with that type
 Functions on the path without direct callers go on to their virtual callers where a vcallers hook gives them
 (bncpp-66, cpp/eh_virtual.py: the calls through the X::VTable members of the slots holding the function; steps
-marked 'virtual'). Functions with neither are the frontier (entry points, or reached only through function
-pointers, or through receivers BN has no class type for).
+marked 'virtual'; a lambda's operator() goes on to the calls of the std::functions holding it, cpp/eh_closures.py,
+bncpp-109). Functions with neither are the frontier (entry points, or reached only through function pointers, or
+through receivers BN has no class type for).
 
 Prototype: the offline catch_bfs.py of 2026-10-12 (bncpp session, copied into synVbasic's scripts): the same
 walk over objdump and the file's own tables; here BN's call graph (shared/callgraph.py) and cpp/bnimage.py.
@@ -27,6 +29,7 @@ from collections import deque
 
 from . import lsda as _lsda, std_exceptions, unwind_info
 
+_PASS = ("tail", "unwind", "cleanup", "may catch")  # the exception goes on to the owner's callers
 PREFIX = "[eh] "  # our comments; any other comment at the address is the user's and stays
 
 
@@ -128,10 +131,27 @@ class Trace:
 
     def owner(self, addr):
         i = bisect.bisect_right(self.starts, addr) - 1
-        if i >= 0:
-            return self.starts[i]
-        funcs = self.bv.get_functions_containing(addr)
-        return funcs[0].start if funcs else addr
+        if i < 0:
+            funcs = self.bv.get_functions_containing(addr)
+            return funcs[0].start if funcs else addr
+        # compact unwind merges consecutive functions with the same encoding (a frameless forwarder after its
+        # neighbour, bncpp-109): a BN function inside the entry is its own owner when it is one of the source's --
+        # named, or called from outside the entry (pads and split pieces are reached only from their owner)
+        u = self.starts[i]
+        end = self.starts[i + 1] if i + 1 < len(self.starts) else None
+        best = u
+        for f in self.bv.get_functions_containing(addr):
+            if best < f.start <= addr and self._entry_function(f, u, end):
+                best = f.start
+        return best
+
+    def _entry_function(self, f, u, end):
+        memo = self.__dict__.setdefault("_entry_memo", {})
+        if f.start not in memo:
+            # a symbol of the image's (auto, but there: BN's own sub_ functions have none) or an outside caller
+            memo[f.start] = self.bv.get_symbol_at(f.start) is not None or any(
+                r.address < u or (end is not None and r.address >= end) for r in self.bv.get_code_refs(f.start))
+        return memo[f.start]
 
     def is_tail(self, site):
         from binaryninja import BranchType
@@ -211,14 +231,40 @@ class Trace:
                 for site in rethrows:
                     self.throw_site(site, queue, st.owner)
             self.pending += [(st, site, ti) for site, ti in throws]
-        elif st.kind in ("tail", "unwind", "cleanup", "may catch") and st.owner not in self.seen:
+        elif st.kind in _PASS and st.owner not in self.seen:
             self.seen.add(st.owner)
             queue.append(st.owner)
+
+    def step(self, site, via, tail, virtual):
+        """the decision at a call site the exception from function via reaches; tail: from the IL, None: ask"""
+        own = self.owner(site)
+        if (self.is_tail(site) if tail is None else tail):
+            kind, cs, clause = "tail", None, None
+        else:
+            kind, cs, clause = self.decide(own, site)
+        st = Step(kind, site, own, via, cs.landing_pad if cs else None, clause, virtual)
+        self.steps.append(st)
+        return st, cs
+
+    def chain(self, st, via, queue):
+        """on from a closure call inside a function shared by many std::functions (cpp/eh_closures.py): only through
+        the calls that passed this one down, then to all callers of the function it lives in"""
+        cs = None
+        for site, _caller, tail in via:
+            if (site, st.owner) in self.chained:
+                return
+            self.chained.add((site, st.owner))
+            self.through.add(st.owner)  # left through this call only, not queued for all its callers
+            st, cs = self.step(site, st.owner, tail, False)
+            if st.kind not in _PASS:
+                break
+        self.after_step(st, cs, queue)
 
     def run(self, starts=(), sites=()):
         """starts: functions the exception leaves (their callers decide); sites: throw sites (the call to
         ___cxa_throw decides in its own owner's table first -- a throw in a catch body or inside a try)"""
         queue, self.seen, self.done_sites, self.pending = deque(), set(), set(), []
+        self.chained, self.through = set(), set()
         for site in sites:
             self.throw_site(site, queue)
         for fn in starts:
@@ -228,20 +274,24 @@ class Trace:
         while queue:
             fn = queue.popleft()
             sites = {site: None for site, _caller in self.callers.get(fn, [])}  # a site BN lists twice: once
-            for site, _caller, tail in (self.vcallers(fn) if self.vcallers is not None else ()):
+            chains = {}  # virtual site -> [via]: the call sites back to the std::function's owner; None: all callers
+            for c in (self.vcallers(fn) if self.vcallers is not None else ()):
+                site, tail, via = c[0], c[2], (c[3] if len(c) > 3 else ())
                 sites.setdefault(site, tail)  # virtual: tail from the IL (an indirect call has no branch target)
+                if not via:
+                    chains[site] = None
+                elif chains.get(site, []) is not None:
+                    chains[site] = chains.get(site, []) + [via]
             if not sites:
                 self.frontier.append(fn)
                 continue
             for site, vtail in sorted(sites.items()):
-                own = self.owner(site)
-                if (self.is_tail(site) if vtail is None else vtail):
-                    kind, cs, clause = "tail", None, None
+                st, cs = self.step(site, fn, vtail, vtail is not None)
+                if chains.get(site) and st.kind in _PASS:
+                    for via in chains[site]:
+                        self.chain(st, via, queue)
                 else:
-                    kind, cs, clause = self.decide(own, site)
-                st = Step(kind, site, own, fn, cs.landing_pad if cs else None, clause, vtail is not None)
-                self.steps.append(st)
-                self.after_step(st, cs, queue)
+                    self.after_step(st, cs, queue)
         done = set()
         for st, site, ti in self.pending:  # handlers that throw another exception: one more trace each
             if (site, ti) in done or self.depth >= 3:
@@ -283,7 +333,7 @@ class Trace:
         members = getattr(self.vcallers, "members", None)
         nvt = sum(1 for fn in self.frontier if fn in members) if members is not None else 0
         out = ["functions on the path: %d; %s%s; frontier (no callers): %d%s" % (
-            len(self.seen), ", ".join("%s %d" % kv for kv in sorted(count.items())) or "no callers",
+            len(self.seen | self.through), ", ".join("%s %d" % kv for kv in sorted(count.items())) or "no callers",
             "; virtual call sites %d" % nv if nv else "", len(self.frontier),
             " (%d in a vtable: no virtual call through a typed receiver)" % nvt if nvt else "")]
         for st in self.steps:

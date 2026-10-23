@@ -1,0 +1,693 @@
+// apply(std::function<int32_t (int32_t)> const&, int32_t) @ 0x400690
+{
+    int32_t var_c = arg2;
+    struct std* rdi = *(uint64_t*)((char*)arg1 + 0x20);
+
+    if (rdi)
+        return (uint64_t)((*(uint64_t*)(*(uint64_t*)rdi + 0x30))(rdi, &var_c) + 1);
+
+    std::__throw_bad_function_call[abi:nqe210106](rdi);
+    /* no return */
+}
+
+// guarded_apply(int32_t) @ 0x4006c0
+{
+    // exception table (LSDA 0x400fb8): 2 of 4 call sites have a landing pad; #n = the selector value
+    //   0x4006f3..0x4006fb -> 0x40073f sub_40073f: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x400773..0x400778 (in sub_40073f) -> 0x40077f sub_40077f: cleanup
+
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int64_t* rbp_1 = &var_8;
+    int64_t var_28 = *(uint64_t*)___stack_chk_guard;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable
+        * const var_58 = &_vtable_for_std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    int32_t var_50 = arg1;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable
+        * const* var_38 = &var_58;
+    try
+    {
+        int32_t rax_1 = apply(&var_58, arg1);
+    }
+    // unwind: int64_t* rdi = var_38;
+    // unwind: int64_t rcx_1;
+    // unwind: if (rdi == arg6)
+    // unwind: {
+    // unwind:     rcx_1 = *(uint64_t*)rdi;
+    // unwind:     (*(uint64_t*)(rcx_1 + 0x20))(rdi, arg2, arg3, rcx_1);
+    // unwind: }
+    // unwind: else if (rdi)
+    // unwind: {
+    // unwind:     rcx_1 = *(uint64_t*)rdi;
+    // unwind:     (*(uint64_t*)(rcx_1 + 0x28))(rdi, arg2, arg3, rcx_1);
+    // unwind: }
+    catch (std::runtime_error& e)
+    {
+        /* tailcall */
+        return sub_40071d(0xffffffff, arg5);
+    }
+    int64_t rax_2;
+    int64_t entry_rbx;
+    int64_t entry_r14;
+    int64_t entry_r15;
+
+    if (var_38 == &var_58)
+        rax_2 = 0x20;
+    else
+    {
+        rax_2 = 0x28;
+
+        if (!var_38)
+            /* tailcall */
+            return sub_40071d(rax_1, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
+    }
+
+    (*(uint64_t*)(*(uint64_t*)var_38 + rax_2))();
+    /* tailcall */
+    return sub_40071d(rax_1, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
+}
+
+// sub_40071d @ 0x40071d
+{
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg2 - 0x20))
+        return (uint64_t)arg1;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// sub_40073f @ 0x40073f
+{
+    // landing pad of guarded_apply(int32_t) @ 0x4006c0
+    //   from 0x4006f3..0x4006fb: catch (std::runtime_error) #1, cleanup, cleanup
+
+    int64_t* rdi = *(uint64_t*)((char*)arg5 - 0x30);
+    int64_t rcx_1;
+
+    if (rdi == arg6)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x20))(rdi, arg2, arg3, rcx_1);
+    }
+    else if (rdi)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x28))(rdi, arg2, arg3, rcx_1);
+    }
+
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    ___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40071d(0xffffffff, arg5);
+}
+
+// sub_40077f @ 0x40077f
+{
+    // landing pad of guarded_apply(int32_t) @ 0x4006c0
+    //   from 0x400773..0x400778 (in sub_40073f): cleanup
+
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// run_cb(std::function<void ()> const&) @ 0x400790
+{
+    struct std* rdi = *(uint64_t*)((char*)arg1 + 0x20);
+
+    if (rdi)
+❓        /* jump -> *(uint64_t*)(*(uint64_t*)rdi + 0x30) */
+
+    std::__throw_bad_function_call[abi:nqe210106](rdi);
+    /* no return */
+}
+
+// forward(std::function<void ()> const&) @ 0x4007b0
+{
+    /* tailcall */
+    return run_cb(arg1);
+}
+
+// guarded_forward(int32_t) @ 0x4007c0
+{
+    // exception table (LSDA 0x400fdc): 2 of 4 call sites have a landing pad; #n = the selector value
+    //   0x4007f1..0x4007f9 -> 0x40083b sub_40083b: catch (std::logic_error) #1, cleanup, cleanup
+    //   0x40086f..0x400874 (in sub_40083b) -> 0x40087b sub_40087b: cleanup
+
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int64_t var_28 = *(uint64_t*)___stack_chk_guard;
+    struct std::__function::__base<void ()>::std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::VTable
+        * const var_58 = &_vtable_for_std::__function::__func<guarded_forward(int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    int32_t var_50 = arg1;
+    struct std::__function::__base<void ()>::std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::VTable
+        * const* var_38 = &var_58;
+    try
+    {
+        forward(&var_58);
+    }
+    // unwind: int64_t* rdi = var_38;
+    // unwind: int64_t rcx_1;
+    // unwind: if (rdi == arg6)
+    // unwind: {
+    // unwind:     rcx_1 = *(uint64_t*)rdi;
+    // unwind:     (*(uint64_t*)(rcx_1 + 0x20))(rdi, arg2, arg3, rcx_1);
+    // unwind: }
+    // unwind: else if (rdi)
+    // unwind: {
+    // unwind:     rcx_1 = *(uint64_t*)rdi;
+    // unwind:     (*(uint64_t*)(rcx_1 + 0x28))(rdi, arg2, arg3, rcx_1);
+    // unwind: }
+    catch (std::logic_error& e)
+    {
+        /* tailcall */
+        return sub_40081b(arg5);
+    }
+
+    if (var_38 == &var_58)
+        (*(uint64_t*)var_38)->destroy();
+    else if (var_38)
+        (*(uint64_t*)var_38)->destroy_deallocate();
+
+    int64_t entry_rbx;
+    int64_t entry_r14;
+    int64_t entry_r15;
+    /* tailcall */
+    return sub_40081b(&var_8, entry_rbx, entry_r14, entry_r15, var_8);
+}
+
+// sub_40081b @ 0x40081b
+{
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg1 - 0x20))
+        return;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// sub_40083b @ 0x40083b
+{
+    // landing pad of guarded_forward(int32_t) @ 0x4007c0
+    //   from 0x4007f1..0x4007f9: catch (std::logic_error) #1, cleanup, cleanup
+
+    int64_t* rdi = *(uint64_t*)((char*)arg5 - 0x30);
+    int64_t rcx_1;
+
+    if (rdi == arg6)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x20))(rdi, arg2, arg3, rcx_1);
+    }
+    else if (rdi)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x28))(rdi, arg2, arg3, rcx_1);
+    }
+
+    if (arg3 != 1)
+    {
+        __Unwind_Resume(arg4);
+        /* no return */
+    }
+
+    ___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40081b(arg5);
+}
+
+// sub_40087b @ 0x40087b
+{
+    // landing pad of guarded_forward(int32_t) @ 0x4007c0
+    //   from 0x40086f..0x400874 (in sub_40083b): cleanup
+
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400890
+{
+    *(uint64_t*)this = &_vtable_for_Worker;
+    int64_t* rdi = *(uint64_t*)((char*)this + 0x30);
+    int64_t rax_2;
+
+    if (rdi == (char*)this + 0x10)
+        rax_2 = 0x20;
+    else
+    {
+        rax_2 = 0x28;
+
+        if (!rdi)
+            return;
+    }
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)rdi + rax_2) */
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x4008d0
+{
+    *(uint64_t*)this = &_vtable_for_Worker;
+    int64_t* rdi = *(uint64_t*)((char*)this + 0x30);
+    int64_t rax_2;
+
+    if (rdi == (char*)this + 0x10)
+        rax_2 = 0x20;
+    else
+    {
+        rax_2 = 0x28;
+
+        if (!rdi)
+            return;
+    }
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)rdi + rax_2) */
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400910
+{
+    *(uint64_t*)this = &_vtable_for_Worker;
+    int64_t* rdi = *(uint64_t*)((char*)this + 0x30);
+    int64_t rcx_1;
+    int64_t entry_rdx;
+    int64_t entry_rsi;
+
+    if (rdi == (char*)this + 0x10)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x20))(rdi, entry_rsi, entry_rdx, rcx_1);
+    }
+    else if (rdi)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x28))(rdi, entry_rsi, entry_rdx, rcx_1);
+    }
+    /* tailcall */
+    return operator delete(this);
+}
+
+// Worker::set(struct Worker* this, std::function<void ()>) @ 0x400960
+{
+    // exception table (LSDA 0x401000): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4009cd..0x4009d3 -> 0x4009de sub_4009de: catch (...) #1
+
+    int64_t rax;
+    int64_t var_28 = rax;
+    int64_t* rdi = *(uint64_t*)((char*)this + 0x30);
+    *(uint64_t*)((char*)this + 0x30) = 0;
+    void* entry_rsi;
+    int64_t rcx_1;
+    int64_t entry_rdx;
+
+    if (rdi == (char*)this + 0x10)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x20))(rdi, entry_rsi, entry_rdx, rcx_1);
+    }
+    else if (rdi)
+    {
+        rcx_1 = *(uint64_t*)rdi;
+        (*(uint64_t*)(rcx_1 + 0x28))(rdi, entry_rsi, entry_rdx, rcx_1);
+    }
+    int64_t result = *(uint64_t*)((char*)entry_rsi + 0x20);
+
+    if (!result)
+    {
+        *(uint64_t*)((char*)this + 0x30) = 0;
+        return result;
+    }
+
+    if (result == entry_rsi)
+    {
+        *(uint64_t*)((char*)this + 0x30) = (char*)this + 0x10;
+        int64_t* rdi_1 = *(uint64_t*)((char*)entry_rsi + 0x20);
+        return (*(uint64_t*)(*(uint64_t*)rdi_1 + 0x18))(rdi_1, (char*)this + 0x10);
+    }
+
+    *(uint64_t*)((char*)this + 0x30) = result;
+    *(uint64_t*)((char*)entry_rsi + 0x20) = 0;
+    return result;
+}
+
+// sub_4009de @ 0x4009de
+{
+    // landing pad of Worker::set(struct Worker* this, std::function<void ()>) @ 0x400960
+    //   from 0x4009cd..0x4009d3: catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// Worker::work(struct Worker* this) @ 0x4009f0
+{
+    // exception table (LSDA 0x401014): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400a04..0x400a15 -> 0x400a17 sub_400a17: catch (std::runtime_error) #1
+
+    struct std* rdi = *(uint64_t*)((char*)this + 0x30);
+
+    try
+    {
+        if (!rdi)
+        {
+            std::__throw_bad_function_call[abi:nqe210106](rdi);
+            /* no return */
+        }
+
+        (*(uint64_t*)(*(uint64_t*)rdi + 0x30))(rdi);
+    }
+    catch (std::runtime_error& e)
+    {
+        /* tailcall */
+        return sub_400a07(0xffffffff);
+    }
+    int64_t entry_rbx;
+    int64_t entry_rbp;
+    /* tailcall */
+    return sub_400a07(0, entry_rbx, entry_rbp);
+}
+
+// sub_400a07 @ 0x400a07
+{
+    return (uint64_t)arg1;
+}
+
+// sub_400a17 @ 0x400a17
+{
+    // landing pad of Worker::work(struct Worker* this) @ 0x4009f0
+    //   from 0x400a04..0x400a15: catch (std::runtime_error) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400a07(0xffffffff);
+}
+
+// make_worker() @ 0x400a30
+{
+    struct Worker::VTable** result = operator new(0x40);
+    *(uint64_t*)result = &_vtable_for_Worker;
+    result[6] = 0;
+    return result;
+}
+
+// schedule(Worker*, int32_t) @ 0x400a60
+{
+    int64_t rax = *(uint64_t*)___stack_chk_guard;
+    struct std::__function::__base<void ()>::std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::VTable
+        * const var_48 = &_vtable_for_std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    int32_t var_40 = arg2;
+    struct std::__function::__base<void ()>::std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::VTable
+        * const* var_28 = &var_48;
+    Worker::set(arg1, var_48);
+
+    if (var_28 == &var_48)
+        (*(uint64_t*)var_28)->destroy();
+    else if (var_28)
+        (*(uint64_t*)var_28)->destroy_deallocate();
+
+    int64_t result = *(uint64_t*)___stack_chk_guard;
+
+    if (result == rax)
+        return result;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// std::__throw_bad_function_call[abi:nqe210106](struct std* this) @ 0x400ae0
+{
+    throw std::__1::bad_function_call();
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b20
+{
+    return;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b30
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400b40
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable
+        ** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    result[1] = *(uint32_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x400b70
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>{for `std::__function::__base<int32_t (int32_t)>'};
+    uint64_t result = (uint64_t)*(uint32_t*)((char*)this + 8);
+    *(uint32_t*)((char*)arg2 + 8) = (uint32_t)result;
+    return result;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400b90
+{
+    return;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x400ba0
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x400bc0
+{
+    // exception table (LSDA 0x401028): 1 of 3 call sites have a landing pad
+    //   0x400be3..0x400bf2 -> 0x400bfa sub_400bfa: cleanup
+
+    int32_t rax = *(uint32_t*)arg2;
+
+    if (rax < 3)
+        return (uint64_t)(rax + *(uint32_t*)((char*)this + 8));
+
+    struct std::runtime_error* rax_2 = ___cxa_allocate_exception(0x10);
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator() .cold.1(
+            rax_2,
+        std::runtime_error::runtime_error(rax_2, "big"));
+    /* no return */
+}
+
+// sub_400bfa @ 0x400bfa
+{
+    // landing pad of std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x400bc0
+    //   from 0x400be3..0x400bf2: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x400c10
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z13guarded_applyiE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x400c30
+{
+    return &_typeinfo_for_guarded_apply(int32_t)::$_0;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400c40
+{
+    return;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400c50
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const @ 0x400c60
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<void ()>::std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::VTable
+        ** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<guarded_forward(int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    result[1] = *(uint32_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const @ 0x400c90
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<guarded_forward(int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    uint64_t result = (uint64_t)*(uint32_t*)((char*)this + 8);
+    *(uint32_t*)((char*)arg2 + 8) = (uint32_t)result;
+    return result;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400cb0
+{
+    return;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400cc0
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400ce0
+{
+    // exception table (LSDA 0x401038): 1 of 3 call sites have a landing pad
+    //   0x400cff..0x400d0e -> 0x400d16 sub_400d16: cleanup
+
+    if (!*(uint32_t*)((char*)this + 8))
+        return;
+
+    struct std::logic_error* rax = ___cxa_allocate_exception(0x10);
+    std::logic_error::logic_error(rax, "k");
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(rax);
+    /* no return */
+}
+
+// sub_400d16 @ 0x400d16
+{
+    // landing pad of std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400ce0
+    //   from 0x400cff..0x400d0e: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::type_info const&) const @ 0x400d30
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z15guarded_forwardiE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target_type(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const @ 0x400d50
+{
+    return &_typeinfo_for_guarded_forward(int32_t)::$_0;
+}
+
+// ___clang_call_terminate @ 0x400d60
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400d70
+{
+    return;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400d80
+{
+    /* tailcall */
+    return operator delete(this);
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const @ 0x400d90
+{
+    int64_t rax;
+    int64_t var_18 = rax;
+    struct std::__function::__base<void ()>::std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::VTable
+        ** result = operator new(0x10);
+    *(uint64_t*)result = &_vtable_for_std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    result[1] = *(uint32_t*)((char*)this + 8);
+    return result;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const @ 0x400dc0
+{
+    *(uint64_t*)arg2 = &_vtable_for_std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>{for `std::__function::__base<void ()>'};
+    uint64_t result = (uint64_t)*(uint32_t*)((char*)this + 8);
+    *(uint32_t*)((char*)arg2 + 8) = (uint32_t)result;
+    return result;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400de0
+{
+    return;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400df0
+{
+    if (!this)
+        return;
+
+❓    /* jump -> *(uint64_t*)(*(uint64_t*)this + 0x8) */
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400e10
+{
+    // exception table (LSDA 0x401048): 1 of 3 call sites have a landing pad
+    //   0x400e2f..0x400e3e -> 0x400e46 sub_400e46: cleanup
+
+    if (*(uint32_t*)((char*)this + 8) < 2)
+        return;
+
+    struct std::runtime_error* rax = ___cxa_allocate_exception(0x10);
+    std::runtime_error::runtime_error(rax, "w");
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(rax);
+    /* no return */
+}
+
+// sub_400e46 @ 0x400e46
+{
+    // landing pad of std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400e10
+    //   from 0x400e2f..0x400e3e: cleanup
+
+    ___cxa_free_exception();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::type_info const&) const @ 0x400e60
+{
+    if (*(uint64_t*)((char*)arg2 + 8) == "Z8scheduleP6WorkeriE3$_0")
+        return (char*)this + 8;
+
+    return nullptr;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target_type(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const @ 0x400e80
+{
+    return &_typeinfo_for_schedule(Worker*, int32_t)::$_0;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator() .cold.1(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x400e90
+{
+    ___cxa_throw(this, typeinfo_for_std::runtime_error, std::runtime_error::~runtime_error);
+    /* no return */
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x400eb0
+{
+    ___cxa_throw(this, typeinfo_for_std::logic_error, std::logic_error::~logic_error);
+    /* no return */
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x400ed0
+{
+    ___cxa_throw(this, typeinfo_for_std::runtime_error, std::runtime_error::~runtime_error);
+    /* no return */
+}
+

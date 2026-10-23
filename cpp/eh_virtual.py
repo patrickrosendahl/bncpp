@@ -13,6 +13,8 @@ base's VTable (an anchored base, bncpp-31) once a receiver has that type.
 The result of a dynamic_cast<T*> is a T* whatever BN typed it (bncpp-95): ___dynamic_cast(p, src typeinfo, T's
 typeinfo, hint) -- a call (*(*r + k))(r, ...) on that result goes through T::VTable member k, so it counts like a
 typed receiver (cast_calls, from the IL of ___dynamic_cast's callers; cached).
+A lambda's operator() behind a std::function is called through the std::function's __f_, never a typed receiver:
+cpp/eh_closures.py follows the closure from its construction to those calls (bncpp-109).
 """
 from . import rtti_fields
 from .rtti_names import _primary_base
@@ -161,6 +163,7 @@ class VirtualCallers:
         self.bv, self.types, self.labels, self.cache, self.budget = bv, types, labels, cache, budget
         self.members = slot_members(types, labels)
         self.memo = {}
+        self.closures = None  # cpp/eh_closures.ClosureCallers, made on first use
         self._casts = None
         self.cast_progress = None  # (callers done, callers)
 
@@ -225,4 +228,8 @@ class VirtualCallers:
         out = []
         for key in sorted(self.members.get(fn, ())):
             out += [c for c in self.member_calls(key) if c not in out]
+        if self.closures is None:
+            from .eh_closures import ClosureCallers
+            self.closures = ClosureCallers(self.bv, self.types)
+        out += [c for c in self.closures(fn) if c not in out]
         return out

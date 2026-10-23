@@ -75,6 +75,7 @@ TESTS = [
     "TestVirtualThrow",          # exception path through virtual calls (bncpp-66; checked by hand with bn_eh_path.py)
     "TestCastThrow",             # ... through calls on dynamic_cast results (bncpp-95; by hand with bn_eh_path.py)
     "TestThrowHelpers",          # throw sites behind libc++'s __throw_* helpers and own wrappers (bncpp-92)
+    "TestClosureThrow",          # ... through std::function: params, a forwarder, a member (bncpp-109; by hand)
     # names hashed like SynthV's raw slices
     "TestCatchAllHashed",        # clang's terminate helper and std::terminate unnamed: guards found anyway (bncpp-71)
 ]

@@ -1,0 +1,41 @@
+classes sized 4
+ctor already typed 3
+ctor typed 11
+ctors forwarding 4
+ctors/dtors 14
+fields 5
+fields named (override) 0
+functions scanned 15
+helper accesses added 0
+helper entries 74
+helper floats over int 0
+helper walks 86
+params with direct callers 18
+pointer fields kept 0
+pointer fields typed 0
+pointer fields: contradiction 0
+ptr store functions scanned 15
+ptr stores 6
+returns used as objects 0
+rounds 3
+stable 1
+structs 6
+structs with a base 3
+
+struct Worker  (0x40 bytes, from new)
+     0x0 vptr                     struct Worker::VTable*  [vptr]
+    0x10 field_10                 int64_t  [access]
+    0x30 field_30                 uint64_t  [access]
+struct std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>  (0x10 bytes, from new)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct std::__1::__function::__base<int32_t (int32_t)>  (0x8 bytes, from vptr)
+     0x0 vptr                     struct std::__1::__function::__base<int32_t (int32_t)>::VTable*  [vptr]
+struct std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>  (0x10 bytes, from new)  base std::__1::__function::__base<void ()> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]
+struct std::__1::__function::__base<void ()>  (0x8 bytes, from vptr)
+     0x0 vptr                     struct std::__1::__function::__base<void ()>::VTable*  [vptr]
+struct std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>  (0x10 bytes, from new)  base std::__1::__function::__base<void ()> @ 0x0
+     0x0 vptr                     struct std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::VTable*  [vptr]
+     0x8 field_8                  int32_t  [access]

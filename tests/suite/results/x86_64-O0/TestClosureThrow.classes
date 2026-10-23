@@ -1,0 +1,118 @@
+typeinfo 0x403088  class mangled 6Worker
+  vtable 0x403078  offset_to_top 0  2 slots
+    [0] 0x400a70 Worker::~Worker(struct Worker* this)
+    [1] 0x400a90 Worker::~Worker(struct Worker* this)
+typeinfo 0x4030f0  si    mangled NSt3__110__function6__funcIZ13guarded_applyiE3$_0FiiEEE
+  closure std::function  invoke [6] 0x4010c0  (name)
+  base 0x403108 NSt3__110__function6__baseIFiiEEE
+  vtable 0x4030a8  offset_to_top 0  9 slots
+    [0] 0x400fa0 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)
+    [1] 0x400fc0 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)
+    [2] 0x400ff0 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const
+    [3] 0x401050 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const
+    [4] 0x401080 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)
+    [5] 0x401090 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)
+    [6] 0x4010c0 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)
+    [7] 0x4010f0 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const
+    [8] 0x401140 std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const
+typeinfo 0x403108  class mangled NSt3__110__function6__baseIFiiEEE  bind __ZTINSt3__110__function6__baseIFiiEEE
+  vtable 0x403128  offset_to_top 0  9 slots
+    [0] 0x401160 std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)
+    [1] 0x401170 std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)
+    [2] pure
+    [3] pure
+    [4] pure
+    [5] pure
+    [6] pure
+    [7] pure
+    [8] pure
+typeinfo 0x403170  class mangled Z13guarded_applyiE3$_0
+typeinfo 0x4031d8  si    mangled NSt3__110__function6__funcIZ15guarded_forwardiE3$_0FvvEEE
+  closure std::function  invoke [6] 0x4016c0  (name)
+  base 0x4031f0 NSt3__110__function6__baseIFvvEEE
+  vtable 0x403190  offset_to_top 0  9 slots
+    [0] 0x4015a0 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)
+    [1] 0x4015c0 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)
+    [2] 0x4015f0 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const
+    [3] 0x401650 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const
+    [4] 0x401680 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)
+    [5] 0x401690 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)
+    [6] 0x4016c0 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)
+    [7] 0x4016e0 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::type_info const&) const
+    [8] 0x401730 std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target_type(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const
+typeinfo 0x4031f0  class mangled NSt3__110__function6__baseIFvvEEE  bind __ZTINSt3__110__function6__baseIFvvEEE
+  vtable 0x403210  offset_to_top 0  9 slots
+    [0] 0x401750 std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this)
+    [1] 0x401760 std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this)
+    [2] pure
+    [3] pure
+    [4] pure
+    [5] pure
+    [6] pure
+    [7] pure
+    [8] pure
+typeinfo 0x403258  class mangled Z15guarded_forwardiE3$_0
+typeinfo 0x4032c0  si    mangled NSt3__110__function6__funcIZ8scheduleP6WorkeriE3$_0FvvEEE
+  closure std::function  invoke [6] 0x401cf0  (name)
+  base 0x4031f0 NSt3__110__function6__baseIFvvEEE
+  vtable 0x403278  offset_to_top 0  9 slots
+    [0] 0x401bd0 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+    [1] 0x401bf0 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+    [2] 0x401c20 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const
+    [3] 0x401c80 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const
+    [4] 0x401cb0 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+    [5] 0x401cc0 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+    [6] 0x401cf0 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+    [7] 0x401d10 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::type_info const&) const
+    [8] 0x401d60 std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target_type(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const
+typeinfo 0x4032d8  class mangled Z8scheduleP6WorkeriE3$_0
+
+names (cpp/rtti_names.py; now: BN's name)
+R 0x400a70 Worker::~Worker   [now: Worker::~Worker(struct Worker* this)]
+R 0x400a90 Worker::~Worker [deleting]   [now: Worker::~Worker(struct Worker* this)]
+R 0x400fa0 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x400fc0 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func [deleting]   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x400ff0 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc2   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x401050 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc3   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const]
+R 0x401080 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc4   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x401090 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc5   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this)]
+R 0x4010c0 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&)]
+R 0x4010f0 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc7   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const]
+R 0x401140 std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::vfunc8   [now: std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const]
+R 0x401160 std::__1::__function::__base<int32_t (int32_t)>::~__base   [now: std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)]
+R 0x401170 std::__1::__function::__base<int32_t (int32_t)>::~__base [deleting]   [now: std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this)]
+R 0x4015a0 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)]
+R 0x4015c0 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func [deleting]   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)]
+R 0x4015f0 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc2   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const]
+R 0x401650 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc3   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const]
+R 0x401680 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc4   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)]
+R 0x401690 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc5   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)]
+R 0x4016c0 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this)]
+R 0x4016e0 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc7   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::type_info const&) const]
+R 0x401730 std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::vfunc8   [now: std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target_type(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const]
+R 0x401750 std::__1::__function::__base<void ()>::~__base   [now: std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this)]
+R 0x401760 std::__1::__function::__base<void ()>::~__base [deleting]   [now: std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this)]
+R 0x401bd0 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)]
+R 0x401bf0 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func [deleting]   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)]
+R 0x401c20 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc2   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const]
+R 0x401c80 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc3   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const]
+R 0x401cb0 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc4   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)]
+R 0x401cc0 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc5   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)]
+R 0x401cf0 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)]
+R 0x401d10 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc7   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::type_info const&) const]
+R 0x401d60 std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::vfunc8   [now: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target_type(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const]
+D 0x403068 vtable_for_Worker   [now: _vtable_for_Worker]
+D 0x403088 typeinfo_for_Worker   [now: _typeinfo_for_Worker]
+D 0x403098 vtable_for_std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>]
+D 0x4030f0 typeinfo_for_std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>   [now: _typeinfo_for_std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>]
+D 0x403108 typeinfo_for_std::__1::__function::__base<int32_t (int32_t)>   [now: _typeinfo_for_std::__function::__base<int32_t (int32_t)>]
+D 0x403118 vtable_for_std::__1::__function::__base<int32_t (int32_t)>   [now: _vtable_for_std::__1::__function::__base<int32_t (int32_t)>]
+D 0x403170 typeinfo_for_guarded_apply(int32_t)::$_0   [now: _typeinfo_for_guarded_apply(int32_t)::$_0]
+D 0x403180 vtable_for_std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>   [now: _vtable_for_std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>]
+D 0x4031d8 typeinfo_for_std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>   [now: _typeinfo_for_std::__function::__func<guarded_forward(int32_t)::$_0, void ()>]
+D 0x4031f0 typeinfo_for_std::__1::__function::__base<void ()>   [now: _typeinfo_for_std::__function::__base<void ()>]
+D 0x403200 vtable_for_std::__1::__function::__base<void ()>   [now: _vtable_for_std::__1::__function::__base<void ()>]
+D 0x403258 typeinfo_for_guarded_forward(int32_t)::$_0   [now: _typeinfo_for_guarded_forward(int32_t)::$_0]
+D 0x403268 vtable_for_std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>   [now: _vtable_for_std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>]
+D 0x4032c0 typeinfo_for_std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>   [now: _typeinfo_for_std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>]
+D 0x4032d8 typeinfo_for_schedule(Worker*, int32_t)::$_0   [now: _typeinfo_for_schedule(Worker*, int32_t)::$_0]

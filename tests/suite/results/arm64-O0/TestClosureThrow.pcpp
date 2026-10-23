@@ -1,0 +1,1184 @@
+// apply(std::function<int32_t (int32_t)> const&, int32_t) @ 0x400698
+{
+    return (uint64_t)(std::function<int32_t (int32_t)>::operator()(arg1, arg2) + 1);
+}
+
+// std::function<int32_t (int32_t)>::operator()(struct std::function<int32_t (int32_t)>* this, int32_t) const @ 0x4006c8
+{
+    int32_t var_1c = arg2;
+    return std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](this,
+        &var_1c);
+}
+
+// guarded_apply(int32_t) @ 0x4006f8
+{
+    // exception table (LSDA 0x402448): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x400728..0x400730 -> 0x40075c sub_40075c: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x400738..0x400744 -> 0x400784 sub_400784: catch (std::runtime_error) #1, cleanup, cleanup
+    //   0x4007c0..0x4007c4 (in sub_4007ac) -> 0x40081c sub_40081c: cleanup
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t var_18 = *(uint64_t*)___stack_chk_guard;
+    struct std::function<int32_t (int32_t)> var_38;
+    try
+    {
+        std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(&var_38,
+            (uint64_t)arg1);
+        int32_t var_3c = apply(&var_38, arg1);
+    }
+    // unwind: std::function<int32_t (int32_t)>::~function(arg3 - 0x28);
+    catch (std::runtime_error& e)
+    {
+        void* fp;
+        var_3c = 0xffffffff;
+        /* tailcall */
+        return j_sub_4007cc(arg1);
+    }
+    std::function<int32_t (int32_t)>::~function(&var_38);
+    /* tailcall */
+    return sub_4007cc(&var_10, var_10);
+}
+
+// sub_40075c @ 0x40075c
+{
+    // landing pad of guarded_apply(int32_t) @ 0x4006f8
+    //   from 0x400728..0x400730: catch (std::runtime_error) #1, cleanup, cleanup
+
+    if (!arg2)
+        /* tailcall */
+        return sub_400824(arg1);
+
+    /* tailcall */
+    return sub_40079c(arg2, arg1);
+}
+
+// sub_400784 @ 0x400784
+{
+    // landing pad of guarded_apply(int32_t) @ 0x4006f8
+    //   from 0x400738..0x400744: catch (std::runtime_error) #1, cleanup, cleanup
+
+    std::function<int32_t (int32_t)>::~function(arg3 - 0x28);
+    /* tailcall */
+    return sub_40079c(arg2, arg1);
+}
+
+// sub_40079c @ 0x40079c
+{
+    if (arg1 != 1)
+        /* tailcall */
+        return sub_400824(arg2);
+
+    void* fp;
+    /* tailcall */
+    return sub_4007ac(fp, arg2);
+}
+
+// sub_4007ac @ 0x4007ac
+{
+    void* arg_30 = ___cxa_begin_catch(arg2);
+    *(uint32_t*)((char*)arg1 - 0x2c) = 0xffffffff;
+    ___cxa_end_catch();
+    /* tailcall */
+    return j_sub_4007cc(arg1);
+}
+
+// j_sub_4007cc @ 0x4007c8
+{
+    /* tailcall */
+    return sub_4007cc(arg1, arg2);
+}
+
+// sub_4007cc @ 0x4007cc
+{
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg1 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg1 - 0x2c);
+
+    /* tailcall */
+    return sub_4007f0();
+}
+
+// sub_4007f0 @ 0x4007f0
+{
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// sub_40081c @ 0x40081c
+{
+    // landing pad of guarded_apply(int32_t) @ 0x4006f8
+    //   from 0x4007c0..0x4007c4 (in sub_4007ac): cleanup
+
+    /* tailcall */
+    return sub_400824(arg1);
+}
+
+// sub_400824 @ 0x400824
+{
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0) @ 0x40082c
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(this,
+        (uint64_t)arg2);
+}
+
+// std::function<int32_t (int32_t)>::~function(struct std::function<int32_t (int32_t)>* this) @ 0x400868
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::function<int32_t (int32_t)>::~function(this);
+}
+
+// run_cb(std::function<void ()> const&) @ 0x400894
+{
+    return std::function<void ()>::operator()(arg1);
+}
+
+// std::function<void ()>::operator()(struct std::function<void ()>* this) const @ 0x4008b8
+{
+    return std::__function::__value_func<void ()>::operator()[abi:nqe210106](this);
+}
+
+// forward(std::function<void ()> const&) @ 0x4008dc
+{
+    return run_cb(arg1);
+}
+
+// guarded_forward(int32_t) @ 0x400900
+{
+    // exception table (LSDA 0x402470): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x400930..0x400938 -> 0x400954 sub_400954: catch (std::logic_error) #1, cleanup, cleanup
+    //   0x40093c..0x400944 -> 0x40097c sub_40097c: catch (std::logic_error) #1, cleanup, cleanup
+    //   0x4009b8..0x4009bc (in sub_4009a4) -> 0x400a1c sub_400a1c: cleanup
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    int64_t var_18 = *(uint64_t*)___stack_chk_guard;
+    struct std::function<void ()> var_38;
+    try
+    {
+        std::function<void ()>::function<guarded_forward(int32_t)::$_0, void>(&var_38,
+            (uint64_t)arg1);
+        forward(&var_38);
+    }
+    // unwind: std::function<void ()>::~function(arg3 - 0x28);
+    catch (std::logic_error& e)
+    {
+        void* fp;
+        var_3c = 0xffffffff;
+        /* tailcall */
+        return j_sub_4009cc(arg1);
+    }
+    std::function<void ()>::~function(&var_38);
+    int32_t var_3c = 0;
+    /* tailcall */
+    return sub_4009cc(&var_10, var_10);
+}
+
+// sub_400954 @ 0x400954
+{
+    // landing pad of guarded_forward(int32_t) @ 0x400900
+    //   from 0x400930..0x400938: catch (std::logic_error) #1, cleanup, cleanup
+
+    if (!arg2)
+        /* tailcall */
+        return sub_400a24(arg1);
+
+    /* tailcall */
+    return sub_400994(arg2, arg1);
+}
+
+// sub_40097c @ 0x40097c
+{
+    // landing pad of guarded_forward(int32_t) @ 0x400900
+    //   from 0x40093c..0x400944: catch (std::logic_error) #1, cleanup, cleanup
+
+    std::function<void ()>::~function(arg3 - 0x28);
+    /* tailcall */
+    return sub_400994(arg2, arg1);
+}
+
+// sub_400994 @ 0x400994
+{
+    if (arg1 != 1)
+        /* tailcall */
+        return sub_400a24(arg2);
+
+    void* fp;
+    /* tailcall */
+    return sub_4009a4(fp, arg2);
+}
+
+// sub_4009a4 @ 0x4009a4
+{
+    void* arg_20 = ___cxa_begin_catch(arg2);
+    *(uint32_t*)((char*)arg1 - 0x2c) = 0xffffffff;
+    ___cxa_end_catch();
+    /* tailcall */
+    return j_sub_4009cc(arg1);
+}
+
+// j_sub_4009cc @ 0x4009c0
+{
+    /* tailcall */
+    return sub_4009cc(arg1, arg2);
+}
+
+// sub_4009cc @ 0x4009cc
+{
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg1 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg1 - 0x2c);
+
+    /* tailcall */
+    return sub_4009f0();
+}
+
+// sub_4009f0 @ 0x4009f0
+{
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// sub_400a1c @ 0x400a1c
+{
+    // landing pad of guarded_forward(int32_t) @ 0x400900
+    //   from 0x4009b8..0x4009bc (in sub_4009a4): cleanup
+
+    /* tailcall */
+    return sub_400a24(arg1);
+}
+
+// sub_400a24 @ 0x400a24
+{
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::function<void ()>::function<guarded_forward(int32_t)::$_0, void>(struct std::function<void ()>* this, guarded_forward(int32_t)::$_0) @ 0x400a2c
+{
+    struct std::function<void ()>* this_1 = this;
+    std::function<void ()>::function<guarded_forward(int32_t)::$_0, void>(this, (uint64_t)arg2);
+}
+
+// std::function<void ()>::~function(struct std::function<void ()>* this) @ 0x400a68
+{
+    struct std::function<void ()>* this_1 = this;
+    std::function<void ()>::~function(this);
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400a94
+{
+    struct Worker* this_1 = this;
+    *(uint64_t*)this = &_vtable_for_Worker;
+    std::function<void ()>::~function((char*)this + 8);
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400ad4
+{
+    struct Worker* this_1 = this;
+    Worker::~Worker(this);
+}
+
+// Worker::~Worker(struct Worker* this) @ 0x400b00
+{
+    Worker::~Worker(this);
+    operator delete(this);
+}
+
+// Worker::set(struct Worker* this, std::function<void ()>) @ 0x400b30
+{
+    int64_t var_20 = arg2;
+    std::function<void ()>::operator=((char*)this + 8, arg2);
+    return (char*)this + 8;
+}
+
+// std::function<void ()>::operator=(struct std::function<void ()>* this, std::function<void ()>&&) @ 0x400b60
+{
+    // exception table (LSDA 0x402498): 1 of 1 call sites have a landing pad; #n = the selector value
+    //   0x400b80..0x400b84 -> 0x400b98 sub_400b98: catch (...) #1
+
+    std::__function::__value_func<void ()>::operator=[abi:nqe210106](this, arg2);
+    return this;
+}
+
+// sub_400b98 @ 0x400b98
+{
+    // landing pad of std::function<void ()>::operator=(struct std::function<void ()>* this, std::function<void ()>&&) @ 0x400b60
+    //   from 0x400b80..0x400b84: catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// Worker::work(struct Worker* this) @ 0x400b9c
+{
+    // exception table (LSDA 0x4024a8): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400bb0..0x400bb8 -> 0x400bc0 sub_400bc0: catch (std::runtime_error) #1
+
+    int64_t fp;
+    int64_t var_10 = fp;
+    try
+    {
+        std::function<void ()>::operator()((char*)this + 8);
+    }
+    catch (std::runtime_error& e)
+    {
+        var_14 = 0xffffffff;
+        /* tailcall */
+        return sub_400c04(arg3);
+    }
+    int32_t var_14 = 0;
+    /* tailcall */
+    return sub_400c04(&var_10, var_10);
+}
+
+// sub_400bc0 @ 0x400bc0
+{
+    // landing pad of Worker::work(struct Worker* this) @ 0x400b9c
+    //   from 0x400bb0..0x400bb8: catch (std::runtime_error) #1
+
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    void* arg_8 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 4) = 0xffffffff;
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_400c04(arg3);
+}
+
+// sub_400c04 @ 0x400c04
+{
+    return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
+}
+
+// make_worker() @ 0x400c1c
+{
+    struct Worker* result = operator new(0x28);
+    Worker::Worker(result);
+    return result;
+}
+
+// Worker::Worker(struct Worker* this) @ 0x400c48
+{
+    struct Worker* this_1 = this;
+    Worker::Worker(this);
+}
+
+// schedule(Worker*, int32_t) @ 0x400c74
+{
+    int64_t x8 = *(uint64_t*)___stack_chk_guard;
+    struct std::function<void ()> var_38;
+    struct std::function<void ()>* result = &var_38;
+    std::function<void ()>::function<schedule(Worker*, int32_t)::$_0, void>(&var_38,
+        (uint64_t)arg2);
+    Worker::set(arg1, result);
+    std::function<void ()>::~function(result);
+
+    if (*(uint64_t*)___stack_chk_guard == x8)
+        return result;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// std::function<void ()>::function<schedule(Worker*, int32_t)::$_0, void>(struct std::function<void ()>* this, schedule(Worker*, int32_t)::$_0) @ 0x400cfc
+{
+    struct std::function<void ()>* this_1 = this;
+    std::function<void ()>::function<schedule(Worker*, int32_t)::$_0, void>(this, (uint64_t)arg2);
+}
+
+// Worker::Worker(struct Worker* this) @ 0x400d38
+{
+    struct Worker* this_1 = this;
+    *(uint64_t*)this = &_vtable_for_Worker;
+    std::function<void ()>::function[abi:nqe210106]((char*)this + 8);
+}
+
+// std::function<void ()>::function[abi:nqe210106](struct std::function<void ()>* this) @ 0x400d78
+{
+    struct std::function<void ()>* this_1 = this;
+    std::function<void ()>::function[abi:nqe210106](this);
+}
+
+// std::function<void ()>::function[abi:nqe210106](struct std::function<void ()>* this) @ 0x400da4
+{
+    struct std::function<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106](struct std::__function::__value_func<void ()>* this) @ 0x400dd0
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106](struct std::__function::__value_func<void ()>* this) @ 0x400dfc
+{
+    *(uint64_t*)((char*)this + 0x18) = 0;
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this, int32_t&&) const @ 0x400e14
+{
+    if (*(uint64_t*)((char*)this + 0x18))
+    {
+        int64_t* x0 = *(uint64_t*)((char*)this + 0x18);
+        return (*(uint64_t*)(*(uint64_t*)x0 + 0x30))(x0, arg2);
+    }
+
+    std::__throw_bad_function_call[abi:nqe210106](this);
+    /* no return */
+}
+
+// std::__throw_bad_function_call[abi:nqe210106](struct std* this) @ 0x400e64
+{
+    struct std::bad_function_call* thrown_exception = ___cxa_allocate_exception(8);
+    *(uint64_t*)thrown_exception = 0;
+    std::bad_function_call::bad_function_call[abi:nqe210106](thrown_exception);
+    ___cxa_throw(thrown_exception, typeinfo_for_std::__1::bad_function_call,
+        std::bad_function_call::~bad_function_call);
+    /* no return */
+}
+
+// std::bad_function_call::bad_function_call[abi:nqe210106](struct std::bad_function_call* this) @ 0x400e9c
+{
+    struct std::bad_function_call* this_1 = this;
+    std::bad_function_call::bad_function_call[abi:nqe210106](this);
+}
+
+// std::bad_function_call::bad_function_call[abi:nqe210106](struct std::bad_function_call* this) @ 0x400ec8
+{
+    std::exception::exception[abi:nqe210106](this);
+    *(uint64_t*)this = _vtable_for_std::__1::bad_function_call + 0x10;
+}
+
+// std::exception::exception[abi:nqe210106](struct std::exception* this) @ 0x400f04
+{
+    *(uint64_t*)this = _vtable_for_std::exception + 0x10;
+}
+
+// std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(struct std::function<int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0) @ 0x400f28
+{
+    int32_t var_14 = arg2;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    struct std::__function::__value_func<int32_t (int32_t)>* this_2 = this_1;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<guarded_apply(int32_t)::$_0, 0>(
+        this_1, &var_14);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<guarded_apply(int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0&&) @ 0x400f60
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<guarded_apply(int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::__value_func[abi:nqe210106]<guarded_apply(int32_t)::$_0, 0>(struct std::__function::__value_func<int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0&&) @ 0x400f94
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<guarded_apply(int32_t)::$_0>(struct std::__function* this, guarded_apply(int32_t)::$_0 const&) @ 0x400ff8
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0&&) @ 0x401010
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0&&) @ 0x401044
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_4040a8;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](struct std::__function::__base<int32_t (int32_t)>* this) @ 0x401090
+{
+    *(uint64_t*)this = &data_404128;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4010b4
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4010e0
+{
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(this);
+    operator delete(this);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401110
+{
+    // exception table (LSDA 0x4024bc): 1 of 3 call sites have a landing pad
+    //   0x401138..0x401140 -> 0x401154 sub_401154: cleanup
+
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* result =
+        operator new(0x10);
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        result, (char*)this + 8);
+    return result;
+}
+
+// sub_401154 @ 0x401154
+{
+    // landing pad of std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401110
+    //   from 0x401138..0x401140: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::__function::__base<int32_t (int32_t)>*) const @ 0x401178
+{
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        arg2, (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4011a8
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::destroy_deallocate(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4011b8
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) @ 0x4011f8
+{
+    return std::__invoke_r[abi:nqe210106]<int32_t, guarded_apply(int32_t)::$_0&, int32_t>(
+        (char*)this + 8, arg2);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, std::type_info const&) const @ 0x401228
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2,
+                &_typeinfo_for_guarded_apply(int32_t)::$_0)
+            & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::target_type(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const @ 0x401284
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    return &_typeinfo_for_guarded_apply(int32_t)::$_0;
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x40129c
+{
+    struct std::__function::__base<int32_t (int32_t)>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x4012b0
+{
+    struct std::__function::__base<int32_t (int32_t)>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::~__func(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) @ 0x4012bc
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+}
+
+// std::__function::__base<int32_t (int32_t)>::~__base(struct std::__function::__base<int32_t (int32_t)>* this) @ 0x4012e8
+{
+    return;
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0 const&) @ 0x4012fc
+{
+    struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this_1 = this;
+    std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](
+        this, arg2);
+}
+
+// std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__func[abi:nqe210106](struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, guarded_apply(int32_t)::$_0 const&) @ 0x401330
+{
+    std::__function::__base<int32_t (int32_t)>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_4040a8;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<int32_t, guarded_apply(int32_t)::$_0&, int32_t>(struct std* this, guarded_apply(int32_t)::$_0&&&...) @ 0x40137c
+{
+    return std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(struct std::__invoke_void_return_wrapper<int32_t, false>* this, guarded_apply(int32_t)::$_0&&&...) @ 0x4013a8
+{
+    return std::__invoke[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(this, arg2);
+}
+
+// std::__invoke[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(struct std* this, std::__invoke_result_impl&&...) @ 0x4013d4
+{
+    return guarded_apply(int32_t)::$_0::operator()(this, *(uint32_t*)arg2);
+}
+
+// guarded_apply(int32_t)::$_0::operator()(struct guarded_apply(int32_t)::$_0* this, int32_t) const @ 0x401404
+{
+    // exception table (LSDA 0x4024cc): 1 of 3 call sites have a landing pad
+    //   0x40143c..0x401448 -> 0x401464 sub_401464: cleanup
+
+    if (arg2 <= 2)
+        return (uint64_t)(arg2 + *(uint32_t*)this);
+
+    throw std::runtime_error("big");
+}
+
+// sub_401464 @ 0x401464
+{
+    // landing pad of guarded_apply(int32_t)::$_0::operator()(struct guarded_apply(int32_t)::$_0* this, int32_t) const @ 0x401404
+    //   from 0x40143c..0x401448: cleanup
+
+    int32_t x1;
+    int32_t arg_14 = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::type_info::operator==[abi:nqe210106](struct std::type_info* this, std::type_info const&) const @ 0x4014a4
+{
+    struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* x9 =
+        *(uint64_t*)((char*)this + 8);
+    struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* x8_2 =
+        *(uint64_t*)((char*)arg2 + 8);
+
+    if (x9 == x8_2)
+        return 1;
+
+    int32_t x0_1 = std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](
+        x9, arg2);
+    int32_t x0_3;
+
+    if (!(x0_1 & 1))
+        x0_3 = std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](
+            x8_2, arg2);
+
+    char var_21;
+
+    if (!(x0_1 & 1) && !(x0_3 & 1))
+        var_21 = (char)(!_strcmp(x9 & 0x7fffffffffffffff, x8_2 & 0x7fffffffffffffff) ? 1 : 0) & 1;
+    else
+        var_21 = 0;
+
+    return (uint64_t)var_21 & 1;
+}
+
+// std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* this, uint64_t) @ 0x401578
+{
+    return !(this & 0x8000000000000000);
+}
+
+// std::function<int32_t (int32_t)>::~function(struct std::function<int32_t (int32_t)>* this) @ 0x401594
+{
+    struct std::function<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::~__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::~__value_func[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this) @ 0x4015c0
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+    std::__function::__value_func<int32_t (int32_t)>::~__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<int32_t (int32_t)>::~__value_func[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this) @ 0x4015ec
+{
+    struct std::__function::__value_func<int32_t (int32_t)>* this_1 = this;
+
+    if (*(uint64_t*)((char*)this + 0x18) == this)
+        (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x20))();
+    else if (*(uint64_t*)((char*)this + 0x18))
+        (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x28))();
+}
+
+// std::__function::__value_func<void ()>::operator()[abi:nqe210106](struct std::__function::__value_func<void ()>* this) const @ 0x401670
+{
+    if (*(uint64_t*)((char*)this + 0x18))
+        return (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x30))();
+
+    std::__throw_bad_function_call[abi:nqe210106](this);
+    /* no return */
+}
+
+// std::function<void ()>::function<guarded_forward(int32_t)::$_0, void>(struct std::function<void ()>* this, guarded_forward(int32_t)::$_0) @ 0x4016b8
+{
+    int32_t var_14 = arg2;
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    struct std::__function::__value_func<void ()>* this_2 = this_1;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<guarded_forward(int32_t)::$_0, 0>(
+        this_1, &var_14);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<guarded_forward(int32_t)::$_0, 0>(struct std::__function::__value_func<void ()>* this, guarded_forward(int32_t)::$_0&&) @ 0x4016f0
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<guarded_forward(int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<guarded_forward(int32_t)::$_0, 0>(struct std::__function::__value_func<void ()>* this, guarded_forward(int32_t)::$_0&&) @ 0x401724
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<guarded_forward(int32_t)::$_0>(struct std::__function* this, guarded_forward(int32_t)::$_0 const&) @ 0x401788
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, guarded_forward(int32_t)::$_0&&) @ 0x4017a0
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, guarded_forward(int32_t)::$_0&&) @ 0x4017d4
+{
+    std::__function::__base<void ()>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404190;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__function::__base<void ()>::__base[abi:nqe210106](struct std::__function::__base<void ()>* this) @ 0x401820
+{
+    *(uint64_t*)this = &data_404210;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401844
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(this);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401870
+{
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(this);
+    operator delete(this);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const @ 0x4018a0
+{
+    // exception table (LSDA 0x4024dc): 1 of 3 call sites have a landing pad
+    //   0x4018c8..0x4018d0 -> 0x4018e4 sub_4018e4: cleanup
+
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* result =
+        operator new(0x10);
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](result,
+        (char*)this + 8);
+    return result;
+}
+
+// sub_4018e4 @ 0x4018e4
+{
+    // landing pad of std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const @ 0x4018a0
+    //   from 0x4018c8..0x4018d0: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const @ 0x401908
+{
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](arg2,
+        (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401938
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401948
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401988
+{
+    int64_t entry_x1;
+    std::__invoke_r[abi:nqe210106]<void, guarded_forward(int32_t)::$_0&>((char*)this + 8, entry_x1);
+    return (char*)this + 8;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, std::type_info const&) const @ 0x4019b0
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2,
+                &_typeinfo_for_guarded_forward(int32_t)::$_0)
+            & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::target_type(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const @ 0x401a0c
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+    return &_typeinfo_for_guarded_forward(int32_t)::$_0;
+}
+
+// std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this) @ 0x401a24
+{
+    struct std::__function::__base<void ()>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this) @ 0x401a38
+{
+    struct std::__function::__base<void ()>* this_1 = this;
+    trap(1);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::~__func(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) @ 0x401a44
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+}
+
+// std::__function::__base<void ()>::~__base(struct std::__function::__base<void ()>* this) @ 0x401a70
+{
+    return;
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, guarded_forward(int32_t)::$_0 const&) @ 0x401a84
+{
+    struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this, guarded_forward(int32_t)::$_0 const&) @ 0x401ab8
+{
+    std::__function::__base<void ()>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404190;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<void, guarded_forward(int32_t)::$_0&>(struct std* this, guarded_forward(int32_t)::$_0&&&...) @ 0x401b04
+{
+    std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(struct std::__invoke_void_return_wrapper<void, true>* this, guarded_forward(int32_t)::$_0&&&...) @ 0x401b28
+{
+    std::__invoke[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(this, arg2);
+}
+
+// std::__invoke[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(struct std* this, std::__invoke_result_impl&&...) @ 0x401b4c
+{
+    guarded_forward(int32_t)::$_0::operator()(this);
+    return this;
+}
+
+// guarded_forward(int32_t)::$_0::operator()(struct guarded_forward(int32_t)::$_0* this) const @ 0x401b70
+{
+    // exception table (LSDA 0x4024ec): 1 of 3 call sites have a landing pad
+    //   0x401b9c..0x401ba8 -> 0x401bc4 sub_401bc4: cleanup
+
+    if (!*(uint32_t*)this)
+        return;
+
+    throw std::logic_error("k");
+}
+
+// sub_401bc4 @ 0x401bc4
+{
+    // landing pad of guarded_forward(int32_t)::$_0::operator()(struct guarded_forward(int32_t)::$_0* this) const @ 0x401b70
+    //   from 0x401b9c..0x401ba8: cleanup
+
+    int32_t x1;
+    int32_t arg_c = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// std::function<void ()>::~function(struct std::function<void ()>* this) @ 0x401bf4
+{
+    struct std::function<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::~__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<void ()>::~__value_func[abi:nqe210106](struct std::__function::__value_func<void ()>* this) @ 0x401c20
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::~__value_func[abi:nqe210106](this);
+}
+
+// std::__function::__value_func<void ()>::~__value_func[abi:nqe210106](struct std::__function::__value_func<void ()>* this) @ 0x401c4c
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+
+    if (*(uint64_t*)((char*)this + 0x18) == this)
+        (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x20))();
+    else if (*(uint64_t*)((char*)this + 0x18))
+        (*(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x28))();
+}
+
+// std::__function::__value_func<void ()>::operator=[abi:nqe210106](struct std::__function::__value_func<void ()>* this, std::__function::__value_func<void ()>&&) @ 0x401cd0
+{
+    std::__function::__value_func<void ()>::operator=[abi:nqe210106](this, 0);
+
+    if (!*(uint64_t*)((char*)arg2 + 0x18))
+        *(uint64_t*)((char*)this + 0x18) = 0;
+    else if (*(uint64_t*)((char*)arg2 + 0x18) != arg2)
+    {
+        *(uint64_t*)((char*)this + 0x18) = *(uint64_t*)((char*)arg2 + 0x18);
+        *(uint64_t*)((char*)arg2 + 0x18) = 0;
+    }
+    else
+    {
+        *(uint64_t*)((char*)this + 0x18) = this;
+        int64_t* x0_2 = *(uint64_t*)((char*)arg2 + 0x18);
+        (*(uint64_t*)(*(uint64_t*)x0_2 + 0x18))(x0_2, *(uint64_t*)((char*)this + 0x18));
+    }
+
+    return this;
+}
+
+// ___clang_call_terminate @ 0x401d84
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// std::__function::__value_func<void ()>::operator=[abi:nqe210106](struct std::__function::__value_func<void ()>* this, std::nullptr_t) @ 0x401d94
+{
+    int64_t var_20 = arg2;
+    int64_t* x8 = *(uint64_t*)((char*)this + 0x18);
+    *(uint64_t*)((char*)this + 0x18) = 0;
+
+    if (x8 == this)
+        (*(uint64_t*)(*(uint64_t*)x8 + 0x20))();
+    else if (x8)
+        (*(uint64_t*)(*(uint64_t*)x8 + 0x28))();
+
+    return this;
+}
+
+// std::__function::__value_func<void ()>::__as_base[abi:nqe210106](struct std::__function::__value_func<void ()>* this, void*) @ 0x401e14
+{
+    return this;
+}
+
+// std::function<void ()>::function<schedule(Worker*, int32_t)::$_0, void>(struct std::function<void ()>* this, schedule(Worker*, int32_t)::$_0) @ 0x401e28
+{
+    int32_t var_14 = arg2;
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    struct std::__function::__value_func<void ()>* this_2 = this_1;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<schedule(Worker*, int32_t)::$_0, 0>(
+        this_1, &var_14);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<schedule(Worker*, int32_t)::$_0, 0>(struct std::__function::__value_func<void ()>* this, schedule(Worker*, int32_t)::$_0&&) @ 0x401e60
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<schedule(Worker*, int32_t)::$_0, 0>(
+        this, arg2);
+}
+
+// std::__function::__value_func<void ()>::__value_func[abi:nqe210106]<schedule(Worker*, int32_t)::$_0, 0>(struct std::__function::__value_func<void ()>* this, schedule(Worker*, int32_t)::$_0&&) @ 0x401e94
+{
+    struct std::__function::__value_func<void ()>* this_1 = this;
+    *(uint64_t*)((char*)this + 0x18) = 0;
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+    *(uint64_t*)((char*)this + 0x18) = this;
+}
+
+// std::__function::__not_null[abi:nqe210106]<schedule(Worker*, int32_t)::$_0>(struct std::__function* this, schedule(Worker*, int32_t)::$_0 const&) @ 0x401ef8
+{
+    struct std::__function* this_1 = this;
+    return 1;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, schedule(Worker*, int32_t)::$_0&&) @ 0x401f10
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, schedule(Worker*, int32_t)::$_0&&) @ 0x401f44
+{
+    std::__function::__base<void ()>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404278;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x401f90
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(this);
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x401fbc
+{
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(this);
+    operator delete(this);
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const @ 0x401fec
+{
+    // exception table (LSDA 0x4024fc): 1 of 3 call sites have a landing pad
+    //   0x402014..0x40201c -> 0x402030 sub_402030: cleanup
+
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* result =
+        operator new(0x10);
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](
+            result,
+        (char*)this + 8);
+    return result;
+}
+
+// sub_402030 @ 0x402030
+{
+    // landing pad of std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const @ 0x401fec
+    //   from 0x402014..0x40201c: cleanup
+
+    *(uint64_t*)((char*)arg3 - 0x10) = arg1;
+    *(uint32_t*)((char*)arg3 - 0x14) = arg2;
+    operator delete(arg4);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::__function::__base<void ()>*) const @ 0x402054
+{
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](arg2,
+        (char*)this + 8);
+    return arg2;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x402084
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::destroy_deallocate(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x402094
+{
+    if (this)
+        (*(uint64_t*)(*(uint64_t*)this + 8))();
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x4020d4
+{
+    int64_t entry_x1;
+    std::__invoke_r[abi:nqe210106]<void, schedule(Worker*, int32_t)::$_0&>((char*)this + 8,
+        entry_x1);
+    return (char*)this + 8;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, std::type_info const&) const @ 0x4020fc
+{
+    if (!(std::type_info::operator==[abi:nqe210106](arg2,
+            &_typeinfo_for_schedule(Worker*, int32_t)::$_0) & 1))
+        return nullptr;
+
+    return (char*)this + 8;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::target_type(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const @ 0x402158
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+    return &_typeinfo_for_schedule(Worker*, int32_t)::$_0;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::~__func(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) @ 0x402170
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, schedule(Worker*, int32_t)::$_0 const&) @ 0x40219c
+{
+    struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this_1 = this;
+    std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](this,
+        arg2);
+}
+
+// std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__func[abi:nqe210106](struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this, schedule(Worker*, int32_t)::$_0 const&) @ 0x4021d0
+{
+    std::__function::__base<void ()>::__base[abi:nqe210106](this);
+    *(uint64_t*)this = &data_404278;
+    *(uint32_t*)((char*)this + 8) = *(uint32_t*)arg2;
+}
+
+// std::__invoke_r[abi:nqe210106]<void, schedule(Worker*, int32_t)::$_0&>(struct std* this, schedule(Worker*, int32_t)::$_0&&&...) @ 0x40221c
+{
+    std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(
+        this, arg2);
+}
+
+// std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(struct std::__invoke_void_return_wrapper<void, true>* this, schedule(Worker*, int32_t)::$_0&&&...) @ 0x402240
+{
+    std::__invoke[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(this, arg2);
+}
+
+// std::__invoke[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(struct std* this, std::__invoke_result_impl&&...) @ 0x402264
+{
+    schedule(Worker*, int32_t)::$_0::operator()(this);
+    return this;
+}
+
+// schedule(Worker*, int32_t)::$_0::operator()(struct schedule(Worker*, int32_t)::$_0* this) const @ 0x402288
+{
+    // exception table (LSDA 0x40250c): 1 of 3 call sites have a landing pad
+    //   0x4022b8..0x4022c4 -> 0x4022e0 sub_4022e0: cleanup
+
+    if (*(uint32_t*)this <= 1)
+        return;
+
+    throw std::runtime_error("w");
+}
+
+// sub_4022e0 @ 0x4022e0
+{
+    // landing pad of schedule(Worker*, int32_t)::$_0::operator()(struct schedule(Worker*, int32_t)::$_0* this) const @ 0x402288
+    //   from 0x4022b8..0x4022c4: cleanup
+
+    int32_t x1;
+    int32_t arg_c = x1;
+    ___cxa_free_exception(arg2);
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+

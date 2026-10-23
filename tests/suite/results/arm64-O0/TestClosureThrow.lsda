@@ -1,0 +1,50 @@
+guarded_apply(int32_t)  lsda base+0x2448  lpstart +0x0  5 call sites
+  +0x30  .. +0x38  lp +0x64  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x40  .. +0x4c  lp +0x8c  catch(typeinfo_for_std::runtime_error), cleanup, cleanup
+  +0x4c  .. +0xc8  unwind
+  +0xc8  .. +0xcc  lp +0x124 cleanup
+  +0xcc  .. +0x134 unwind
+
+guarded_forward(int32_t)  lsda base+0x2470  lpstart +0x0  5 call sites
+  +0x30  .. +0x38  lp +0x54  catch(typeinfo_for_std::logic_error), cleanup, cleanup
+  +0x3c  .. +0x44  lp +0x7c  catch(typeinfo_for_std::logic_error), cleanup, cleanup
+  +0x44  .. +0xb8  unwind
+  +0xb8  .. +0xbc  lp +0x11c cleanup
+  +0xbc  .. +0x12c unwind
+
+std::function<void ()>::operator=(struct std::function<void ()>* this, std::function<void ()>&&)  lsda base+0x2498  lpstart +0x0  1 call sites
+  +0x20  .. +0x24  lp +0x38  catch(...)
+
+Worker::work(struct Worker* this)  lsda base+0x24a8  lpstart +0x0  2 call sites
+  +0x14  .. +0x1c  lp +0x24  catch(typeinfo_for_std::runtime_error)
+  +0x1c  .. +0x80  unwind
+
+std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this) const  lsda base+0x24bc  lpstart +0x0  3 call sites
+  +0x0   .. +0x28  unwind
+  +0x28  .. +0x30  lp +0x44  cleanup
+  +0x30  .. +0x68  unwind
+
+guarded_apply(int32_t)::$_0::operator()(struct guarded_apply(int32_t)::$_0* this, int32_t) const  lsda base+0x24cc  lpstart +0x0  3 call sites
+  +0x0   .. +0x38  unwind
+  +0x38  .. +0x44  lp +0x60  cleanup
+  +0x44  .. +0xa0  unwind
+
+std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::__clone(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) const  lsda base+0x24dc  lpstart +0x0  3 call sites
+  +0x0   .. +0x28  unwind
+  +0x28  .. +0x30  lp +0x44  cleanup
+  +0x30  .. +0x68  unwind
+
+guarded_forward(int32_t)::$_0::operator()(struct guarded_forward(int32_t)::$_0* this) const  lsda base+0x24ec  lpstart +0x0  3 call sites
+  +0x0   .. +0x2c  unwind
+  +0x2c  .. +0x38  lp +0x54  cleanup
+  +0x38  .. +0x84  unwind
+
+std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::__clone(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) const  lsda base+0x24fc  lpstart +0x0  3 call sites
+  +0x0   .. +0x28  unwind
+  +0x28  .. +0x30  lp +0x44  cleanup
+  +0x30  .. +0x68  unwind
+
+schedule(Worker*, int32_t)::$_0::operator()(struct schedule(Worker*, int32_t)::$_0* this) const  lsda base+0x250c  lpstart +0x0  3 call sites
+  +0x0   .. +0x30  unwind
+  +0x30  .. +0x3c  lp +0x58  cleanup
+  +0x3c  .. +0x88  unwind
