@@ -15,6 +15,6 @@
         var_15 = (uint8_t)result;
     }
 
-    return var_15 & 1;
+    return var_15;
 }
 

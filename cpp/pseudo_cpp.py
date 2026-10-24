@@ -848,6 +848,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         o = e.operation
         if o == Op.HLIL_VAR and e.var in (self.inline or {}) and e.var not in seen:
             return self._bool_tokens(self.inline[e.var], seen | {e.var}, neg)
+        if o == Op.HLIL_VAR and e.var not in (self.inline or {}) and self._safe_zero_one(e.var):
+            toks = self._expr_tokens(e, seen)  # a variable that only ever holds 0 / 1 (bncpp-135)
+            return [tok(TT.OperationToken, "!")] + toks if neg else toks
         if o in (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART):  # widening a 0 / 1 keeps it
             return self._bool_tokens(e.src, seen, neg)
         if o == Op.HLIL_AND and e.right.operation == Op.HLIL_CONST and e.right.constant == 1:
@@ -979,16 +982,64 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         with var_1 = `c ? 1 : 0`), else None"""
         if len(ret.src) != 1:
             return None
-        v = ret.src[0]
+        v, masked = ret.src[0], False
         while v.operation in (Op.HLIL_ZX, Op.HLIL_SX) or (v.operation == Op.HLIL_AND and
                                                           v.right.operation == Op.HLIL_CONST and v.right.constant == 1):
+            masked = masked or v.operation == Op.HLIL_AND
             v = v.src if v.operation != Op.HLIL_AND else v.left
+        if masked and v.operation == Op.HLIL_VAR and v.var not in (self.inline or {}) and self._safe_zero_one(v.var):
+            # `return var_15 & 1;` of a variable that only ever holds 0 / 1: the `& 1` changes nothing (bncpp-135)
+            return [tok(TT.KeywordToken, "return"), tok(TT.TextToken, " ")] + self._expr_tokens(v, seen) + \
+                [tok(TT.TextToken, ";")]
         if not (v.operation == Op.HLIL_VAR and v.var in (self.inline or {})) and v.operation != Op.HLIL_BOOL_TO_INT:
             return None  # a plain variable / comparison: nothing is known to be 0 / 1 that Pseudo C does not show
         toks = self._bool_tokens(v, seen)
         if toks is None:
             return None
         return [tok(TT.KeywordToken, "return"), tok(TT.TextToken, " ")] + toks + [tok(TT.TextToken, ";")]
+
+    def _safe_zero_one(self, var):
+        try:
+            return self._zero_one_var(var)
+        except Exception:
+            return False
+
+    def _zero_one_var(self, var, seen=frozenset()):
+        """every definition of var (no parameter, address never taken) stores a 0 / 1 value: a 0 / 1 constant, a
+        comparison, another such variable, or the low part of a variable whose low part the statement right before
+        set to one (`(uint8_t)result = c; var_15 = (uint8_t)result;`, x86_64-O0: BN's `result.b`, a struct field at
+        offset 0, or a LOW_PART)"""
+        if var in seen or var in self._addr_taken() or var in self.function.parameter_vars:
+            return False
+        defs = self.hlil.get_var_definitions(var)
+        if not defs:
+            return False
+        for d in defs:
+            if d.operation == Op.HLIL_ASSIGN and d.dest.operation != Op.HLIL_VAR or \
+                    d.operation not in (Op.HLIL_ASSIGN, Op.HLIL_VAR_INIT):
+                return False
+            if not self._zero_one_value(d.src, d, seen | {var}):
+                return False
+        return True
+
+    def _zero_one_value(self, e, stmt, seen):
+        o = e.operation
+        if o in (Op.HLIL_ZX, Op.HLIL_SX):
+            return self._zero_one_value(e.src, stmt, seen)
+        if _bool_const(e) is not None or o in _CMP or o in _FCMP or o == Op.HLIL_BOOL_TO_INT or \
+                (o in (Op.HLIL_NOT, Op.HLIL_AND, Op.HLIL_OR) and e.size == 0) or \
+                (o == Op.HLIL_AND and _bool_const(e.right) == 1):
+            return True
+        if o == Op.HLIL_VAR:
+            return self._zero_one_var(e.var, seen)
+        if _low_of_var(e) is not None:
+            block = stmt.parent
+            body = list(block.body) if block is not None and block.operation == Op.HLIL_BLOCK else []
+            at = next((n for n, s in enumerate(body) if s.expr_index == stmt.expr_index), 0)
+            prev = body[at - 1] if at else None
+            return prev is not None and prev.operation == Op.HLIL_ASSIGN and prev.dest.size == e.size and \
+                _low_of_var(prev.dest) == _low_of_var(e) and self._zero_one_value(prev.src, prev, seen)
+        return False
 
     def _ternary_tokens(self, value, seen):
         simple = self._ternary_bool(value, seen)
@@ -1112,6 +1163,14 @@ def _invert_cmp(toks):
     out = list(toks)
     out[at[0]] = tok(t.type, t.text.replace(t.text.strip(), _INVERSE[t.text.strip()]))
     return out
+
+
+def _low_of_var(e):
+    """the variable whose low part e is (`(uint8_t)r` as LOW_PART, or `r.b` as a struct field at offset 0), else None"""
+    if e.operation in (Op.HLIL_LOW_PART, Op.HLIL_STRUCT_FIELD) and e.src.operation == Op.HLIL_VAR and \
+            (e.operation == Op.HLIL_LOW_PART or e.offset == 0):
+        return e.src.var
+    return None
 
 
 def _bool_const(v):

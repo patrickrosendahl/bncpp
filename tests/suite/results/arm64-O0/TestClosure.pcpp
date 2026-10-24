@@ -860,7 +860,7 @@
     else
         var_21 = 0;
 
-    return (uint64_t)var_21 & 1;
+    return var_21;
 }
 
 // std::__type_info_implementations::__non_unique_arm_rtti_bit_impl::__is_type_name_unique[abi:nqe210106](struct std::__type_info_implementations::__non_unique_arm_rtti_bit_impl* this, uint64_t) @ 0x401d34
