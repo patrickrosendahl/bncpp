@@ -3,7 +3,7 @@ classes sized 2
 ctors/dtors 0
 fields 1
 fields named (override) 0
-functions scanned 1
+functions scanned 2
 helper accesses added 0
 helper entries 4
 helper floats over int 0
@@ -12,7 +12,7 @@ params with direct callers 1
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 1
+ptr store functions scanned 2
 ptr stores 2
 returns used as objects 0
 rounds 2

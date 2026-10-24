@@ -1,20 +1,20 @@
-classes sized 1
+classes sized 4
 ctor already typed 3
-ctor typed 8
-ctors forwarding 1
-ctors/dtors 11
+ctor typed 11
+ctors forwarding 4
+ctors/dtors 14
 fields 5
 fields named (override) 0
-functions scanned 15
+functions scanned 20
 helper accesses added 0
-helper entries 71
+helper entries 74
 helper floats over int 0
-helper walks 83
+helper walks 86
 params with direct callers 18
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 15
+ptr store functions scanned 20
 ptr stores 6
 returns used as objects 0
 rounds 3
@@ -26,16 +26,16 @@ struct Worker  (0x28 bytes, from new)
      0x0 vptr                     struct Worker::VTable*  [vptr]
      0x8 field_8                  int64_t  [access]
     0x20 field_20                 uint64_t  [access]
-struct std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>  (0xc bytes, from members)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
+struct std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>  (0x10 bytes, from new)  base std::__1::__function::__base<int32_t (int32_t)> @ 0x0
      0x0 vptr                     struct std::__1::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
 struct std::__1::__function::__base<int32_t (int32_t)>  (0x8 bytes, from vptr)
      0x0 vptr                     struct std::__1::__function::__base<int32_t (int32_t)>::VTable*  [vptr]
-struct std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>  (0xc bytes, from members)  base std::__1::__function::__base<void ()> @ 0x0
+struct std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>  (0x10 bytes, from new)  base std::__1::__function::__base<void ()> @ 0x0
      0x0 vptr                     struct std::__1::__function::__func<guarded_forward(int32_t)::$_0, void ()>::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
 struct std::__1::__function::__base<void ()>  (0x8 bytes, from vptr)
      0x0 vptr                     struct std::__1::__function::__base<void ()>::VTable*  [vptr]
-struct std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>  (0xc bytes, from members)  base std::__1::__function::__base<void ()> @ 0x0
+struct std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>  (0x10 bytes, from new)  base std::__1::__function::__base<void ()> @ 0x0
      0x0 vptr                     struct std::__1::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]

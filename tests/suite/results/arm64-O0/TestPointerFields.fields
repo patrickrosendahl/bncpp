@@ -1,9 +1,9 @@
 2c virtual call sites 2
 2c vtable slots read 4
-classes sized 8
-ctor already typed 20
-ctors forwarding 8
-ctors/dtors 20
+classes sized 10
+ctor already typed 22
+ctors forwarding 10
+ctors/dtors 22
 fields 16
 fields named (override) 0
 functions scanned 23
@@ -15,7 +15,7 @@ params from callers: typed 5
 params with direct callers 9
 pointer fields kept 0
 pointer fields typed 8
-pointer fields: contradiction 0
+pointer fields: contradiction 1
 ptr store functions scanned 26
 ptr stores 12
 returns used as objects 2
@@ -24,7 +24,7 @@ stable 1
 structs 12
 structs with a base 4
 
-struct Child  (0x18 bytes, from members)
+struct Child  (0x18 bytes, from new)
      0x0 vptr                     struct Child::VTable*  [vptr]
      0x8 field_8                  struct Owner*  [pointer]
     0x10 field_10                 int64_t  [access]
@@ -32,10 +32,11 @@ struct Child  (0x18 bytes, from members)
 struct Owner  (0x28 bytes, from new)
      0x0 vptr                     struct Owner::VTable*  [vptr]
      0x8 field_8                  struct Engine*  [pointer]
-    0x10 field_10                 int64_t*  [access]
+    0x10 field_10                 struct Child*  [pointer]
     0x18 field_18                 struct Shape*  [pointer]
     0x20 field_20                 struct Engine*  [pointer]
   pointer 0x8 typed: Engine  (Engine new)
+  pointer 0x10 typed: Child  (Child new)
   pointer 0x18 typed: Shape  (Square new, Circle new)
   pointer 0x20 typed: Engine  (Engine field)
 struct Engine  (0x10 bytes, from new)
@@ -43,9 +44,9 @@ struct Engine  (0x10 bytes, from new)
      0x8 field_8                  int64_t  [access]
 struct Slot  (0x10 bytes, from new)
      0x0 vptr                     struct Slot::VTable*  [vptr]
-     0x8 field_8                  struct Engine*  [pointer]
-  pointer 0x8 typed: Engine  (Engine new)
-struct FastBlock  (0x18 bytes, from members)  base Block @ 0x0
+     0x8 field_8                  void*  [access]
+  pointer 0x8 contradiction: -  (Child new, Engine new)
+struct FastBlock  (0x18 bytes, from new)  base Block @ 0x0
      0x0 vptr                     struct FastBlock::VTable*  [vptr]
     0x10 field_10                 int64_t  [access]
 struct Block  (0x10 bytes, from members)

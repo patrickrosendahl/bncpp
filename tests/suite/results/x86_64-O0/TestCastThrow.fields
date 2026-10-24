@@ -4,7 +4,7 @@ ctors forwarding 2
 ctors/dtors 5
 fields 0
 fields named (override) 0
-functions scanned 5
+functions scanned 7
 helper accesses added 0
 helper entries 18
 helper floats over int 0
@@ -13,7 +13,7 @@ params with direct callers 0
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 5
+ptr store functions scanned 7
 ptr stores 0
 returns used as objects 0
 rounds 2

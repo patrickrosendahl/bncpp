@@ -1,6 +1,7 @@
-classes sized 0
-ctor already typed 2
-ctors/dtors 2
+classes sized 1
+ctor already typed 3
+ctors forwarding 1
+ctors/dtors 3
 fields 7
 fields named (override) 0
 functions scanned 6
@@ -20,7 +21,7 @@ stable 1
 structs 1
 structs with a base 0
 
-struct TagMap  (0x3c bytes, from members)
+struct TagMap  (0x40 bytes, from new)
      0x0 vptr                     struct TagMap::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
     0x10 field_10                 void*  [access]

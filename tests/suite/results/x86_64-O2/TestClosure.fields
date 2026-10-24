@@ -4,7 +4,7 @@ ctor typed 3
 ctors/dtors 3
 fields 9
 fields named (override) 0
-functions scanned 16
+functions scanned 18
 helper accesses added 0
 helper entries 53
 helper floats over int 0
@@ -13,7 +13,7 @@ params with direct callers 0
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 16
+ptr store functions scanned 18
 ptr stores 10
 returns used as objects 0
 rounds 2

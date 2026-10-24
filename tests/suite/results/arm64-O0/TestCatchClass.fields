@@ -1,10 +1,11 @@
 allocator by votes (no operator new name) 0
-classes sized 0
-ctor already typed 2
-ctors/dtors 2
+classes sized 2
+ctor already typed 4
+ctors forwarding 2
+ctors/dtors 4
 fields 3
 fields named (override) 0
-functions scanned 2
+functions scanned 12
 helper accesses added 0
 helper entries 12
 helper floats over int 0
@@ -13,7 +14,7 @@ params with direct callers 7
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 2
+ptr store functions scanned 12
 ptr stores 3
 returns used as objects 0
 rounds 2
@@ -21,10 +22,10 @@ stable 1
 structs 2
 structs with a base 1
 
-struct IoError  (0x1c bytes, from members)  base AppError @ 0x0
+struct IoError  (0x20 bytes, from new)  base AppError @ 0x0
      0x0 vptr                     struct IoError::VTable*  [vptr]
     0x18 field_18                 int32_t  [access]
-struct AppError  (0x18 bytes, from members)
+struct AppError  (0x18 bytes, from new)
      0x0 vptr                     struct AppError::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
     0x10 field_10                 char const*  [access]

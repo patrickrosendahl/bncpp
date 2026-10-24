@@ -32,6 +32,7 @@
 # a float access there types an int32 field BN saw as float.
 # bncpp-32: where no import is named operator new (hashed nlist names), sizes come from the callee voted the
 # allocator over a sample (_find_allocator; cached as section "allocator", the review's first 'allocator:' line).
+# bncpp-112: ___cxa_allocate_exception(sizeof(T)) counts like operator new (exception classes only ever thrown).
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
 import importlib, json, os, re, time
 import binaryninja as _bn
@@ -77,6 +78,7 @@ _CTORS_VERSION = 4
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
 _OPERATOR_NEW = ("__Znwm", "__Znam", "__ZnwmRKSt9nothrow_t", "__ZnamRKSt9nothrow_t")
+_EXCEPTION_NEW = ("___cxa_allocate_exception",)  # sizeof(T) for a thrown T (bncpp-112)
 _counts, _review = {}, []
 
 
@@ -284,6 +286,9 @@ if not _new_addrs:
     _review.append(_got["line"])
     print(_got["line"])
     _lap("0 allocator")
+# bncpp-112: exception classes that are only thrown, never new'd, get their size from the allocation too (after the
+# vote, which only runs where no operator new is named)
+_new_addrs = _new_addrs | set(s.address for n in _EXCEPTION_NEW for s in bv.get_symbols_by_name(n))
 _cache = _cache_file.get("ctors", _CTORS_VERSION) if _limit is None and not _nocache else None
 if _cache is not None and _cache.get("alloc", sorted(_named_new)) != sorted(_new_addrs):
     _cache = None  # step 1 ran with another allocator (a cache from before bncpp-32 had none in a hashed build)
@@ -325,10 +330,13 @@ def _forwards_to(a):
     """the function a tiny function a only passes its 'this' on to (C1 -> C2 constructors: 'return C2(this, ...)'),
     else None; size-checked before its IL is built"""
     f = bv.get_function_at(a)
-    if f is None or f.total_bytes > 48 or not len(f.parameter_vars):
+    n = len(f.parameter_vars) if f is not None else 0
+    if f is None or f.total_bytes > max(48, 32 + 12 * n) or not n:
         return None
     m = f.mlil
-    if m is None or len(m) > 6:  # O0 spills this first: var_10 = this; rdi = var_10; C2(rdi)
+    # O0 spills this first: var_10 = this; rdi = var_10; C2(rdi) -- and each other parameter the same way (bncpp-112:
+    # arm64-O0 IoError(this, int) C1 is 52 bytes / 8 MLIL instructions, AppError(this, int, char const*) 60 / 10)
+    if m is None or len(m) > max(6, 2 + 3 * n):
         return None
     p0 = f.parameter_vars[0]
     for ins in m.instructions:

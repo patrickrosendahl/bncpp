@@ -1,11 +1,11 @@
-classes sized 11
-ctor already typed 23
+classes sized 14
+ctor already typed 26
 ctor typed 10
-ctors forwarding 11
-ctors/dtors 33
+ctors forwarding 14
+ctors/dtors 36
 fields 9
 fields named (override) 0
-functions scanned 31
+functions scanned 34
 helper accesses added 0
 helper entries 147
 helper floats over int 0
@@ -14,7 +14,7 @@ params with direct callers 18
 pointer fields kept 0
 pointer fields typed 0
 pointer fields: contradiction 0
-ptr store functions scanned 31
+ptr store functions scanned 34
 ptr stores 8
 returns used as objects 0
 rounds 3
@@ -22,13 +22,13 @@ stable 1
 structs 19
 structs with a base 14
 
-struct IoErr  (0x8 bytes, from vptr)  base Err @ 0x0
+struct IoErr  (0x8 bytes, from new)  base Err @ 0x0
      0x0 vptr                     struct IoErr::VTable*  [vptr]
-struct Err  (0x8 bytes, from vptr)
+struct Err  (0x8 bytes, from derived)
      0x0 vptr                     struct Err::VTable*  [vptr]
-struct ParseErr  (0x8 bytes, from vptr)  base Err @ 0x0
+struct ParseErr  (0x8 bytes, from new)  base Err @ 0x0
      0x0 vptr                     struct ParseErr::VTable*  [vptr]
-struct RangeErr  (0x8 bytes, from vptr)  base Err @ 0x0
+struct RangeErr  (0x8 bytes, from new)  base Err @ 0x0
      0x0 vptr                     struct RangeErr::VTable*  [vptr]
 struct Codec  (0x8 bytes, from derived)
      0x0 vptr                     struct Codec::VTable*  [vptr]
