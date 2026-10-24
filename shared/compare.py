@@ -10,6 +10,10 @@ after a jump, a catch variable used outside its catch) and statement counts; tot
 """
 import re
 
+# the renderers' marker for a function BN skipped (binary-cpp cpp/pseudo_cpp.py render_function, binary-jvm's
+# dump): its output is no evidence either way, counted as 'skipped' instead of checked (bncpp-148, jvm-103)
+SKIPPED = re.compile(r"//\s*analysis skipped\b")
+
 KEYWORDS = {"if", "while", "for", "switch", "catch", "return", "sizeof", "do", "else", "case", "throw", "new",
             "delete", "synchronized", "super", "this"}
 
@@ -125,7 +129,9 @@ def check_function(body, ref_body=None, counters=None, distinct=(), ignore=(), c
     """{counter: n, lost_calls: [...], lost_strings: [...]} for one function's output lines (body) against the
     reference lines (ref_body; None: no no-loss check). counters: {name: compiled regex} counted over the text
     without string literals (comments kept: a render-error marker is a comment); distinct: the counters that
-    count different matches (temporaries); ignore: names (or a regex) that may vanish (plumbing the output hides)"""
+    count different matches (temporaries); ignore: names (or a regex) that may vanish (plumbing the output hides).
+    skipped: 1 when BN skipped the function's analysis in the output or the reference (SKIPPED); then no no-loss
+    lists, since a skipped side shows no code, not lost code"""
     text = "\n".join(body)
     code = strip_strings(text)
     r = {}
@@ -138,11 +144,13 @@ def check_function(body, ref_body=None, counters=None, distinct=(), ignore=(), c
     r["leaked_catch_var"] = leaked_catch_var(body, catch_var) if catch_var else 0
     stmts = statements(body)
     r["stmts"] = len(stmts)
+    r["skipped"] = int(bool(SKIPPED.search(text) or ref_body and SKIPPED.search("\n".join(ref_body))))
     if ref_body is not None:
         ref = "\n".join(ref_body)
         r["ref_stmts"] = len(statements(ref_body))
-        r["lost_calls"] = sorted(called_names(ref, ignore) - called_names(text))
-        r["lost_strings"] = sorted(string_literals(ref) - string_literals(text))
+        skip = r["skipped"]
+        r["lost_calls"] = [] if skip else sorted(called_names(ref, ignore) - called_names(text))
+        r["lost_strings"] = [] if skip else sorted(string_literals(ref) - string_literals(text))
     return r
 
 

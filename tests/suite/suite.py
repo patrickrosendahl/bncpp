@@ -410,9 +410,10 @@ MAY_VANISH = re.compile(r"_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get
                         r"clang_call_terminate|cxa_allocate_exception|cxa_throw|offset)")
 # the name needs a separator before it: `catch (T)` has none (the type's last character is not a variable)
 CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+?(?: const)?(?:\s*[&*]\s*|\s+)(\w+)\)"
-# gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report
+# gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report.
+# skipped (bncpp-148): a function BN skipped is unchecked -- the suite never hits it, so one is a dump to redo
 GATES = {"lost_calls": 0, "lost_strings": 0, "render_errors": 0, "unbalanced": 0, "truncated": 0,
-         "leaked_catch_var": 0, "missing": 0, "unsettled": 0}
+         "leaked_catch_var": 0, "missing": 0, "unsettled": 0, "skipped": 0}
 _FUNC = re.compile(r"^// .* @ (0x[0-9a-f]+)$")  # keyed by the address (overloads share a name)
 
 
@@ -462,7 +463,7 @@ def _check_rows(names, root, show, quiet=False):
                     print("=" * 30, r["function"], {k: x for k, x in r.items() if x and k != "function"})
                     print("\n".join(body))
     keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
-                             "lost_calls", "lost_strings", "stmts", "ref_stmts"]
+                             "lost_calls", "lost_strings", "skipped", "stmts", "ref_stmts"]
     total = C.totals(rows, keys)
     total["missing"] = missing
     total["unsettled"] = 0  # bncpp-60: a class APPLY in the .fields dump that stopped at the round limit
