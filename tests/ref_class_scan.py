@@ -37,7 +37,8 @@ if out:
     with open(out, "w") as f:
         f.write("\n".join(rtti.format_scan(types)) + "\n")
 
-starts = set(f.addr for f in unwind_info.functions(m))
+# __unwind_info merges runs of neighbours with one encoding (bncpp-109): its entries alone miss function starts
+starts = set(f.addr for f in unwind_info.functions(m)) | set(m.function_starts())
 kinds = collections.Counter(t.kind for t in types.values())
 names = collections.Counter(t.name_kind for t in types.values())
 print("typeinfo objects: %d  %s" % (len(types), dict(kinds)))

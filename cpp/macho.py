@@ -14,6 +14,7 @@ LC_SYMTAB = 0x2
 LC_DYSYMTAB = 0xB
 LC_DYLD_INFO = 0x22
 LC_DYLD_INFO_ONLY = 0x80000022
+LC_FUNCTION_STARTS = 0x26
 INDIRECT_SYMBOL_LOCAL = 0x80000000
 INDIRECT_SYMBOL_ABS = 0x40000000
 CPU_TYPES = {"x86_64": 0x01000007, "arm64": 0x0100000C}
@@ -43,6 +44,7 @@ class MachO:
         self._symtab = None
         self._dysymtab = None
         self._dyld_info = None
+        self._function_starts = None
         self._binds = None
         self._load_commands()
 
@@ -90,6 +92,8 @@ class MachO:
             elif cmd in (LC_DYLD_INFO, LC_DYLD_INFO_ONLY):
                 # rebase, bind, weak_bind, lazy_bind, export: (off, size) each
                 self._dyld_info = struct.unpack_from("<10I", self.image, off + 8)
+            elif cmd == LC_FUNCTION_STARTS:
+                self._function_starts = struct.unpack_from("<II", self.image, off + 8)  # dataoff, datasize
             off += cmdsize
         self._names = self._read_symtab()
 
@@ -138,6 +142,27 @@ class MachO:
     @property
     def text_base(self):
         return self.segments["__TEXT"][0]
+
+    def function_starts(self):
+        """the addresses of LC_FUNCTION_STARTS (ULEB128 deltas from the __TEXT segment, ending at a 0 delta)"""
+        if not self._function_starts:
+            return []
+        dataoff, datasize = self._function_starts
+        data, out, addr, p = self.image[dataoff:dataoff + datasize], [], self.text_base, 0
+        while p < len(data):
+            delta, shift = 0, 0
+            while True:
+                b = data[p]
+                p += 1
+                delta |= (b & 0x7F) << shift
+                shift += 7
+                if not b & 0x80:
+                    break
+            if delta == 0:
+                break
+            addr += delta
+            out.append(addr)
+        return out
 
     # -- the image interface (cpp/bnimage.py) ---------------------------------------
 
