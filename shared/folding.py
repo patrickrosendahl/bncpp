@@ -30,6 +30,8 @@ A plan is a dict the mixin fills in place:
   "folded"   {index}                definitions whose value moved into a later statement (do not print)
   "incdec"   {index: (t, value)}    post/pre increment candidates (plan_incdec); folded like any temporary
   "ternary"  {index: (x, value)}    ternary candidates another pass placed (fold_candidate reads them)
+  "own"      {index: (x, value, pure, {index})}  a language's own candidates: value a tuple of its own kind
+                                    (evaluated as value_parts(value)), folded with the listed statements
 """
 from binaryninja import HighLevelILOperation
 
@@ -38,6 +40,10 @@ from .hlil import children, walk
 Op = HighLevelILOperation
 
 _WRAPS = (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART)
+# a compound store `*(a) op= v` is ASSIGN(dest, op(<a copy of dest>, v)); the copy is not printed (bncpp-106)
+_COMPOUND_OPS = (Op.HLIL_ADD, Op.HLIL_SUB, Op.HLIL_MUL, Op.HLIL_AND, Op.HLIL_OR, Op.HLIL_XOR, Op.HLIL_LSL,
+                 Op.HLIL_LSR, Op.HLIL_ASR)
+_MEMORY_LVALUES = (Op.HLIL_DEREF, Op.HLIL_DEREF_FIELD, Op.HLIL_ARRAY_INDEX)
 
 
 class FoldMixin:
@@ -47,13 +53,17 @@ class FoldMixin:
     def foldable_var(self, var):
         return True
 
+    def value_parts(self, value):
+        """the expressions a language's own ("own" plan) tuple value evaluates, in order"""
+        return ()
+
     # --- counting ---------------------------------------------------------------------------------------
 
     def _counts(self):
         if getattr(self, "_fold_counts", None) is None:
             uses, defs = {}, {}
             try:
-                for i in walk(self.hlil.root):
+                for i in walk_printed(self.hlil.root):
                     if i.operation == Op.HLIL_VAR:
                         uses[i.var] = uses.get(i.var, 0) + 1
                     elif i.operation == Op.HLIL_VAR_INIT:
@@ -73,7 +83,7 @@ class FoldMixin:
 
     @staticmethod
     def refs(instr, var):
-        return sum(1 for i in walk(instr) if i.operation == Op.HLIL_VAR and i.var == var)
+        return sum(1 for i in walk_printed(instr) if i.operation == Op.HLIL_VAR and i.var == var)
 
     def _addr_taken(self):
         """variables whose address is taken somewhere: their storage identity matters, so they must never fold
@@ -121,6 +131,11 @@ class FoldMixin:
                     self.eval_nodes(v, None, out)
             elif isinstance(value, tuple) and value[0] == "incdec":
                 self.eval_nodes(value[5], None, out)  # f++ is the store to f
+            elif isinstance(value, tuple):
+                for v in self.value_parts(value):
+                    r = self.eval_nodes(v, stop_var, out)
+                    if r[1] is not False:
+                        return r
             out.append(e)
             return out, False
         # the right operand of a short-circuit && / || is only evaluated when the left allows it
@@ -133,6 +148,8 @@ class FoldMixin:
             kids = [e.right]
         elif o in (Op.HLIL_IF, Op.HLIL_SWITCH):
             kids = [e.condition]
+        elif o == Op.HLIL_ASSIGN and compound_copy(e) is not None:
+            kids = [e.dest, e.src.right]  # the address once, then the operand; the copy's load is the store's own
         elif o in (Op.HLIL_WHILE, Op.HLIL_DO_WHILE, Op.HLIL_FOR, Op.HLIL_BLOCK):
             if stop_var is not None:
                 return out, None  # a loop/block body is not a place a value can be moved into
@@ -154,6 +171,8 @@ class FoldMixin:
         if k in plan.get("incdec", {}):
             var, value = plan["incdec"][k]
             return var, value, False
+        if k in plan.get("own", {}):
+            return plan["own"][k][:3]
         if k in plan.get("ternary", {}):
             var, value = plan["ternary"][k]
             if self.var_count(var) - self.refs(s, var) != 1:
@@ -247,6 +266,8 @@ class FoldMixin:
         folded.add(k)
         if store is not None:
             folded.add(store)
+        if k in plan.get("own", {}):
+            folded.update(plan["own"][k][3])
 
     # --- x++ / ++x as a value (bncpp-11) ----------------------------------------------------------------
 
@@ -342,6 +363,50 @@ class FoldMixin:
             return False
         effects = [i for i in self.eval_nodes(v)[0] if self.side_effect(i)]
         return not effects or (len(effects) == 1 and effects[0].operation == Op.HLIL_CALL)
+
+
+def compound_copy(i):
+    """the copy of the destination inside a compound store to memory (`*(p + (t << 3)) |= v` is
+    ASSIGN(*(p + (t << 3)), *(p + (t << 3)) | v)), else None. The base language prints the address once, so its
+    variables are read once there (a local's `x += v` keeps both: x is written, too)."""
+    if i.operation != Op.HLIL_ASSIGN or i.dest.operation not in _MEMORY_LVALUES or \
+            i.src.operation not in _COMPOUND_OPS or not _same_tree(i.dest, i.src.left):
+        return None
+    return i.src.left
+
+
+def walk_printed(instr):
+    """walk(instr) without the destination copies of compound stores (compound_copy)"""
+    stack = [instr]
+    while stack:
+        i = stack.pop()
+        yield i
+        skip = compound_copy(i)
+        kids = list(children(i))
+        if skip is not None:
+            kids = [i.dest, i.src.right]
+            yield i.src  # the operation itself, not its left operand
+        stack.extend(reversed(kids))
+
+
+def _same_tree(a, b):
+    """a and b are the same expression: operations, sizes, variables and constants"""
+    if a.operation != b.operation or a.size != b.size:
+        return False
+    ka, kb = a.operands, b.operands
+    if len(ka) != len(kb):
+        return False
+    for x, y in zip(ka, kb):
+        if hasattr(x, "operation") and hasattr(y, "operation"):
+            if not _same_tree(x, y):
+                return False
+        elif isinstance(x, list) or isinstance(y, list):
+            if not isinstance(x, list) or not isinstance(y, list) or len(x) != len(y) or \
+                    not all(_same_tree(p, q) if hasattr(p, "operation") else p == q for p, q in zip(x, y)):
+                return False
+        elif x != y:
+            return False
+    return True
 
 
 def _continues(body):

@@ -9,7 +9,7 @@
 
         result = x0 ? (uint64_t)((uint32_t)result + 1) : (uint64_t)(uint32_t)result;
 
-        i -= x0 ? 1 : 0;
+        i -= x0 != 0;
     } while (i > 0);
 
     return result;
@@ -54,6 +54,6 @@
 
 // pick_call(int32_t) @ 0x40068c
 {
-    return (uint64_t)(next_value() << (arg1 < 1 ? 1 : 0));
+    return (uint64_t)(next_value() << (arg1 < 1));
 }
 

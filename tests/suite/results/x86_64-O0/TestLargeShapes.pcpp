@@ -2,8 +2,9 @@
 {
     int64_t rax_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) >> 3;
 
-    if ((!rax_3 ? 0 : (rax_3 << 6) - 1)
-            == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
+    int64_t var_30 = !rax_3 ? 0 : (rax_3 << 6) - 1;
+
+    if (var_30 == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
         grow(arg1);
 
     *(uint64_t*)((char*)arg1 + 0x18) += 1;
@@ -21,8 +22,7 @@
 // count(Ring*, uint32_t) @ 0x400670
 {
     int64_t result = *(uint64_t*)((char*)arg1 + 0x28);
-    uint64_t rcx = (uint64_t)arg2;
-    *(uint32_t*)(result + (rcx << 2)) += 1;
+    *(uint32_t*)(result + ((uint64_t)arg2 << 2)) += 1;
     return result;
 }
 

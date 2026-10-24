@@ -2,8 +2,9 @@
 {
     int64_t x8_3 = (*(uint64_t*)((char*)arg1 + 8) - *(uint64_t*)arg1) / 8;
 
-    if ((!x8_3 ? 0 : (x8_3 << 6) - 1)
-            == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
+    int64_t var_38 = !x8_3 ? 0 : (x8_3 << 6) - 1;
+
+    if (var_38 == *(uint64_t*)((char*)arg1 + 0x10) + *(uint64_t*)((char*)arg1 + 0x18))
         grow(arg1);
 
     *(uint64_t*)((char*)arg1 + 0x18) += 1;
@@ -11,16 +12,12 @@
 
 // set_bit(Ring*, uint64_t) @ 0x400660
 {
-    int64_t x9_1 = *(uint64_t*)((char*)arg1 + 0x20);
-    uint64_t x10 = arg2 >> 6;
-    *(uint64_t*)(x9_1 + (x10 << 3)) |= 1 << (arg2 & 0x3f);
+    *(uint64_t*)(*(uint64_t*)((char*)arg1 + 0x20) + ((arg2 >> 6) << 3)) |= 1 << (arg2 & 0x3f);
 }
 
 // count(Ring*, uint32_t) @ 0x4006a0
 {
-    int64_t x9 = *(uint64_t*)((char*)arg1 + 0x28);
-    uint64_t x8_1 = (uint64_t)arg2;
-    *(uint32_t*)(x9 + (x8_1 << 2)) += 1;
+    *(uint32_t*)(*(uint64_t*)((char*)arg1 + 0x28) + ((uint64_t)arg2 << 2)) += 1;
 }
 
 // spare(Ring*) @ 0x4006d0

@@ -309,8 +309,10 @@
 
 // std::string::capacity[abi:nqe210106](std::string* this) const @ 0x400b34
 {
-    return (!(std::string::__is_long[abi:nqe210106](this) & 1) ? 0x17 :
-        std::string::__get_long_cap[abi:nqe210106](this)) - 1;
+    uint64_t var_28 = !(std::string::__is_long[abi:nqe210106](this) & 1) ? 0x17 :
+        std::string::__get_long_cap[abi:nqe210106](this);
+
+    return var_28 - 1;
 }
 
 // std::__to_address[abi:nqe210106]<char const>(struct std* this, char const) @ 0x400b88

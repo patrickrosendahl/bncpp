@@ -265,8 +265,10 @@
     int64_t x9_1 = (*(uint64_t*)(**(uint64_t**)((char*)this + 8) + 0x10))()
         + (*(uint64_t*)(**(uint64_t**)((char*)this + 0x10) + 0x10))();
 
-    return x9_1 + (!*(uint64_t*)((char*)this + 0x18) ? 0 : (
-        *(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x10))());
+    int64_t var_38 = !*(uint64_t*)((char*)this + 0x18) ? 0 : (
+        *(uint64_t*)(**(uint64_t**)((char*)this + 0x18) + 0x10))();
+
+    return x9_1 + var_38;
 }
 
 // Owner::reshape(struct Owner* this, int32_t) @ 0x400cf0

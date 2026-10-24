@@ -685,7 +685,7 @@
     char var_21;
 
     if (!(x0_1 & 1) && !(x0_3 & 1))
-        var_21 = (char)(!_strcmp(x9 & 0x7fffffffffffffff, x8_2 & 0x7fffffffffffffff) ? 1 : 0) & 1;
+        var_21 = !_strcmp(x9 & 0x7fffffffffffffff, x8_2 & 0x7fffffffffffffff);
     else
         var_21 = 0;
 

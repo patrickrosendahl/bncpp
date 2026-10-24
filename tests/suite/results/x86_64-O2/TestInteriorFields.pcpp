@@ -5,7 +5,7 @@
     if (rdi)
         operator delete[](rdi);
 
-    void* result = operator new[](-((arg2 >> 0x3d ? 1 : 0)) | arg2 << 3);
+    void* result = operator new[](-(((arg2 >> 0x3d) != 0)) | arg2 << 3);
     *(uint64_t*)arg1 = result;
     arg1[1] = arg2;
 

@@ -19,7 +19,7 @@ from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render, eh_throw
 from ..shared import regions as _regions
 from ..shared.folding import FoldMixin
-from ..shared.hlil import walk
+from ..shared.hlil import children, walk
 
 Op = HighLevelILOperation
 P = OperatorPrecedence
@@ -572,12 +572,59 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         _CatchFolds, which does)."""
         return True
 
+    def fold_candidate(self, body, k, plan):
+        """FoldMixin: a conditional expression whose use would print too wide stays `T x = c ? a : b;` (bncpp-89)"""
+        if k in plan.get("ternary", {}) and body[k].instr_index in getattr(self, "_wide_ternary", ()):
+            return None
+        return super().fold_candidate(body, k, plan)
+
+    def value_parts(self, value):
+        """FoldMixin hook: a ("lowbyte", ...) value evaluates its first value, then each operand (bncpp-85)"""
+        return [value[2]] + [x for _op, x in value[3]] if value[0] == "lowbyte" else ()
+
     def _fold_plan(self):
-        """{instruction index of a folded definition} for this function; fills self.inline (var -> value).
-        Run per HLIL block so a temporary folds into its use within the same block, in order."""
+        """{instruction index of a folded definition} for this function; fills self.inline (var -> value). A
+        conditional expression folded into a line wider than _MAX_WIDTH is planned again unfolded (bncpp-89)."""
         cached = getattr(self, "_folded_idx", None)
         if cached is not None:
             return cached
+        self._wide_ternary = set()
+        for _ in range(4):
+            folded_idx = self._plan_once()
+            wide = self._wide_folds(folded_idx)
+            if not wide - self._wide_ternary:
+                break
+            self._wide_ternary |= wide
+            self._fold_counts = None
+        return folded_idx
+
+    def _wide_folds(self, folded_idx):
+        """the if instruction indexes of the folded conditional expressions on a line wider than _MAX_WIDTH (the
+        lines that stay, with the folded values substituted)"""
+        ternaries = {v for v, x in self.inline.items() if isinstance(x, tuple) and x[0] == "ternary"}
+        if not ternaries or self.function is None or self.function.hlil is None:
+            return set()
+        gone = set(folded_idx)
+        for value, d, inner in self._ternary_stmt.values():
+            if value is None:
+                gone |= inner | {d}
+        out = set()
+        try:
+            lines = self.base().get_expr_text(self.function.hlil.root, None, P.TopLevelOperatorPrecedence, True)
+        except Exception:
+            return out
+        for line in lines:
+            if line.il_instruction is not None and line.il_instruction.instr_index in gone:
+                continue
+            self._subst_log = set()
+            text = "".join(t.text for t in self._subst_inline(list(line.tokens)))
+            if len(text.rstrip()) > _MAX_WIDTH:
+                out |= {self.inline[v][2].instr_index for v in self._subst_log & ternaries}
+        self._subst_log = None
+        return out
+
+    def _plan_once(self):
+        """Run per HLIL block so a temporary folds into its use within the same block, in order."""
         self.inline = {}
         self._ternary_stmt = {}  # if instr index -> (value, definition instr index, the if's instr indexes)
         folded_idx, names = set(), {}
@@ -589,11 +636,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 for k in range(len(body) - 1):  # x++ / ++x (bncpp-11), c ? a : b (bncpp-9): fold_candidate
                     self.plan_incdec(body, k, plan)  # reads plan["incdec"] / plan["ternary"]
                     self.plan_ternary(body, k, plan)
+                self.plan_lowbyte(body, plan)
                 # nothing moves into, out of or across a try run (bncpp-84): one fold plan per stretch of the body
                 # in one run, or outside all of them
                 zone = [zones.get(st.expr_index) for st in body]
                 for k in [k for k in plan.get("incdec", {}) if zone[k] != zone[k + 1]]:
                     del plan["incdec"][k]
+                for k in [k for k, c in plan.get("own", {}).items()
+                          if len({zone[i] for i in c[3] | {k, k + 1}}) != 1]:
+                    del plan["own"][k]
                 for j in [j for j, d in plan.get("ternary_def", {}).items()
                           if zone[j] != zone[d] or body[j].expr_index in compound]:
                     del plan["ternary"][j], plan["ternary_def"][j]
@@ -625,6 +676,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 pass
         self._fold_names = names  # display name -> variable, for the token splice
         self._folded_idx = folded_idx
+        self._bool_lines = {}  # instr index -> its lines' `c ? 1 : 0` rewritten (bncpp-86), filled on use
         self._bool_rets = {}  # return instr index -> `return b;` (bncpp-10)
         try:
             for i in walk(hlil.root):
@@ -636,12 +688,42 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             self._bool_rets = {}
         return folded_idx
 
+    def plan_lowbyte(self, body, plan):
+        """`T r; (uint8_t)r = c1; (uint8_t)r &= c2; return r;` (bncpp-85): x86_64 returns a bool in al, and BN writes
+        it into the low byte of a wider result whose upper bytes the caller never reads. r declared apart and
+        used nowhere else: the run before the return is one value ("lowbyte", r, first value, [(op, operand)]) that
+        folds into the return like a temporary (`return c1 && c2;`), so a temporary of c1 can fold on into it."""
+        for m, ret in enumerate(body):
+            if ret.operation != Op.HLIL_RET or len(ret.src) != 1 or ret.src[0].operation != Op.HLIL_VAR or m == 0:
+                continue
+            r, k, ops, first = ret.src[0].var, m - 1, [], None
+            if self.def_count(r) != 2 or r in self._addr_taken() or not self.foldable_var(r):
+                continue
+            while k >= 0 and k not in plan.get("skip", ()) and body[k].operation == Op.HLIL_ASSIGN and \
+                    _low_byte(body[k].dest, r):
+                v = body[k].src
+                if v.operation in _LOW_OPS and _low_byte(v.left, r) and not self.refs(v.right, r):
+                    ops.append((v.operation, v.right))
+                    k -= 1
+                    continue
+                if not self.refs(v, r):
+                    first = k
+                break
+            if first is None or self.var_count(r) != sum(self.refs(body[i], r) for i in range(first, m)) + 1:
+                continue
+            value = ("lowbyte", r, body[first].src, ops[::-1])
+            plan.setdefault("own", {})[m - 1] = (r, value, all(self.pure(e) for e in self.value_parts(value)),
+                                                 set(range(first, m - 1)))
+            plan.setdefault("hidden_decls", set()).update(
+                d for d in range(first) if body[d].operation == Op.HLIL_VAR_DECLARE and body[d].var == r)
+
     def fold_lines(self, keyed):
         """keyed [(tokens, key)] -> the lines with each folded definition dropped and each folded variable's one
         read replaced by its value, rendered through the base language and spliced in (recursively, so a chain of
         folds collapses). key: (function start, HLIL instruction index) or None."""
         folded = self._fold_plan()
-        if not folded and not self.inline and not self._ternary_stmt and not self._bool_rets:
+        if not folded and not self.inline and not self._ternary_stmt and not self._bool_rets and \
+                not self._has_bool_to_int():
             return keyed
         start = self.function.start
         own = lambda key: key[1] if key is not None and key[0] == start else None
@@ -676,6 +758,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             elif n in drop or own(key) in folded:
                 blank = blank or empty(toks)  # a folded definition: its value moved into a later statement
                 continue
+            else:
+                toks = self._bool_line(toks, own(key))
             closing = "".join(t.text for t in toks).strip().startswith("}")
             if closing and out and empty(out[-1][0]):
                 out.pop()  # no blank line left before a closing brace (the block's last statements folded away)
@@ -697,6 +781,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if var is None or var in seen or var not in self.inline:
                 out.append(t)
                 continue
+            if getattr(self, "_subst_log", None) is not None:
+                self._subst_log.add(var)
             # the whole value of a `return v;` / `x = v;` or a whole call argument needs no parentheses
             after = toks[n + 1].text.lstrip() if n + 1 < len(toks) else ""
             before = "".join(x.text for x in out[-2:])
@@ -725,6 +811,13 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             return [op] + toks if pre else toks + [op]
         if isinstance(value, tuple) and value[0] == "ternary":
             return paren(self._ternary_tokens(value, seen))
+        if isinstance(value, tuple) and value[0] == "lowbyte":
+            toks = self._lowbyte_bool(value, seen)
+            if toks is None:
+                toks = _group(self._expr_tokens(value[2], seen))
+                for op, x in value[3]:
+                    toks += [tok(TT.OperationToken, " %s " % _LOW_OPS[op])] + _group(self._expr_tokens(x, seen))
+            return paren(toks)
         return paren(self._expr_tokens(value, seen))
 
     # --- booleans (bncpp-10): c ? 1 : 0 -> c, c ? x : 0 -> c && x, `return (uint64_t)b & 1;` -> `return b;` ----
@@ -733,7 +826,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         """e (an HLIL expression or a folded ('ternary', ...) value) as a C boolean expression -- an int that is 0 or
         1 -- negated with neg; None when e's value is not known to be 0 / 1"""
         if isinstance(e, tuple):
-            return self._ternary_bool(e, seen, neg) if e[0] == "ternary" else None
+            return self._ternary_bool(e, seen, neg) if e[0] == "ternary" else \
+                self._lowbyte_bool(e, seen, neg) if e[0] == "lowbyte" else None
         o = e.operation
         if o == Op.HLIL_VAR and e.var in (self.inline or {}) and e.var not in seen:
             return self._bool_tokens(self.inline[e.var], seen | {e.var}, neg)
@@ -798,6 +892,70 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if _top_op(ts, ("||",) if not is_or else ()) or _top_ternary(ts) else ts
         return group(left) + [tok(TT.OperationToken, " || " if is_or else " && ")] + group(right)
 
+    def _lowbyte_bool(self, value, seen, neg=False):
+        """a ("lowbyte", ...) value (bncpp-85) as a boolean expression: its first value and operands each 0 / 1, `&`
+        / `|` of pure operands as && / || (`& 1` of a boolean is the boolean); else None"""
+        _, _r, first, ops = value
+        toks = self._bool_tokens(first, seen)
+        for op, x in ops:
+            if op == Op.HLIL_AND and _bool_const(x) == 1:
+                if toks is None:
+                    toks = _group(self._expr_tokens(first, seen)) + [tok(TT.OperationToken, " & "),
+                                                                      tok(TT.IntegerToken, "1")]
+                continue
+            right = self._bool_tokens(x, seen) if op in (Op.HLIL_AND, Op.HLIL_OR) and self.pure(x) else None
+            if toks is None or right is None:
+                return None
+            is_or = op == Op.HLIL_OR
+            group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] \
+                if _top_op(ts, ("||",) if not is_or else ()) or _top_ternary(ts) else ts
+            toks = group(toks) + [tok(TT.OperationToken, " || " if is_or else " && ")] + group(right)
+        if toks is None or not neg:
+            return toks
+        return [tok(TT.OperationToken, "!"), tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
+
+    # --- c ? 1 : 0 inside a statement (bncpp-86) -------------------------------------------------------------
+
+    def _has_bool_to_int(self):
+        hit = getattr(self, "_any_b2i", None)
+        if hit is None:
+            try:
+                hit = any(i.operation == Op.HLIL_BOOL_TO_INT for i in walk(self.function.hlil.root))
+            except Exception:
+                hit = False
+            self._any_b2i = hit
+        return hit
+
+    def _bool_line(self, toks, idx):
+        """a statement's line with each `c ? 1 : 0` (an HLIL_BOOL_TO_INT on it) printed as c: a C comparison is
+        already 0 / 1, and ?: binds loosest, so c fits wherever the ?: was. An assignment whose whole value is the
+        boolean (behind widenings / `& 1`) prints `x = c;`."""
+        if idx is None or not self._has_bool_to_int():
+            return toks
+        try:
+            st = self.function.hlil[idx]
+        except Exception:
+            return toks
+        nodes = [i for i in _line_nodes(st) if i.operation == Op.HLIL_BOOL_TO_INT]
+        if not nodes:
+            return toks
+        if st.operation in (Op.HLIL_ASSIGN, Op.HLIL_VAR_INIT) and \
+                (st.operation == Op.HLIL_VAR_INIT or st.dest.operation == Op.HLIL_VAR):
+            whole = self._bool_tokens(st.src, set())
+            cut = next((n for n, t in enumerate(toks) if t.text.strip() == "="), None)
+            if whole is not None and cut is not None and "".join(t.text for t in toks).rstrip().endswith(";"):
+                space = [] if toks[cut].text.endswith(" ") else [tok(TT.TextToken, " ")]
+                return toks[:cut + 1] + space + whole + [tok(TT.TextToken, ";")]
+        for b in nodes:
+            rep = self._bool_tokens(b, set())
+            if rep is None:
+                continue
+            text = "".join(t.text for t in eh_throw._flat([list(l.tokens) for l in self.base().get_expr_text(
+                b, None, P.TopLevelOperatorPrecedence, False)]))
+            if text:
+                toks = _replace_spans(toks, re.compile(re.escape(text)), lambda m, rep=rep: rep)
+        return toks
+
     def _bool_return(self, ret, seen):
         """`return b;` for a return whose value is a boolean behind a widening / `& 1` (`return (uint64_t)var_1 & 1;`
         with var_1 = `c ? 1 : 0`), else None"""
@@ -848,6 +1006,42 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
 
 _OPS = set("+ - * / % & | ^ << >> < > <= >= == != && || ? :".split())
+_MAX_WIDTH = 100  # a line a folded conditional expression may make (bncpp-89)
+_LOW_OPS = {Op.HLIL_AND: "&", Op.HLIL_OR: "|", Op.HLIL_XOR: "^"}  # compound stores into a low byte (bncpp-85)
+
+
+def _group(toks):
+    return toks if _atomic(toks) else [tok(TT.TextToken, "(")] + toks + [tok(TT.TextToken, ")")]
+
+
+def _low_byte(e, r):
+    """e is the low byte of variable r: `(uint8_t)r` (an offset-0 field or a low part of size 1)"""
+    return e.size == 1 and e.operation in (Op.HLIL_STRUCT_FIELD, Op.HLIL_LOW_PART) and \
+        getattr(e, "offset", 0) == 0 and e.src.operation == Op.HLIL_VAR and e.src.var == r
+
+
+def _line_nodes(st):
+    """the expressions printed on a statement's own lines: a compound statement's head (condition, a for's
+    init / update), not its bodies"""
+    o = st.operation
+    if o in (Op.HLIL_IF, Op.HLIL_WHILE, Op.HLIL_DO_WHILE, Op.HLIL_SWITCH):
+        roots = [st.condition]
+    elif o == Op.HLIL_FOR:
+        roots = [st.init, st.condition, st.update]
+    elif o == Op.HLIL_BLOCK:
+        roots = []
+    else:
+        roots = [st]
+    out = []
+    for r in roots:
+        stack = [r]
+        while stack:
+            i = stack.pop()
+            if i.operation == Op.HLIL_BLOCK:
+                continue
+            out.append(i)
+            stack.extend(children(i))
+    return out
 
 
 def _atomic(toks):
@@ -979,8 +1173,8 @@ def _key(s):
 
 
 def _replace_spans(toks, rx, fn):
-    """toks with each match of rx in their text replaced by one text token fn(match) (None: kept); tokens cut by
-    a match's edge keep their outside part as text"""
+    """toks with each match of rx in their text replaced by one text token fn(match), or the tokens when fn returns
+    a list (None: kept); tokens cut by a match's edge keep their outside part as text"""
     text = "".join(t.text for t in toks)
     ms = [(m.start(), m.end(), fn(m)) for m in rx.finditer(text)]
     ms = [x for x in ms if x[2] is not None]
@@ -1001,7 +1195,7 @@ def _replace_spans(toks, rx, fn):
         return out
     out, cur = [], 0
     for a, b, rep in ms:
-        out += piece(cur, a) + [tok(TT.TextToken, rep)]
+        out += piece(cur, a) + (list(rep) if isinstance(rep, list) else [tok(TT.TextToken, rep)])
         cur = b
     return out + piece(cur, len(text))
 

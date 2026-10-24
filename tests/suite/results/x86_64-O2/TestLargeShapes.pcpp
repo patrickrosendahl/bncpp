@@ -22,17 +22,14 @@
 // set_bit(Ring*, uint64_t) @ 0x4005f0
 {
     int64_t result = 1 << ((uint8_t)arg2 & 0x3f);
-    int64_t rdx = *(uint64_t*)((char*)arg1 + 0x20);
-    uint64_t rcx_1 = arg2 >> 6;
-    *(uint64_t*)(rdx + (rcx_1 << 3)) |= result;
+    *(uint64_t*)(*(uint64_t*)((char*)arg1 + 0x20) + ((arg2 >> 6) << 3)) |= result;
     return result;
 }
 
 // count(Ring*, uint32_t) @ 0x400610
 {
     int64_t result = *(uint64_t*)((char*)arg1 + 0x28);
-    uint64_t rcx = (uint64_t)arg2;
-    *(uint32_t*)(result + (rcx << 2)) += 1;
+    *(uint32_t*)(result + ((uint64_t)arg2 << 2)) += 1;
     return result;
 }
 
