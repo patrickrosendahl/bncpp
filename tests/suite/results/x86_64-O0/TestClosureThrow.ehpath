@@ -1,0 +1,41 @@
+== FROM guarded_apply(int)::$_0::operator()|__func<guarded_apply*operator()
+thrown: 0x403048; terminate helpers: 0x401a20; throwers: 1
+functions on the path: 8; caught 1, unwind 8; virtual call sites 1; frontier (no callers): 0
+  caught     0x400727 in guarded_apply(int32_t)  [eh] caught by catch (std::runtime_error) #1 from apply(std::function<int32_t (int32_t)> const&, int32_t): landing pad 0x400767
+
+0x401301 unwind     [eh] unwinds through: no landing pad (exception from guarded_apply(int32_t)::$_0::operator()(struct guarded_apply(int32_t)::$_0* this, int32_t) const)
+0x40129a unwind     [eh] unwinds through: no landing pad (exception from guarded_apply(int32_t)::$_0::operator()(struct guarded_apply(int32_t)::$_0* this, int32_t) const)
+0x401268 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(struct std* this, std::__invoke_result_impl&&...))
+0x401238 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_void_return_wrapper<int32_t, false>::__call[abi:nqe210106]<guarded_apply(int32_t)::$_0&, int32_t>(struct std::__invoke_void_return_wrapper<int32_t, false>* this, guarded_apply(int32_t)::$_0&&&...))
+0x4010dc unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_r[abi:nqe210106]<int32_t, guarded_apply(int32_t)::$_0&, int32_t>(struct std* this, guarded_apply(int32_t)::$_0&&&...))
+0x400d73 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) (virtual call))
+0x4006d7 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__value_func<int32_t (int32_t)>::operator()[abi:nqe210106](struct std::__function::__value_func<int32_t (int32_t)>* this, int32_t&&) const)
+0x4006a6 unwind     [eh] unwinds through: no landing pad (exception from std::function<int32_t (int32_t)>::operator()(struct std::function<int32_t (int32_t)>* this, int32_t) const)
+0x400727 caught     [eh] caught by catch (std::runtime_error) #1 from apply(std::function<int32_t (int32_t)> const&, int32_t): landing pad 0x400767
+
+== FROM guarded_forward(int)::$_0::operator()|__func<guarded_forward*operator()
+thrown: 0x403058; terminate helpers: 0x401a20; throwers: 1
+functions on the path: 9; caught 1, unwind 9; virtual call sites 1; frontier (no callers): 0
+  caught     0x400904 in guarded_forward(int32_t)  [eh] caught by catch (std::logic_error) #1 from forward(std::function<void ()> const&): landing pad 0x40093b
+
+0x4018b9 unwind     [eh] unwinds through: no landing pad (exception from guarded_forward(int32_t)::$_0::operator()(struct guarded_forward(int32_t)::$_0* this) const)
+0x401860 unwind     [eh] unwinds through: no landing pad (exception from guarded_forward(int32_t)::$_0::operator()(struct guarded_forward(int32_t)::$_0* this) const)
+0x401840 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(struct std* this, std::__invoke_result_impl&&...))
+0x401820 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<guarded_forward(int32_t)::$_0&>(struct std::__invoke_void_return_wrapper<void, true>* this, guarded_forward(int32_t)::$_0&&&...))
+0x4016d4 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_r[abi:nqe210106]<void, guarded_forward(int32_t)::$_0&>(struct std* this, guarded_forward(int32_t)::$_0&&&...))
+0x40143b unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) (virtual call))
+0x4008a0 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__value_func<void ()>::operator()[abi:nqe210106](struct std::__function::__value_func<void ()>* this) const)
+0x400880 unwind     [eh] unwinds through: no landing pad (exception from std::function<void ()>::operator()(struct std::function<void ()>* this) const)
+0x4008c0 unwind     [eh] unwinds through: no landing pad (exception from run_cb(std::function<void ()> const&))
+0x400904 caught     [eh] caught by catch (std::logic_error) #1 from forward(std::function<void ()> const&): landing pad 0x40093b
+
+== FROM schedule(Worker*, int)::$_0::operator()|__func<schedule*operator()
+thrown: 0x403048; terminate helpers: 0x401a20; throwers: 1
+functions on the path: 5; unwind 5; frontier (no callers): 1 (1 in a vtable: no virtual call through a typed receiver)
+  frontier: std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this)
+
+0x401eb9 unwind     [eh] unwinds through: no landing pad (exception from schedule(Worker*, int32_t)::$_0::operator()(struct schedule(Worker*, int32_t)::$_0* this) const)
+0x401e60 unwind     [eh] unwinds through: no landing pad (exception from schedule(Worker*, int32_t)::$_0::operator()(struct schedule(Worker*, int32_t)::$_0* this) const)
+0x401e40 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(struct std* this, std::__invoke_result_impl&&...))
+0x401e20 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_void_return_wrapper<void, true>::__call[abi:nqe210106]<schedule(Worker*, int32_t)::$_0&>(struct std::__invoke_void_return_wrapper<void, true>* this, schedule(Worker*, int32_t)::$_0&&&...))
+0x401d04 unwind     [eh] unwinds through: no landing pad (exception from std::__invoke_r[abi:nqe210106]<void, schedule(Worker*, int32_t)::$_0&>(struct std* this, schedule(Worker*, int32_t)::$_0&&&...))

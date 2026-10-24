@@ -20,8 +20,9 @@ errors, a catch clause in the LSDA but no try, ...) and the class APPLYs in .fie
 limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --max K=V).
 
 Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view), .lsda (the decoded
-exception tables, cpp/lsda.py on cpp/bnimage.py) and .classes (the class scan, cpp/rtti.py, with the names
-cpp/rtti_names.py gives). .pc is Pseudo C of the same functions (BN's own output, for
+exception tables, cpp/lsda.py on cpp/bnimage.py), .classes (the class scan, cpp/rtti.py, with the names
+cpp/rtti_names.py gives), .fields (the class pipeline) and .ehpath (the exception path from the functions in
+EH_PATHS). .pc is Pseudo C of the same functions (BN's own output, for
 comparison; not checked). ref-lsda decodes the same tables from the files themselves (cpp/macho.py, reference
 only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
 and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
@@ -72,10 +73,10 @@ TESTS = [
     "TestClosure",               # lambdas in std::function / a function object vs same-shaped classes (bncpp-23)
     "TestAnchoredBaseFields",    # polymorphic anchored base with fields as the second base (bncpp-58/59)
     "TestInteriorFields",        # fields reached only through untyped helpers / an interior pointer; floats (bncpp-33)
-    "TestVirtualThrow",          # exception path through virtual calls (bncpp-66; checked by hand with bn_eh_path.py)
-    "TestCastThrow",             # ... through calls on dynamic_cast results (bncpp-95; by hand with bn_eh_path.py)
+    "TestVirtualThrow",          # exception path through virtual calls (bncpp-66; .ehpath)
+    "TestCastThrow",             # ... through calls on dynamic_cast results (bncpp-95; .ehpath)
     "TestThrowHelpers",          # throw sites behind libc++'s __throw_* helpers and own wrappers (bncpp-92)
-    "TestClosureThrow",          # ... through std::function: params, a forwarder, a member (bncpp-109; by hand)
+    "TestClosureThrow",          # ... through std::function: params, a forwarder, a member (bncpp-109; .ehpath)
     # names hashed like SynthV's raw slices
     "TestCatchAllHashed",        # clang's terminate helper and std::terminate unnamed: guards found anyway (bncpp-71)
 ]
@@ -164,14 +165,29 @@ def build(names):
     print("built %d tests x %d variants into %s" % (len(names), len(VARIANTS), BIN))
 
 
-CHECKED = ("pcpp", "lsda", "classes", "fields")  # output kinds compared against a reference
+CHECKED = ("pcpp", "lsda", "classes", "fields", "ehpath")  # output kinds compared against a reference
+
+# .ehpath (bncpp-117): the exception path from these functions (tests/bn_eh_path.py after the class pipeline, one
+# run per entry); only these tests have one. An entry is a FROM: a name, '*' wildcards, '|' alternatives (the
+# first that names a function in the variant -- a lambda's operator() is inlined into __func's at -O2)
+EH_PATHS = {
+    "TestVirtualThrow": ["Job::run"],
+    "TestCastThrow": ["Batch::flush"],
+    "TestClosureThrow": ["guarded_apply(int)::$_0::operator()|__func<guarded_apply*operator()",
+                         "guarded_forward(int)::$_0::operator()|__func<guarded_forward*operator()",
+                         "schedule(Worker*, int)::$_0::operator()|__func<schedule*operator()"],
+}
+
+
+def kinds(t):
+    return [k for k in CHECKED if k != "ehpath" or t in EH_PATHS]
 
 
 def pairs(names):
     for arch, opt in VARIANTS:
         v = variant_name(arch, opt)
         for t in names:
-            for ext in CHECKED:
+            for ext in kinds(t):
                 f = "%s.%s" % (t, ext)
                 yield v, f, os.path.join(OUT, v, f), os.path.join(RESULTS, v, f)
 
@@ -252,7 +268,7 @@ def compare(names, show_diff):
                 sys.stdout.writelines(difflib.unified_diff(open(ref).readlines(), open(out).readlines(),
                                                            "reference", "output"))
     print(", ".join("%d %s" % (n, k) for k, n in counts.items()))
-    return 0 if counts["ok"] == len(VARIANTS) * len(names) * len(CHECKED) else 1
+    return 0 if counts["ok"] == sum(1 for _ in pairs(names)) else 1
 
 
 # flaw counters over a function's Pseudo Cpp (string literals removed, comments kept)

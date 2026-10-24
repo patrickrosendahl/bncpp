@@ -22,7 +22,7 @@ specifics. Language-neutral code goes into `shared/` (rules + shared-file table:
 python3 tests/suite/suite.py build                     # tests/suite/src/TestX.cpp -> bin/<arch>-O<n>/TestX.dylib
 B=/Users/patrick/dev/bn-script-bridge/bnrun
 $B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp devN" (BN can't unregister)
-$B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc,lsda}
+$B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc,lsda,classes,fields,ehpath}
                                                        #   only some: --env DUMP_KINDS=lsda (comma list),
                                                        #   --env DUMP_TESTS=TestVirtual (name prefixes)
 python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)

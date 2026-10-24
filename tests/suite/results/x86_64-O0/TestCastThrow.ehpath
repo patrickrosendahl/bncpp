@@ -1,0 +1,7 @@
+== FROM Batch::flush
+thrown: 0x401010; terminate helpers: none; throwers: 0
+functions on the path: 1; caught 1, unwind 1; virtual call sites 1; frontier (no callers): 0
+  caught*    0x400823 in try_flush(Work*, int32_t)  [eh] caught by catch (std::logic_error) #1 from Batch::flush(struct Batch* this, int32_t) (virtual call): landing pad 0x400832
+
+0x4006d9 unwind     [eh] unwinds through: no landing pad (exception from Batch::flush(struct Batch* this, int32_t))
+0x400823 caught     [eh] caught by catch (std::logic_error) #1 from Batch::flush(struct Batch* this, int32_t) (virtual call): landing pad 0x400832

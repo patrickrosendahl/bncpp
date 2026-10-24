@@ -15,10 +15,12 @@
 #          (tests/bn_class_apply.py, bn_class_types.py, bn_class_fields.py NOCACHE=1): counts, then the layouts
 #          (cpp/rtti_fields.py; checked), with NAMES=tests/suite/src/<TestX>.names where that exists; then the
 #          catch handlers' object variables (tests/bn_catch_types.py APPLY, where a clause catches a class of the
-#          scan; bncpp-28). Runs last: it
-#          changes the view's names and types
+#          scan; bncpp-28). Runs after the others: it changes the view's names and types
+#   .ehpath   for the tests in suite.py's EH_PATHS, after the class pipeline (run for it if .fields is not
+#          dumped): the exception path from each listed function (tests/bn_eh_path.py NOCACHE=1, its review lines;
+#          bncpp-117)
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
-import glob, importlib, os
+import glob, importlib, importlib.util, os
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -32,15 +34,19 @@ _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
 _rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
 _rtti_names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
 _lp = importlib.import_module(_dev["pkgname"] + ".cpp.landing_pads")
-_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or "pc,pcpp,lsda,classes,fields"
+_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or \
+    "pc,pcpp,lsda,classes,fields,ehpath"
 _kinds = [k.strip() for k in _kinds_arg.split(",") if k.strip()]
-if set(_kinds) - {"pc", "pcpp", "lsda", "classes", "fields"}:
+if set(_kinds) - {"pc", "pcpp", "lsda", "classes", "fields", "ehpath"}:
     raise ValueError("DUMP_KINDS: unknown kind in %r" % _kinds_arg)
 _bins = globals().get("DUMP_BINARIES") or sorted(glob.glob(os.path.join(REPO, "tests/suite/bin/*/*.dylib")))
 _only = (globals().get("env") or {}).get("DUMP_TESTS") or os.environ.get("DUMP_TESTS")
 if _only:
     _bins = [b for b in _bins if any(os.path.basename(b).startswith(p) for p in _only.split(","))]
 _out = os.path.join(REPO, ".scratch/suite/out")
+_spec = importlib.util.spec_from_file_location("_suite", os.path.join(REPO, "tests/suite/suite.py"))
+_suite = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(_suite)
 
 
 def _render(func, language):
@@ -97,6 +103,21 @@ def _dump_fields(bv, binary):
     return out
 
 
+def _dump_ehpath(bv, froms):
+    out = []
+    for a in froms:
+        g = {"__name__": "__bn_dump__", "bv": bv, "CPP_REPO": REPO, "env": {"FROM": a, "NOCACHE": "1"}}
+        path = os.path.join(REPO, "tests", "bn_eh_path.py")
+        try:
+            with open(path, encoding="utf-8") as fh:
+                exec(compile(fh.read(), path, "exec"), g)
+            lines = g["_lines"]
+        except ValueError as ex:  # FROM names no function
+            lines = ["error: %s" % ex]
+        out += (["== FROM %s" % a] + lines + [""])
+    return out[:-1]
+
+
 _ok = 0
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) if "DUMP_BINARIES" not in globals() else "other"
@@ -120,11 +141,16 @@ for _path in _bins:
             _texts["lsda"] = _dump_lsda(_bv)
         if "classes" in _kinds:
             _texts["classes"] = _dump_classes(_bv)
-        if "fields" in _kinds:  # last: changes the view
-            _texts["fields"] = _dump_fields(_bv, _path)
+        _base = os.path.splitext(os.path.basename(_path))[0]
+        _froms = _suite.EH_PATHS.get(_base) if "ehpath" in _kinds else None
+        if "fields" in _kinds or _froms:  # after the others: changes the view
+            _f = _dump_fields(_bv, _path)
+            if "fields" in _kinds:
+                _texts["fields"] = _f
+        if _froms:  # after the class pipeline (bncpp-117)
+            _texts["ehpath"] = _dump_ehpath(_bv, _froms)
         _dir = os.path.join(_out, _variant)
         os.makedirs(_dir, exist_ok=True)
-        _base = os.path.splitext(os.path.basename(_path))[0]
         for _key, _lines in _texts.items():
             with open(os.path.join(_dir, "%s.%s" % (_base, _key)), "w", encoding="utf-8") as _fh:
                 _fh.write("\n".join(_lines) + "\n")

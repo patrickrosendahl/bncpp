@@ -1,0 +1,26 @@
+== FROM guarded_apply(int)::$_0::operator()|__func<guarded_apply*operator()
+thrown: 0x404028; terminate helpers: 0x400e28; throwers: 4
+functions on the path: 2; caught 1, unwind 2; virtual call sites 1; frontier (no callers): 0
+  caught     0x400714 in guarded_apply(int32_t)  [eh] caught by catch (std::runtime_error) #1 from apply(std::function<int32_t (int32_t)> const&, int32_t): landing pad 0x400774
+
+0x400c74 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&))
+0x4006bc unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::operator()(struct std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>* this, int32_t&&) (virtual call))
+0x400714 caught     [eh] caught by catch (std::runtime_error) #1 from apply(std::function<int32_t (int32_t)> const&, int32_t): landing pad 0x400774
+
+== FROM guarded_forward(int)::$_0::operator()|__func<guarded_forward*operator()
+thrown: 0x404020; terminate helpers: 0x400e28; throwers: 4
+functions on the path: 3; caught 1, tail 2, unwind 1; virtual call sites 1; frontier (no callers): 0
+  caught     0x400830 in guarded_forward(int32_t)  [eh] caught by catch (std::logic_error) #1 from forward(std::function<void ()> const&): landing pad 0x40088c
+
+0x400da4 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this))
+0x4007e0 tail       [eh] unwinds through: tail call (exception from std::__function::__func<guarded_forward(int32_t)::$_0, void ()>::operator()(struct std::__function::__func<guarded_forward(int32_t)::$_0, void ()>* this) (virtual call))
+0x4007f0 tail       [eh] unwinds through: tail call (exception from run_cb(std::function<void ()> const&))
+0x400830 caught     [eh] caught by catch (std::logic_error) #1 from forward(std::function<void ()> const&): landing pad 0x40088c
+
+== FROM schedule(Worker*, int)::$_0::operator()|__func<schedule*operator()
+thrown: 0x404028; terminate helpers: 0x400e28; throwers: 4
+functions on the path: 1; caught 1, unwind 1; virtual call sites 1; frontier (no callers): 0
+  caught*    0x400aa0 in Worker::work(struct Worker* this)  [eh] caught by catch (std::runtime_error) #1 from std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) (virtual call): landing pad 0x400ab8
+
+0x400ee8 unwind     [eh] unwinds through: no landing pad (exception from std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this))
+0x400aa0 caught     [eh] caught by catch (std::runtime_error) #1 from std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>::operator()(struct std::__function::__func<schedule(Worker*, int32_t)::$_0, void ()>* this) (virtual call): landing pad 0x400ab8

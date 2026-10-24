@@ -10,7 +10,8 @@
 # .scratch/eh/<binary>.path.review (the report, then one line per call site with the comment APPLY would set).
 # CAST_BUDGET: seconds for the dynamic_cast callers not cached yet (default 120; SynthV: ~4.5 min in all, so a few
 # runs -- the report says how many are done).
-# APPLY=1 sets the comments (in RAM; never over another comment).
+# APPLY=1 sets the comments (in RAM; never over another comment). NOCACHE=1: no bncache file (call graph and
+# dynamic_cast callers computed in full; tests/bn_dump.py's .ehpath, which takes _lines).
 import importlib, os, re, time
 import binaryninja as _bn
 
@@ -66,7 +67,15 @@ def _matches(want, name):
 
 def _func_addr(a):
     """a hex address, or a function name (an import such as may_throw); '*' matches any text ('__func<schedule*
-    operator()'); a name without '*' that is no symbol's full name is looked for as a part of one (unique only)"""
+    operator()'); a name without '*' that is no symbol's full name is looked for as a part of one (unique only);
+    'a|b': the first alternative that names a function"""
+    if "|" in a:  # alternatives: the first that names a function
+        for alt in a.split("|")[:-1]:
+            try:
+                return _func_addr(alt)
+            except ValueError:
+                pass
+        return _func_addr(a.split("|")[-1])
     if a.startswith("0x"):
         return int(a, 16)
     # every symbol at the start, the auto one too: bn_class_apply.py's user name (Job::vfunc2) hides
@@ -90,7 +99,19 @@ def _func_addr(a):
     return funcs[0].start
 
 
-_from = [_func_addr(a.strip()) for a in _get("FROM", "").split(",") if a.strip()]
+def _split(text):
+    """a comma list whose items may hold commas inside () / <> ('schedule(Worker*, int)::$_0::operator()')"""
+    out, depth, cur = [], 0, ""
+    for c in text:
+        depth += {"(": 1, "<": 1, ")": -1, ">": -1}.get(c, 0)
+        if c == "," and depth <= 0:
+            out, cur = out + [cur], ""
+        else:
+            cur += c
+    return [a.strip() for a in out + [cur] if a.strip()]
+
+
+_from = [_func_addr(a) for a in _split(_get("FROM", ""))]
 if not _from:
     raise ValueError("FROM: comma list of function addresses or names")
 _ti = []
@@ -108,8 +129,8 @@ if not _ti:  # what FROM throws: start at its throw sites (a throw in a catch bo
         for site, t in (_ep.throw_sites(f, _thr) if f else []):
             _sites.append(site)
             _ti += [t] if t not in _ti else []
-_cache_file = _cache.Cache(bv)
-_edges = _cg.edges(bv, _cache_file)
+_cache_file = _cache.Cache(bv) if _get("NOCACHE") != "1" else None
+_edges = _cg.edges(bv, _cache_file) if _cache_file is not None else [tuple(e) for e in _cg.build(bv)]
 _bases = _ep.rtti_bases(_img) if _get("BASES") == "1" else None
 _guards = [h.start for h, _t in _lp.terminate_helpers(bv)]
 _vc = None
@@ -119,7 +140,7 @@ if _get("VIRTUAL", "1") != "0":
     _ev = importlib.import_module(_p + ".cpp.eh_virtual")
     _types = _rtti.scan(_img)
     _vc = _ev.VirtualCallers(bv, _types, _rn.labels(_types, _img.demangle, _rn.label_overrides(_types, _img.symbol_at)),
-                             _cache_file, float(_get("CAST_BUDGET", "120")))
+                             _cache_file, float(_get("CAST_BUDGET", "120")) if _cache_file is not None else None)
 _tr = _ep.Trace(bv, _img, _edges, _ti, _bases, _guards, _vc)
 _tr.run(sites=_sites) if _sites else _tr.run(_from)
 _name = os.path.basename(bv.file.original_filename)
@@ -130,12 +151,13 @@ _lines = ["thrown: %s; terminate helpers: %s; throwers: %d" % (
     ", ".join("%#x" % t if isinstance(t, int) else t for t in _ti) or "unknown",
     ", ".join("%#x" % g for g in _guards) or "none", len(_thr))]
 _lines += _tr.report() + [""] + ["%#x %-10s %s" % (st.site, st.kind, _tr.comment(st)) for st in _tr.all_steps()]
-with open(os.path.join(_out, _name + ".path.review"), "w", encoding="utf-8") as fh:
-    fh.write("\n".join(_lines) + "\n")
-_done, _skipped = _tr.annotate(apply=_get("APPLY") == "1")
-print("\n".join(_tr.report()))
-if _vc is not None and _vc.cast_progress is not None and _vc.cast_progress[0] < _vc.cast_progress[1]:
-    print("dynamic_cast callers: %d of %d analysed (CAST_BUDGET); run again for the rest" % _vc.cast_progress)
-print("%s %d comments, %d skipped (another comment there); review %s (%.1f s)" % (
-    "set" if _get("APPLY") == "1" else "would set", _done, _skipped, os.path.join(_out, _name + ".path.review"),
-    time.time() - _t0))
+if __name__ != "__bn_dump__":  # bn_dump.py's .ehpath takes _lines (bncpp-117)
+    with open(os.path.join(_out, _name + ".path.review"), "w", encoding="utf-8") as fh:
+        fh.write("\n".join(_lines) + "\n")
+    _done, _skipped = _tr.annotate(apply=_get("APPLY") == "1")
+    print("\n".join(_tr.report()))
+    if _vc is not None and _vc.cast_progress is not None and _vc.cast_progress[0] < _vc.cast_progress[1]:
+        print("dynamic_cast callers: %d of %d analysed (CAST_BUDGET); run again for the rest" % _vc.cast_progress)
+    print("%s %d comments, %d skipped (another comment there); review %s (%.1f s)" % (
+        "set" if _get("APPLY") == "1" else "would set", _done, _skipped, os.path.join(_out, _name + ".path.review"),
+        time.time() - _t0))
