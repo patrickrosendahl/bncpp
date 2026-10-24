@@ -120,7 +120,8 @@ def _dump_ehpath(bv, froms):
 
 _ok = 0
 for _path in _bins:
-    _variant = os.path.basename(os.path.dirname(_path)) if "DUMP_BINARIES" not in globals() else "other"
+    _variant = os.path.basename(os.path.dirname(_path)) \
+        if os.path.dirname(os.path.dirname(_path)) == os.path.join(REPO, "tests/suite/bin") else "other"
     _bv = _bn.load(_path)
     try:
         _lp.recover(_bv)  # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too
