@@ -7,12 +7,13 @@
 # renamed only while its name is BN's own (no symbol: sub_..., or BN's auto thunk name j_...) -- a symbol from the
 # binary is auto too and is kept (bncpp-94: Job::run(int) had become Job::vfunc2) --, a data symbol only where
 # there is none or an auto one, a comment only where there is none. Every skip is counted. One exception: a function still carrying our own
-# placeholder Owner::vfuncN from an earlier apply takes a better name for the same owner (bncpp-23: operator()).
+# placeholder (Owner::vfuncN, Owner::vfuncI_at_N [thunk], Owner::vfuncN [thunk]: rtti_names.placeholder_owner) from an
+# earlier apply takes a better name for the same owner (bncpp-23: operator(); bncpp-57: the thunk forms).
 # A vtable slot is a function entry by definition: a slot target BN has no function at gets one (bncpp-30: tiny
 # functions such as a lone 'ret' or a tail jump; arm64 SynthV 210), then its name -- only in executable code. The
 # review says whether it lies inside another function's body; APPLY reports the neighbours (the function containing
 # it, the one before it) whose shape (size, blocks) the new function changed.
-import importlib, os, re, time
+import importlib, os, time
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -41,12 +42,9 @@ _counts = {}
 _review = []  # "apply|keep  directive  [what is there now]" for the review file
 
 
-_PLACEHOLDER = re.compile(r"^(.+)::vfunc\d+$")
-
-
 def _own_placeholder(now, text):
-    m = _PLACEHOLDER.match(now)
-    return m is not None and text.startswith(m.group(1) + "::") and text != now
+    owner = _names.placeholder_owner(now)  # Owner::vfuncN, also the thunk forms (bncpp-57)
+    return owner is not None and text.startswith(owner + "::") and text != now
 
 
 def _count(key):

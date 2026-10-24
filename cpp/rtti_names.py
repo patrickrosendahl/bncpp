@@ -24,6 +24,7 @@ as annotate directives (the bnrun bridge's annotate lane: R:ADDR:NAME function, 
 Pure Python, no Binary Ninja import. Hooks: demangle(mangled) -> str | None; call_targets(addr) -> [name or
 address per call site] | None (None: the function is unknown, no destructor evidence).
 """
+import re
 
 OPERATOR_DELETE = ("__ZdlPv", "__ZdlPvm", "__ZdlPvSt11align_val_t", "__ZdlPvmSt11align_val_t")
 
@@ -216,8 +217,8 @@ def directives(types, demangle=None, call_targets=None, overrides=None):
         elif o is not None:
             name = function_name(lab[o[0]], o[1], o[2])
         else:
-            name = "%s::vfunc%d_at_%d" % (lab[c], i, offset)
-        out.append(("R", f, name + " [thunk]"))
+            name = _VFUNC_AT % (lab[c], i, offset)
+        out.append(("R", f, name + _THUNK))
         out.append(("C", f, "thunk for %s%s" % (where, " -> %#x" % target if target is not None else "")))
     out.sort(key=lambda d: (d[1], d[0]))
     return out
@@ -244,7 +245,22 @@ def function_name(label, index, role):
         return "%s::~%s [deleting]" % (label, short)
     if role == "invoke":
         return "%s::operator()" % label
-    return "%s::vfunc%d" % (label, index)
+    return _VFUNC % (label, index)
+
+
+# our placeholders (no better name known yet): a later apply may replace them with a better name for the same owner
+# (tests/bn_class_apply.py, bncpp-23 / bncpp-57); the pattern comes from the format strings, so the two can't drift
+_VFUNC, _VFUNC_AT, _THUNK = "%s::vfunc%d", "%s::vfunc%d_at_%d", " [thunk]"
+_PLACEHOLDER = re.compile("^(?:%s)(?:%s)?$" % ("|".join(
+    re.escape(f).replace("%s", "(?P<o%d>.+)" % k).replace("%d", r"\d+") for k, f in enumerate((_VFUNC, _VFUNC_AT))),
+    re.escape(_THUNK)))
+
+
+def placeholder_owner(name):
+    """the owner label of one of our placeholder names (Owner::vfunc3, Owner::vfunc2_at_16 [thunk], Owner::vfunc5
+    [thunk]), else None"""
+    m = _PLACEHOLDER.match(name)
+    return None if m is None else m.group("o0") or m.group("o1")
 
 
 def member_name(index, role):
