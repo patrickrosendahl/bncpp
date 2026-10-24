@@ -25,6 +25,8 @@ $B --timeout 60 tests/bn_dev_load.py                   # register "Pseudo Cpp de
 $B --parallel --timeout 600 tests/bn_dump.py           # .scratch/suite/out/<variant>/TestX.{pcpp,pc,lsda,classes,fields,ehpath}
                                                        #   only some: --env DUMP_KINDS=lsda (comma list),
                                                        #   --env DUMP_TESTS=TestVirtual (name prefixes)
+                                                       #   --env DUMP_VARIANTS=x86_64-O2 (comma list),
+                                                       #   --env RESUME=1 (skip binaries already current: a cut-off run)
 python3 tests/suite/suite.py compare [--diff] [TestX…] # against tests/suite/results/ (exit 1 on a difference)
 python3 tests/suite/suite.py check [--worst N] [K=V…]  # no-loss vs Pseudo C + flaw counters (exit 1: a gate)
 python3 tests/suite/suite.py lint                      # pyflakes (redefinitions, undefined names); check runs it

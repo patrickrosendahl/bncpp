@@ -2,6 +2,9 @@
 #   bnrun --parallel --timeout 600 tests/bn_dump.py
 #   bnrun --parallel --timeout 300 --env DUMP_KINDS=lsda tests/bn_dump.py   # only some kinds (comma list)
 #   bnrun --parallel --timeout 300 --env DUMP_TESTS=TestVirtual tests/bn_dump.py   # only test names starting so
+#   bnrun --parallel --timeout 300 --env DUMP_VARIANTS=x86_64-O2,arm64-O2 tests/bn_dump.py   # only these variants
+#   bnrun --parallel --timeout 600 --env RESUME=1 tests/bn_dump.py   # skip binaries already dumped by this dev
+#          load: all requested outputs carry the current stamp -- continues a dump the bridge timeout cut off
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
 # every landing pad BN has none at (cpp/landing_pads.py, bncpp-4) and writes into
 # .scratch/suite/out/<variant>/TestX.*:
@@ -45,6 +48,10 @@ _bins = globals().get("DUMP_BINARIES") or sorted(glob.glob(os.path.join(REPO, "t
 _only = _opt("DUMP_TESTS")
 if _only:
     _bins = [b for b in _bins if any(os.path.basename(b).startswith(p) for p in _only.split(","))]
+_variants = _opt("DUMP_VARIANTS")
+if _variants:
+    _bins = [b for b in _bins if os.path.basename(os.path.dirname(b)) in _variants.split(",")]
+_resume = _opt("RESUME") == "1"
 _out = os.path.join(REPO, ".scratch/suite/out")
 _spec = importlib.util.spec_from_file_location("_suite", os.path.join(REPO, "tests/suite/suite.py"))
 _suite = importlib.util.module_from_spec(_spec)
@@ -121,7 +128,7 @@ def _dump_ehpath(bv, froms):
     return out[:-1]
 
 
-_ok = 0
+_ok = _skipped = 0
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) \
         if os.path.dirname(os.path.dirname(_path)) == os.path.join(REPO, "tests/suite/bin") else "other"
@@ -129,6 +136,12 @@ for _path in _bins:
     _dir = os.path.join(_out, _variant)
     _want = dict(_stamp, input=_suite.input_hash(_path))
     _froms = _suite.EH_PATHS.get(_base) if "ehpath" in _kinds else None
+    if _resume:
+        _have = _suite.read_stamps(_dir).get(_base, {})
+        if all(os.path.exists(os.path.join(_dir, "%s.%s" % (_base, k))) and _have.get(k, {}).get(k2) == x
+               for k in _kinds if k != "ehpath" or _froms for k2, x in _want.items() if k2 != "dev"):
+            _skipped += 1
+            continue
     _bv = _bn.load(_path)
     try:
         _lp.recover(_bv)  # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too
@@ -164,4 +177,5 @@ for _path in _bins:
         _ok += 1
     finally:
         _bv.file.close()
-print("dumped %s of %d of %d binaries into %s" % ("+".join(_kinds), _ok, len(_bins), _out))
+print("dumped %s of %d of %d binaries into %s%s" % ("+".join(_kinds), _ok, len(_bins), _out,
+                                                     " (%d already current: RESUME)" % _skipped if _skipped else ""))
