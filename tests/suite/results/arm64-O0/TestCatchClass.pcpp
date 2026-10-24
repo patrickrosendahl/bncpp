@@ -28,8 +28,8 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_free_exception(arg4);
-    /* tailcall */
-    return sub_4007a4(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_40074c @ 0x40074c
@@ -40,13 +40,7 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_free_exception(arg4);
-    /* tailcall */
-    return sub_4007a4(arg3);
-}
-
-// sub_4007a4 @ 0x4007a4
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
     /* no return */
 }
 

@@ -15,29 +15,32 @@
     // exception table (LSDA 0x402448): 3 of 5 call sites have a landing pad; #n = the selector value
     //   0x400728..0x400730 -> 0x40075c sub_40075c: catch (std::runtime_error) #1, cleanup, cleanup
     //   0x400738..0x400744 -> 0x400784 sub_400784: catch (std::runtime_error) #1, cleanup, cleanup
-    //   0x4007c0..0x4007c4 (in sub_4007ac) -> 0x40081c sub_40081c: cleanup
+    //   0x4007c0..0x4007c4 (in sub_400784) -> 0x40081c sub_40081c: cleanup
 
-    int64_t fp;
-    int64_t var_10 = fp;
-    int64_t var_18 = *(uint64_t*)___stack_chk_guard;
+    int64_t x8 = *(uint64_t*)___stack_chk_guard;
     struct std::function<int32_t (int32_t)> var_38;
     try
     {
         std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(&var_38,
             (uint64_t)arg1);
-        int32_t var_3c = apply(&var_38, arg1);
+        int32_t x0_2 = apply(&var_38, arg1);
     }
-    // unwind: std::function<int32_t (int32_t)>::~function(arg3 - 0x28);
+    // unwind: std::function<int32_t (int32_t)>::~function(&var_38);
     catch (std::runtime_error& e)
     {
-        void* fp;
         var_3c = 0xffffffff;
-        /* tailcall */
-        return j_sub_4007cc(arg1);
+        if (*(uint64_t*)___stack_chk_guard == var_18)
+            return (uint64_t)var_3c;
+        ___stack_chk_fail();
+        /* no return */
     }
     std::function<int32_t (int32_t)>::~function(&var_38);
-    /* tailcall */
-    return sub_4007cc(&var_10, var_10);
+
+    if (*(uint64_t*)___stack_chk_guard == x8)
+        return (uint64_t)x0_2;
+
+    ___stack_chk_fail();
+    /* no return */
 }
 
 // sub_40075c @ 0x40075c
@@ -46,11 +49,26 @@
     //   from 0x400728..0x400730: catch (std::runtime_error) #1, cleanup, cleanup
 
     if (!arg2)
-        /* tailcall */
-        return sub_400824(arg1);
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
-    /* tailcall */
-    return sub_40079c(arg2, arg1);
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    void* arg_30 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 0x2c) = 0xffffffff;
+    ___cxa_end_catch();
+
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg3 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg3 - 0x2c);
+
+    ___stack_chk_fail();
+    /* no return */
 }
 
 // sub_400784 @ 0x400784
@@ -58,48 +76,21 @@
     // landing pad of guarded_apply(int32_t) @ 0x4006f8
     //   from 0x400738..0x400744: catch (std::runtime_error) #1, cleanup, cleanup
 
-    std::function<int32_t (int32_t)>::~function(arg3 - 0x28);
-    /* tailcall */
-    return sub_40079c(arg2, arg1);
-}
+    std::function<int32_t (int32_t)>::~function((char*)arg3 - 0x28);
 
-// sub_40079c @ 0x40079c
-{
-    if (arg1 != 1)
-        /* tailcall */
-        return sub_400824(arg2);
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
-    void* fp;
-    /* tailcall */
-    return sub_4007ac(fp, arg2);
-}
-
-// sub_4007ac @ 0x4007ac
-{
-    void* arg_30 = ___cxa_begin_catch(arg2);
-    *(uint32_t*)((char*)arg1 - 0x2c) = 0xffffffff;
+    void* arg_30 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 0x2c) = 0xffffffff;
     ___cxa_end_catch();
-    /* tailcall */
-    return j_sub_4007cc(arg1);
-}
 
-// j_sub_4007cc @ 0x4007c8
-{
-    /* tailcall */
-    return sub_4007cc(arg1, arg2);
-}
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg3 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg3 - 0x2c);
 
-// sub_4007cc @ 0x4007cc
-{
-    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg1 - 8))
-        return (uint64_t)*(uint32_t*)((char*)arg1 - 0x2c);
-
-    /* tailcall */
-    return sub_4007f0();
-}
-
-// sub_4007f0 @ 0x4007f0
-{
     ___stack_chk_fail();
     /* no return */
 }
@@ -107,14 +98,8 @@
 // sub_40081c @ 0x40081c
 {
     // landing pad of guarded_apply(int32_t) @ 0x4006f8
-    //   from 0x4007c0..0x4007c4 (in sub_4007ac): cleanup
+    //   from 0x4007c0..0x4007c4 (in sub_400784): cleanup
 
-    /* tailcall */
-    return sub_400824(arg1);
-}
-
-// sub_400824 @ 0x400824
-{
     __Unwind_Resume(arg1);
     /* no return */
 }
@@ -152,11 +137,9 @@
     // exception table (LSDA 0x402470): 3 of 5 call sites have a landing pad; #n = the selector value
     //   0x400930..0x400938 -> 0x400954 sub_400954: catch (std::logic_error) #1, cleanup, cleanup
     //   0x40093c..0x400944 -> 0x40097c sub_40097c: catch (std::logic_error) #1, cleanup, cleanup
-    //   0x4009b8..0x4009bc (in sub_4009a4) -> 0x400a1c sub_400a1c: cleanup
+    //   0x4009b8..0x4009bc (in sub_40097c) -> 0x400a1c sub_400a1c: cleanup
 
-    int64_t fp;
-    int64_t var_10 = fp;
-    int64_t var_18 = *(uint64_t*)___stack_chk_guard;
+    int64_t x8 = *(uint64_t*)___stack_chk_guard;
     struct std::function<void ()> var_38;
     try
     {
@@ -164,18 +147,24 @@
             (uint64_t)arg1);
         forward(&var_38);
     }
-    // unwind: std::function<void ()>::~function(arg3 - 0x28);
+    // unwind: std::function<void ()>::~function(&var_38);
     catch (std::logic_error& e)
     {
-        void* fp;
         var_3c = 0xffffffff;
-        /* tailcall */
-        return j_sub_4009cc(arg1);
+        if (*(uint64_t*)___stack_chk_guard == var_18)
+            return (uint64_t)var_3c;
+        ___stack_chk_fail();
+        /* no return */
     }
     std::function<void ()>::~function(&var_38);
     int32_t var_3c = 0;
-    /* tailcall */
-    return sub_4009cc(&var_10, var_10);
+    int32_t var_74 = 0;
+
+    if (*(uint64_t*)___stack_chk_guard == x8)
+        return 0;
+
+    ___stack_chk_fail();
+    /* no return */
 }
 
 // sub_400954 @ 0x400954
@@ -184,11 +173,26 @@
     //   from 0x400930..0x400938: catch (std::logic_error) #1, cleanup, cleanup
 
     if (!arg2)
-        /* tailcall */
-        return sub_400a24(arg1);
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
-    /* tailcall */
-    return sub_400994(arg2, arg1);
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
+
+    void* arg_20 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 0x2c) = 0xffffffff;
+    ___cxa_end_catch();
+
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg3 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg3 - 0x2c);
+
+    ___stack_chk_fail();
+    /* no return */
 }
 
 // sub_40097c @ 0x40097c
@@ -196,48 +200,21 @@
     // landing pad of guarded_forward(int32_t) @ 0x400900
     //   from 0x40093c..0x400944: catch (std::logic_error) #1, cleanup, cleanup
 
-    std::function<void ()>::~function(arg3 - 0x28);
-    /* tailcall */
-    return sub_400994(arg2, arg1);
-}
+    std::function<void ()>::~function((char*)arg3 - 0x28);
 
-// sub_400994 @ 0x400994
-{
-    if (arg1 != 1)
-        /* tailcall */
-        return sub_400a24(arg2);
+    if (arg2 != 1)
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
-    void* fp;
-    /* tailcall */
-    return sub_4009a4(fp, arg2);
-}
-
-// sub_4009a4 @ 0x4009a4
-{
-    void* arg_20 = ___cxa_begin_catch(arg2);
-    *(uint32_t*)((char*)arg1 - 0x2c) = 0xffffffff;
+    void* arg_20 = ___cxa_begin_catch(arg1);
+    *(uint32_t*)((char*)arg3 - 0x2c) = 0xffffffff;
     ___cxa_end_catch();
-    /* tailcall */
-    return j_sub_4009cc(arg1);
-}
 
-// j_sub_4009cc @ 0x4009c0
-{
-    /* tailcall */
-    return sub_4009cc(arg1, arg2);
-}
+    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg3 - 8))
+        return (uint64_t)*(uint32_t*)((char*)arg3 - 0x2c);
 
-// sub_4009cc @ 0x4009cc
-{
-    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg1 - 8))
-        return (uint64_t)*(uint32_t*)((char*)arg1 - 0x2c);
-
-    /* tailcall */
-    return sub_4009f0();
-}
-
-// sub_4009f0 @ 0x4009f0
-{
     ___stack_chk_fail();
     /* no return */
 }
@@ -245,14 +222,8 @@
 // sub_400a1c @ 0x400a1c
 {
     // landing pad of guarded_forward(int32_t) @ 0x400900
-    //   from 0x4009b8..0x4009bc (in sub_4009a4): cleanup
+    //   from 0x4009b8..0x4009bc (in sub_40097c): cleanup
 
-    /* tailcall */
-    return sub_400a24(arg1);
-}
-
-// sub_400a24 @ 0x400a24
-{
     __Unwind_Resume(arg1);
     /* no return */
 }

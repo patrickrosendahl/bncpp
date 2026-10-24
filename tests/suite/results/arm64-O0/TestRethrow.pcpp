@@ -107,8 +107,10 @@
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
 
     if (*(uint32_t*)((char*)arg3 - 0x14) != 1)
-        /* tailcall */
-        return sub_400808(arg3);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
 
     *(uint32_t*)((char*)arg3 - 0x18) =
         *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
@@ -134,8 +136,13 @@
 
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
-    /* tailcall */
-    return sub_4007d8();
+
+    if ((uint32_t)arg5 & 1)
+        ___cxa_free_exception(arg4);
+
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_4007a4 @ 0x4007a4
@@ -145,8 +152,15 @@
 
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
-    /* tailcall */
-    return sub_4007cc();
+    std::string arg_18;
+    std::string::~string(&arg_18);
+
+    if ((uint32_t)arg5 & 1)
+        ___cxa_free_exception(arg4);
+
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_4007b4 @ 0x4007b4
@@ -158,42 +172,14 @@
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     std::string arg_30;
     std::string::~string(&arg_30);
-    /* tailcall */
-    return sub_4007cc();
-}
-
-// sub_4007cc @ 0x4007cc
-{
     std::string arg_18;
     std::string::~string(&arg_18);
-    /* tailcall */
-    return sub_4007d8();
-}
 
-// sub_4007d8 @ 0x4007d8
-{
-    if ((uint32_t)arg1 & 1)
-        /* tailcall */
-        return sub_4007e4();
+    if ((uint32_t)arg5 & 1)
+        ___cxa_free_exception(arg4);
 
     ___cxa_end_catch();
-    void* fp;
-    /* tailcall */
-    return sub_400808(fp);
-}
-
-// sub_4007e4 @ 0x4007e4
-{
-    ___cxa_free_exception(arg1);
-    ___cxa_end_catch();
-    void* fp;
-    /* tailcall */
-    return sub_400808(fp);
-}
-
-// sub_400808 @ 0x400808
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
     /* no return */
 }
 

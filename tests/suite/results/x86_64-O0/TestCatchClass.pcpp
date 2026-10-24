@@ -25,12 +25,12 @@
     // landing pad of fail(int32_t) @ 0x400690
     //   from 0x4006b8..0x4006bd: cleanup
 
-    int64_t rdi = *(uint64_t*)((char*)arg5 - 0x20);
+    int64_t rdi_1 = *(uint64_t*)((char*)arg5 - 0x20);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
-    ___cxa_free_exception(rdi);
-    /* tailcall */
-    return sub_400778(arg5);
+    ___cxa_free_exception(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
 }
 
 // sub_400732 @ 0x400732
@@ -38,17 +38,11 @@
     // landing pad of fail(int32_t) @ 0x400690
     //   from 0x40070d..0x400719: cleanup
 
-    int64_t rdi = *(uint64_t*)((char*)arg5 - 0x28);
+    int64_t rdi_1 = *(uint64_t*)((char*)arg5 - 0x28);
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
-    ___cxa_free_exception(rdi);
-    /* tailcall */
-    return sub_400778(arg5);
-}
-
-// sub_400778 @ 0x400778
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
+    ___cxa_free_exception(rdi_1);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
     /* no return */
 }
 

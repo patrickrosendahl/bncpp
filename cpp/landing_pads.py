@@ -150,19 +150,25 @@ def mark_noreturn(bv, todo):
     return todo
 
 
-def create(bv, todo=None):
-    """a user function at every pad in todo (default: missing(bv)), then analysis; returns the pads created"""
+def create(bv, todo=None, serial=False):
+    """a user function at every pad in todo (default: missing(bv)), then analysis; returns the pads created.
+    serial: one pad at a time in address order, analysis after each (bncpp-124). Pads created together are analysed
+    in parallel, and where two jump into the same tail (x86_64 -O0 TestClosure: two pads, one _Unwind_Resume block)
+    BN keeps it inline in both when they overlap, but splits it off as a function when one pad already owns it --
+    which happens under load. Serial gives that split every time; one analysis per pad is far too slow for SynthV."""
     todo = missing(bv) if todo is None else todo
-    for p in todo:
+    for p in sorted(todo, key=lambda p: p.addr) if serial else todo:
         bv.create_user_function(p.addr)
-    if todo:
+        if serial:
+            bv.update_analysis_and_wait()
+    if todo and not serial:
         bv.update_analysis_and_wait()
     return todo
 
 
-def recover(bv, protected=None):
+def recover(bv, protected=None, serial=False):
     """mark_noreturn, then create: ([functions marked], [pads created])"""
-    return mark_noreturn(bv, noreturn_todo(bv, protected)), create(bv)
+    return mark_noreturn(bv, noreturn_todo(bv, protected)), create(bv, serial=serial)
 
 
 def register_command(prefix):

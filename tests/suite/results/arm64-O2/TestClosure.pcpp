@@ -492,8 +492,10 @@
     //   from 0x400cd8..0x400cdc: catch (Err) #1
 
     if (arg2 != 1)
-        /* tailcall */
-        return sub_400d24(arg1);
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
     int64_t result = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     ___cxa_end_catch();
@@ -506,13 +508,6 @@
     //   from 0x400cf4..0x400cf8 (in sub_400ce0): cleanup
 
     ___cxa_end_catch();
-    struct _Unwind_Exception* entry_x0;
-    /* tailcall */
-    return sub_400d24(entry_x0);
-}
-
-// sub_400d24 @ 0x400d24
-{
     __Unwind_Resume(arg1);
     /* no return */
 }

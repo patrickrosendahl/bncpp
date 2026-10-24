@@ -6,7 +6,7 @@
 #   bnrun --parallel --timeout 600 --env RESUME=1 tests/bn_dump.py   # skip binaries already dumped by this dev
 #          load: all requested outputs carry the current stamp -- continues a dump the bridge timeout cut off
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
-# every landing pad BN has none at (cpp/landing_pads.py, bncpp-4) and writes into
+# every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; serially, bncpp-124) and writes into
 # .scratch/suite/out/<variant>/TestX.*:
 #   .pcpp  each function in __text / .text in the latest dev-loaded Pseudo Cpp (checked by tests/suite/suite.py)
 #   .pc    the same functions in Pseudo C (for comparison)
@@ -144,7 +144,9 @@ for _path in _bins:
             continue
     _bv = _bn.load(_path)
     try:
-        _lp.recover(_bv)  # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too
+        # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too; one at a time, or
+        # BN's parallel analysis of pads that share a tail splits it off in some runs only (bncpp-124)
+        _lp.recover(_bv, serial=True)
         _texts = {}
         _views = [(k, l) for k, l in (("pc", "Pseudo C"), ("pcpp", _lang)) if k in _kinds]
         if _views:
