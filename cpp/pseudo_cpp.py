@@ -1007,8 +1007,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
     def _zero_one_var(self, var, seen=frozenset()):
         """every definition of var (no parameter, address never taken) stores a 0 / 1 value: a 0 / 1 constant, a
         comparison, another such variable, or the low part of a variable whose low part the statement right before
-        set to one (`(uint8_t)result = c; var_15 = (uint8_t)result;`, x86_64-O0: BN's `result.b`, a struct field at
-        offset 0, or a LOW_PART)"""
+        set to one (`(uint8_t)result = c; var_15 = (uint8_t)result;`, x86_64-O0: BN's `result.b`, _low_byte)"""
         if var in seen or var in self._addr_taken() or var in self.function.parameter_vars:
             return False
         defs = self.hlil.get_var_definitions(var)
@@ -1032,13 +1031,14 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             return True
         if o == Op.HLIL_VAR:
             return self._zero_one_var(e.var, seen)
-        if _low_of_var(e) is not None:
+        if e.operation in (Op.HLIL_STRUCT_FIELD, Op.HLIL_LOW_PART) and e.src.operation == Op.HLIL_VAR and \
+                _low_byte(e, e.src.var):
             block = stmt.parent
             body = list(block.body) if block is not None and block.operation == Op.HLIL_BLOCK else []
             at = next((n for n, s in enumerate(body) if s.expr_index == stmt.expr_index), 0)
             prev = body[at - 1] if at else None
-            return prev is not None and prev.operation == Op.HLIL_ASSIGN and prev.dest.size == e.size and \
-                _low_of_var(prev.dest) == _low_of_var(e) and self._zero_one_value(prev.src, prev, seen)
+            return prev is not None and prev.operation == Op.HLIL_ASSIGN and _low_byte(prev.dest, e.src.var) and \
+                self._zero_one_value(prev.src, prev, seen)
         return False
 
     def _ternary_tokens(self, value, seen):
@@ -1069,8 +1069,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         cond, a, b = (self._expr_tokens(e, set()) for e in (iff.condition, a, b))
         group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] if _top_ternary(ts) else ts
         step = [tok(TT.TextToken, " " * (len(_tokens_text(toks)) - len(_tokens_text(toks).lstrip()) + 4))]
-        return [toks + group(cond), step + [tok(TT.TextToken, "? ")] + group(a),
-                step + [tok(TT.TextToken, ": ")] + b + [tok(TT.TextToken, ";")]]
+        head = _wrap_head(toks, step)
+        return head[:-1] + [head[-1] + group(cond), step + [tok(TT.TextToken, "? ")] + group(a),
+                            step + [tok(TT.TextToken, ": ")] + b + [tok(TT.TextToken, ";")]]
 
     def emit_token_lines(self, lines, tokens, statement):
         for i, line in enumerate(_brace_do(lines)):
@@ -1087,6 +1088,57 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 _OPS = set("+ - * / % & | ^ << >> < > <= >= == != && || ? :".split())
 _MAX_WIDTH = 100  # a line a folded conditional expression may make (bncpp-89)
 _LOW_OPS = {Op.HLIL_AND: "&", Op.HLIL_OR: "|", Op.HLIL_XOR: "^"}  # compound stores into a low byte (bncpp-85)
+
+
+def _wrap_head(toks, step):
+    """a declaration head `T x = ` as lines: one line, or wider than _MAX_WIDTH (a long template type, which BN's
+    emitter would wrap with its own indent) broken after the type's first top-level '(' and its top-level ','s, the
+    continuation lines indented by step like the ternary's `? a` / `: b;` (bncpp-136)"""
+    text = _tokens_text(toks)
+    if len(text.rstrip()) <= _MAX_WIDTH:
+        return [toks]
+    depth, cuts = 0, []
+    for n, ch in enumerate(text):
+        if ch in "(<":
+            depth += 1
+            if ch == "(" and depth == 1 and not cuts:
+                cuts.append(n + 1)
+        elif ch in ")>":
+            depth -= 1
+            if depth == 0 and cuts:
+                break
+        elif ch == "," and depth == 1 and cuts:
+            cuts.append(n + 1)
+    if not cuts:
+        return [toks]
+    lines = _split_tokens(toks, cuts)
+    return [lines[0]] + [step + _lstrip_tokens(l) for l in lines[1:]]
+
+
+def _split_tokens(toks, cuts):
+    """toks cut at the character offsets cuts (into their joined text), a token at a cut split in two"""
+    lines, cur, at, cuts = [], [], 0, list(cuts)
+    for t in toks:
+        text = t.text
+        while cuts and cuts[0] - at <= len(text):  # a cut inside this token or right after it
+            k = cuts.pop(0) - at
+            if text[:k]:
+                cur.append(tok(t.type, text[:k]))
+            lines.append(cur)
+            cur, text, at = [], text[k:], at + k
+        if text:
+            cur.append(tok(t.type, text))
+        at += len(text)
+    return lines + [cur]
+
+
+def _lstrip_tokens(toks):
+    toks = list(toks)
+    while toks and not toks[0].text.strip():
+        toks.pop(0)
+    if toks:
+        toks[0] = tok(toks[0].type, toks[0].text.lstrip())
+    return toks
 
 
 def _group(toks):
@@ -1163,14 +1215,6 @@ def _invert_cmp(toks):
     out = list(toks)
     out[at[0]] = tok(t.type, t.text.replace(t.text.strip(), _INVERSE[t.text.strip()]))
     return out
-
-
-def _low_of_var(e):
-    """the variable whose low part e is (`(uint8_t)r` as LOW_PART, or `r.b` as a struct field at offset 0), else None"""
-    if e.operation in (Op.HLIL_LOW_PART, Op.HLIL_STRUCT_FIELD) and e.src.operation == Op.HLIL_VAR and \
-            (e.operation == Op.HLIL_LOW_PART or e.offset == 0):
-        return e.src.var
-    return None
 
 
 def _bool_const(v):

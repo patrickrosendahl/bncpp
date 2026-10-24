@@ -353,8 +353,8 @@
     }
 
     void* __offset(
-            std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>,
-            0x14) x8_1 = !z && n == v
+        std::__function::__func<pick_fn(int32_t const*, int32_t, int32_t)::$_0, int32_t (int32_t)>,
+        0x14) x8_1 = !z && n == v
         ? *(uint64_t*)((char*)this + 8) + ((uint64_t)x8_2 << 2)
         : (char*)this + 0x14;
 
