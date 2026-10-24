@@ -1,5 +1,5 @@
 # Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 600 --env FROM=0x10032b410|name[,…] [--env TI=0x1009d0bb0|typeinfo_for_X[,…]] \
+#   bnrun --bndb DB --timeout 600 --env FROM=0x10032b410|name|part*of*name[,…] [--env TI=0x1009d0bb0|typeinfo_for_X[,…]] \
 #         [--env BASES=1] [--env VIRTUAL=0] [--env APPLY=1] tests/bn_eh_path.py
 # bncpp-24: what the functions at FROM throw, followed up the direct callers (cpp/eh_path.py): who catches it,
 # where it terminates, where it leaves the known call graph. TI: the thrown typeinfos (default: the ones FROM passes
@@ -11,7 +11,7 @@
 # CAST_BUDGET: seconds for the dynamic_cast callers not cached yet (default 120; SynthV: ~4.5 min in all, so a few
 # runs -- the report says how many are done).
 # APPLY=1 sets the comments (in RAM; never over another comment).
-import importlib, os, time
+import importlib, os, re, time
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -27,22 +27,66 @@ _cache = importlib.import_module(_p + ".shared.bncache")
 _env = globals().get("env") or {}
 _get = lambda k, d=None: _env.get(k) or os.environ.get(k) or d
 _t0 = time.time()
+_TYPEDEFS = [(re.compile(r"\b%s\b" % a), b) for a, b in (
+    ("uint8_t", "unsigned char"), ("int8_t", "signed char"), ("uint16_t", "unsigned short"), ("int16_t", "short"),
+    ("uint32_t", "unsigned int"), ("int32_t", "int"), ("uint64_t", "unsigned long"), ("int64_t", "long"))]
+
+
+def _plain(n):
+    """a symbol name without leading '_' and its trailing parameter list (balanced, so 'guarded_apply(int)::$_0::
+    operator()(int) const' keeps the 'guarded_apply(int)' scope and the '()' of operator(), bncpp-118); BN's
+    int32_t & co. as the source spells them"""
+    n = n.lstrip("_").strip()
+    for rx, b in _TYPEDEFS:
+        n = rx.sub(b, n)
+    while n.split(" ")[-1] in ("const", "volatile", "&", "&&", "noexcept") and " " in n:
+        n = n.rsplit(" ", 1)[0]
+    if not n.endswith(")") or n.endswith("operator()"):
+        return n
+    depth = 0
+    for k in range(len(n) - 1, -1, -1):
+        depth += {")": 1, "(": -1}.get(n[k], 0)
+        if depth == 0:
+            return n[:k] if n[:k] else n
+    return n
+
+
+def _matches(want, name):
+    """want with '*' wildcards (the parts in order, anywhere in the name), else equal"""
+    if "*" not in want:
+        return want == name
+    k = 0
+    for part in want.split("*"):
+        k = name.find(part, k)
+        if k < 0:
+            return False
+        k += len(part)
+    return want.endswith("*") or name.endswith(want.rsplit("*", 1)[1])
+
+
 def _func_addr(a):
-    """a hex address, or a function name (an import such as may_throw)"""
+    """a hex address, or a function name (an import such as may_throw); '*' matches any text ('__func<schedule*
+    operator()'); a name without '*' that is no symbol's full name is looked for as a part of one (unique only)"""
     if a.startswith("0x"):
         return int(a, 16)
-    plain = lambda n: n.lstrip("_").split("(")[0]  # '_may_throw', 'may_throw(int32_t)' -> 'may_throw'
     # every symbol at the start, the auto one too: bn_class_apply.py's user name (Job::vfunc2) hides
     # Job::run (bncpp-99)
-    names = lambda f, raw=True: set(plain(n) for sym in bv.get_symbols(f.start)
+    names = lambda f, raw=True: set(_plain(n) for sym in bv.get_symbols(f.start)
                                     for n in ((sym.raw_name,) if raw else ()) + (sym.full_name, sym.short_name))
-    want = plain(a)
-    funcs = sorted((f for f in bv.functions if want in names(f)), key=lambda f: f.start)
+    want = _plain(a)
+    funcs = sorted((f for f in bv.functions if any(_matches(want, n) for n in names(f))), key=lambda f: f.start)
+    if not funcs and "*" not in want:
+        funcs = sorted((f for f in bv.functions if any(want in n for n in names(f, False))), key=lambda f: f.start)
+        if len(funcs) > 1:
+            raise ValueError("FROM: %r is a part of %d functions' names, name one (or use '*'): %s" % (
+                a, len(funcs), [sorted(names(f, False))[0] for f in funcs[:8]]))
     if not funcs:
         near = sorted(set(n for f in bv.functions for n in names(f, False)
                           if any(p in n for p in want.split("::") if p)))[:8]
         raise ValueError("FROM: no function %r (compared raw, full and short names of all symbols at a function "
-                         "start, without leading '_' and parameters); similar: %s" % (a, near or "none"))
+                         "start, without leading '_' and the parameter list); similar: %s" % (a, near or "none"))
+    if len(funcs) > 1:
+        print("FROM %r: %d functions, took %#x %s" % (a, len(funcs), funcs[0].start, funcs[0].symbol.full_name))
     return funcs[0].start
 
 
