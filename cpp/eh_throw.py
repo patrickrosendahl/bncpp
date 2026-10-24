@@ -17,6 +17,7 @@ from binaryninja import HighLevelILOperation
 from ..shared.hlil import walk
 from ..shared.tokens import TT, tok
 from . import eh_comments
+from .eh_path import typeinfo_arg
 
 Op = HighLevelILOperation
 _THROW, _ALLOC = "cxa_throw", "cxa_allocate_exception"
@@ -91,7 +92,8 @@ def _type_name(ti):
         e = e.src
     if e.operation not in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT, Op.HLIL_EXTERN_PTR):
         return None
-    sym = e.function.source_function.view.get_symbol_at(e.constant)
+    view = e.function.source_function.view
+    sym = view.get_symbol_at(typeinfo_arg(view, e.constant))  # (a slot of a local typeinfo: its target, bncpp-116)
     return eh_comments.type_name(sym.full_name if sym is not None else str(e).lstrip("&"))
 
 

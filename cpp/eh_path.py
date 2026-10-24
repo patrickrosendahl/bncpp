@@ -205,9 +205,9 @@ class Trace:
                 name = callee(i)
                 if name == "cxa_rethrow" and i.address not in rethrows:
                     rethrows.append(i.address)
-                elif name == "cxa_throw" and len(i.params) >= 2 and hasattr(i.params[1], "constant") and \
-                        (i.address, i.params[1].constant) not in throws:
-                    throws.append((i.address, i.params[1].constant))
+                elif name == "cxa_throw" and len(i.params) >= 2 and hasattr(i.params[1], "constant"):
+                    t = typeinfo_arg(self.bv, i.params[1].constant)
+                    throws += [(i.address, t)] if (i.address, t) not in throws else []
         return rethrows, throws
 
     def throw_site(self, site, queue, via=None):
@@ -391,6 +391,23 @@ def _scalar(keys):
     return False
 
 
+def _typeinfo_name(sym):
+    return sym is not None and (sym.raw_name.startswith("__ZTI") or sym.full_name.startswith("typeinfo_for_"))
+
+
+def typeinfo_arg(bv, c):
+    """the typeinfo of ___cxa_throw's constant argument c: c itself, or what c points to when c is a pointer slot to
+    a local typeinfo (SynthV's hashed bind slots: libc++'s inlined __throw_bad_function_call passes the slot of
+    typeinfo_for_std::__1::bad_function_call, bncpp-116); an import slot of an external typeinfo stays the slot"""
+    if _typeinfo_name(bv.get_symbol_at(c)):
+        return c
+    try:
+        target = bv.read_pointer(c)
+    except Exception:
+        return c
+    return target if _typeinfo_name(bv.get_symbol_at(target)) else c
+
+
 def thrown_types(func, throwers=None):
     """the typeinfos func throws (addresses; a std helper's class name), from its HLIL"""
     return list(dict.fromkeys(t for _site, t in throw_sites(func, throwers)))
@@ -409,8 +426,9 @@ def throw_sites(func, throwers=None):
         if i.operation not in (Op.HLIL_CALL, Op.HLIL_TAILCALL):
             continue
         if str(i.dest).lstrip("_") == "cxa_throw":
-            if len(i.params) >= 2 and hasattr(i.params[1], "constant") and (i.address, i.params[1].constant) not in out:
-                out.append((i.address, i.params[1].constant))
+            if len(i.params) >= 2 and hasattr(i.params[1], "constant"):
+                t = typeinfo_arg(func.view, i.params[1].constant)
+                out += [(i.address, t)] if (i.address, t) not in out else []
         elif throwers and i.dest.operation in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT) and i.dest.constant in throwers:
             out += [(i.address, t) for t in throwers[i.dest.constant] if (i.address, t) not in out]
     return out
