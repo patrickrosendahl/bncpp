@@ -32,7 +32,7 @@ comparison; not checked). ref-lsda decodes the same tables from the files themse
 only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
 and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
 """
-import difflib, filecmp, hashlib, os, re, shutil, struct, subprocess, sys
+import difflib, filecmp, hashlib, json, os, re, shutil, struct, subprocess, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -197,6 +197,102 @@ def pairs(names):
                 yield v, f, os.path.join(OUT, v, f), os.path.join(RESULTS, v, f)
 
 
+# stamps (bncpp-134): out/<variant>/.stamps.json {TestX: {kind: stamp}}, written by bn_dump.py per output. A stamp
+# holds the hashes of what produced it: 'plugin' the dev-loaded package (top-level *.py, cpp/, shared/ -- what
+# bn_dev_load.py copies; constants.py without its LANGUAGE_NAME), 'scripts' the dump scripts read from the repo
+# (+ EH_PATHS), 'input' the binary (+ its .names); 'dev' the language name, 'at' the time. compare / check warn when
+# the outputs come from more than one plugin state or not from the working tree's; bn_dump.py RESUME=1 skips a
+# binary whose outputs all carry the current stamp (bncpp-130).
+STAMPS = ".stamps.json"
+DUMP_SCRIPTS = ["bn_dump.py", "bn_class_apply.py", "bn_class_types.py", "bn_class_fields.py", "bn_catch_types.py",
+                "bn_eh_path.py"]
+
+
+def _sha(parts):
+    h = hashlib.sha1()
+    for p in parts:
+        h.update(p if isinstance(p, bytes) else p.encode("utf-8"))
+        h.update(b"\0")
+    return h.hexdigest()[:12]
+
+
+def plugin_hash(root=REPO):
+    """the plugin sources under root (the repo or a dev load's /tmp/cpp_devN), as bn_dev_load.py copies them"""
+    parts = []
+    for sub in ("", "cpp", "shared"):
+        d = os.path.join(root, sub)
+        for f in sorted(os.listdir(d)) if os.path.isdir(d) else ():
+            if f.endswith(".py"):
+                data = open(os.path.join(d, f), "rb").read()
+                if sub == "" and f == "constants.py":
+                    data = re.sub(rb'LANGUAGE_NAME = "[^"]*"', b"", data)
+                parts += [os.path.join(sub, f), data]
+    return _sha(parts)
+
+
+def scripts_hash():
+    return _sha([open(os.path.join(REPO, "tests", f), "rb").read() for f in DUMP_SCRIPTS] + [repr(EH_PATHS)])
+
+
+def input_hash(binary):
+    names = os.path.join(SRC, os.path.splitext(os.path.basename(binary))[0] + ".names")
+    return _sha([open(binary, "rb").read()] + ([open(names, "rb").read()] if os.path.exists(names) else []))
+
+
+def read_stamps(variant_dir):
+    try:
+        with open(os.path.join(variant_dir, STAMPS), encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, ValueError):
+        return {}
+
+
+def write_stamps(variant_dir, test, stamps):
+    """merge {kind: stamp} of one test into the variant's stamp file"""
+    allst = read_stamps(variant_dir)
+    allst.setdefault(test, {}).update(stamps)
+    tmp = os.path.join(variant_dir, STAMPS + ".tmp")
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(allst, fh, indent=1, sort_keys=True)
+    os.replace(tmp, os.path.join(variant_dir, STAMPS))
+
+
+def stamp_warnings(names):
+    """warnings about the outputs pairs(names) reads: unstamped, from several plugin states, not from the working
+    tree's sources / scripts / binaries"""
+    plugin, scripts = plugin_hash(), scripts_hash()
+    devs, unstamped, stale = {}, 0, {"plugin": 0, "scripts": 0, "input": 0}
+    inputs, cache = {}, {}
+    for arch, opt in VARIANTS:
+        v = variant_name(arch, opt)
+        if v not in cache:
+            cache[v] = read_stamps(os.path.join(OUT, v))
+        for t in names:
+            for k in kinds(t):
+                if not os.path.exists(os.path.join(OUT, v, "%s.%s" % (t, k))):
+                    continue
+                st = cache[v].get(t, {}).get(k)
+                if st is None:
+                    unstamped += 1
+                    continue
+                devs.setdefault(st["plugin"], set()).add(st.get("dev", "?"))
+                binary = os.path.join(BIN, v, t + ".dylib")
+                if binary not in inputs:
+                    inputs[binary] = input_hash(binary) if os.path.exists(binary) else None
+                for key, now in (("plugin", plugin), ("scripts", scripts), ("input", inputs[binary])):
+                    stale[key] += st.get(key) != now
+    out = []
+    if unstamped:
+        out.append("%d output(s) without a stamp (dumped before bncpp-134)" % unstamped)
+    if len(devs) > 1:
+        out.append("outputs from %d plugin states: %s" % (len(devs), "; ".join(
+            "%s %s" % (h, "/".join(sorted(d))) for h, d in sorted(devs.items()))))
+    what = {"plugin": "the working tree's plugin sources (edited since the dev load, or an older dump)",
+            "scripts": "the current dump scripts / EH_PATHS", "input": "the current binaries (rebuilt since)"}
+    out += ["%d output(s) not from %s" % (n, what[k]) for k, n in stale.items() if n]
+    return out
+
+
 def ref_lsda():
     """decode every test dylib's exception tables from the file (offline, reference only) into
     .scratch/suite/ref/<variant>/TestX.lsda -- the same format as bn_dump.py's .lsda"""
@@ -273,6 +369,8 @@ def compare(names, show_diff):
                 sys.stdout.writelines(difflib.unified_diff(open(ref).readlines(), open(out).readlines(),
                                                            "reference", "output"))
     print(", ".join("%d %s" % (n, k) for k, n in counts.items()))
+    for w in stamp_warnings(names):
+        print("WARNING", w)
     return 0 if counts["ok"] == sum(1 for _ in pairs(names)) else 1
 
 
@@ -424,7 +522,10 @@ def main(argv):
         maxes = [a for a in args if re.match(r"^\w+=\d+$", a)]
         names = [n for n in names if n in TESTS]
         linted = lint()
-        return check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None)) or int(linted != 0)
+        failed = check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None))
+        for w in stamp_warnings(names or TESTS):
+            print("WARNING", w)
+        return failed or int(linted != 0)
     elif cmd == "lint":
         return int(lint() != 0)
     elif cmd == "compare":

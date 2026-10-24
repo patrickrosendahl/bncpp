@@ -19,8 +19,10 @@
 #   .ehpath   for the tests in suite.py's EH_PATHS, after the class pipeline (run for it if .fields is not
 #          dumped): the exception path from each listed function (tests/bn_eh_path.py NOCACHE=1, its review lines;
 #          bncpp-117)
+# Every output gets a stamp in out/<variant>/.stamps.json (plugin / scripts / input hashes, tests/suite/suite.py;
+# bncpp-134): compare and check warn on outputs from mixed or stale sources.
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
-import glob, importlib, importlib.util, os
+import glob, importlib, importlib.util, os, time
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -34,19 +36,20 @@ _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
 _rtti = importlib.import_module(_dev["pkgname"] + ".cpp.rtti")
 _rtti_names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
 _lp = importlib.import_module(_dev["pkgname"] + ".cpp.landing_pads")
-_kinds_arg = (globals().get("env") or {}).get("DUMP_KINDS") or os.environ.get("DUMP_KINDS") or \
-    "pc,pcpp,lsda,classes,fields,ehpath"
+_opt = lambda key: (globals().get("env") or {}).get(key) or os.environ.get(key)
+_kinds_arg = _opt("DUMP_KINDS") or "pc,pcpp,lsda,classes,fields,ehpath"
 _kinds = [k.strip() for k in _kinds_arg.split(",") if k.strip()]
 if set(_kinds) - {"pc", "pcpp", "lsda", "classes", "fields", "ehpath"}:
     raise ValueError("DUMP_KINDS: unknown kind in %r" % _kinds_arg)
 _bins = globals().get("DUMP_BINARIES") or sorted(glob.glob(os.path.join(REPO, "tests/suite/bin/*/*.dylib")))
-_only = (globals().get("env") or {}).get("DUMP_TESTS") or os.environ.get("DUMP_TESTS")
+_only = _opt("DUMP_TESTS")
 if _only:
     _bins = [b for b in _bins if any(os.path.basename(b).startswith(p) for p in _only.split(","))]
 _out = os.path.join(REPO, ".scratch/suite/out")
 _spec = importlib.util.spec_from_file_location("_suite", os.path.join(REPO, "tests/suite/suite.py"))
 _suite = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_suite)
+_stamp = {"plugin": _suite.plugin_hash(_dev["pkg"].__path__[0]), "scripts": _suite.scripts_hash(), "dev": _lang}
 
 
 def _render(func, language):
@@ -122,6 +125,10 @@ _ok = 0
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) \
         if os.path.dirname(os.path.dirname(_path)) == os.path.join(REPO, "tests/suite/bin") else "other"
+    _base = os.path.splitext(os.path.basename(_path))[0]
+    _dir = os.path.join(_out, _variant)
+    _want = dict(_stamp, input=_suite.input_hash(_path))
+    _froms = _suite.EH_PATHS.get(_base) if "ehpath" in _kinds else None
     _bv = _bn.load(_path)
     try:
         _lp.recover(_bv)  # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too
@@ -142,19 +149,18 @@ for _path in _bins:
             _texts["lsda"] = _dump_lsda(_bv)
         if "classes" in _kinds:
             _texts["classes"] = _dump_classes(_bv)
-        _base = os.path.splitext(os.path.basename(_path))[0]
-        _froms = _suite.EH_PATHS.get(_base) if "ehpath" in _kinds else None
         if "fields" in _kinds or _froms:  # after the others: changes the view
             _f = _dump_fields(_bv, _path)
             if "fields" in _kinds:
                 _texts["fields"] = _f
         if _froms:  # after the class pipeline (bncpp-117)
             _texts["ehpath"] = _dump_ehpath(_bv, _froms)
-        _dir = os.path.join(_out, _variant)
         os.makedirs(_dir, exist_ok=True)
         for _key, _lines in _texts.items():
             with open(os.path.join(_dir, "%s.%s" % (_base, _key)), "w", encoding="utf-8") as _fh:
                 _fh.write("\n".join(_lines) + "\n")
+        _at = time.strftime("%Y-%m-%dT%H:%M:%S")
+        _suite.write_stamps(_dir, _base, {k: dict(_want, at=_at) for k in _texts})
         _ok += 1
     finally:
         _bv.file.close()
