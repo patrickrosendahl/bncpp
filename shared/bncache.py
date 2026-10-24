@@ -16,7 +16,6 @@ next Cache() of that view.
 import hashlib
 import json
 import os
-import shutil
 
 import binaryninja
 

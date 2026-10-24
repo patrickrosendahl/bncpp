@@ -13,11 +13,16 @@ change improves the output, review the diff and accept it as the new reference.
   python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [TestX ...]  # no-loss + flaws
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
+  python3 tests/suite/suite.py lint                      # pyflakes over the plugin and tests/ (exit 1: a finding)
 
 check (bncpp-8, shared/compare.py): per function, every call and string literal of its Pseudo C (.pc: the HLIL as
 BN prints it) must still be in its Pseudo Cpp, plus flaw counters (temporaries, gotos, exception plumbing, render
 errors, a catch clause in the LSDA but no try, ...) and the class APPLYs in .fields that stopped at the round
-limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --max K=V).
+limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --max K=V). check runs lint first.
+
+lint (bncpp-133): pyflakes over the plugin (__init__.py, constants.py, cpp/, shared/) and tests/ -- a redefined
+function or an undefined name is silent in BN until a 10 min dump shows the damage. The bridge scripts (tests/)
+get bv and env from bnrun, so they count as builtins there.
 
 Checked outputs (all from bn_dump.py, i.e. through Binary Ninja): .pcpp (the view), .lsda (the decoded
 exception tables, cpp/lsda.py on cpp/bnimage.py), .classes (the class scan, cpp/rtti.py, with the names
@@ -371,6 +376,28 @@ def check(names, maxes, worst, show):
     return 0
 
 
+LINT = [(["__init__.py", "constants.py", "cpp", "shared"], ""), (["tests"], "bv,env")]  # (paths, builtins)
+
+
+def lint():
+    """pyflakes over the plugin and tests/; the number of findings (printed), -1 without pyflakes"""
+    exe = shutil.which("pyflakes")
+    cmd = [exe] if exe else [sys.executable, "-m", "pyflakes"]
+    found = 0
+    for paths, builtins in LINT:
+        r = subprocess.run(cmd + paths, cwd=REPO, capture_output=True, text=True,
+                           env=dict(os.environ, PYFLAKES_BUILTINS=builtins))
+        if r.returncode and not r.stdout and "No module named pyflakes" in r.stderr:
+            print("lint: pyflakes not found (pip install pyflakes)")
+            return -1
+        lines = (r.stdout + r.stderr).splitlines()
+        for line in lines:
+            print(line)
+        found += len(lines)
+    print("lint: %d finding(s)" % found)
+    return found
+
+
 def accept(names):
     for v, t, out, ref in pairs(names):
         if os.path.exists(out):
@@ -396,7 +423,10 @@ def main(argv):
         opt = lambda flag, default: args[args.index(flag) + 1] if flag in args else default
         maxes = [a for a in args if re.match(r"^\w+=\d+$", a)]
         names = [n for n in names if n in TESTS]
-        return check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None))
+        linted = lint()
+        return check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None)) or int(linted != 0)
+    elif cmd == "lint":
+        return int(lint() != 0)
     elif cmd == "compare":
         return compare(names or TESTS, "--diff" in args)
     elif cmd == "accept":

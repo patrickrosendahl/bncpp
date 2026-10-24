@@ -10,7 +10,7 @@ instruction addresses, and the features [(addr, kind, value)]:
   bl     a call site without a name (marks the end of an argument window)
   python3 -I tests/ref_bin_features.py X.dylib [--arch arm64] [--names]
 """
-import os, re, subprocess, sys
+import re, subprocess
 
 
 def _unescape(s):

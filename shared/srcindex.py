@@ -308,7 +308,6 @@ def _classify_brace(toks, i, stack):
         return "block", None, None
     j = i - 1
     # skip trailing qualifiers / attributes / initialiser lists: ') const noexcept override {' / ') : a(x), b(y) {'
-    paren = 0
     while j >= 0:
         k, v, ln = toks[j]
         if v == ")":

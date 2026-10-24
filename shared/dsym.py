@@ -135,7 +135,7 @@ def _line_program(cu_file, rows):
     files = [cu_file] + sorted({r.file for r in rows} - {cu_file})
     fidx = {f: i + 1 for i, f in enumerate(files)}
     prog = bytearray()
-    prev_end, line, fcur = None, 1, 1
+    prev_end, cur_addr, line, fcur = None, None, 1, 1
     for r in rows:
         if prev_end is not None and r.start != prev_end:
             prog += bytes([DW_LNS_advance_pc]) + uleb(prev_end - cur_addr)
