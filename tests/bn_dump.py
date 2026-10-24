@@ -24,6 +24,8 @@
 #          bncpp-117)
 # Every output gets a stamp in out/<variant>/.stamps.json (plugin / scripts / input hashes, tests/suite/suite.py;
 # bncpp-134): compare and check warn on outputs from mixed or stale sources.
+# out/timings.tsv gets a line per binary with the seconds per phase (load, pads, pc+pcpp, ..; bncpp-15), appended:
+# delete it before a run you want to sum up.
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import glob, importlib, importlib.util, os, time
 import binaryninja as _bn
@@ -129,6 +131,7 @@ def _dump_ehpath(bv, froms):
 
 
 _ok = _skipped = 0
+_timings = os.path.join(_out, "timings.tsv")  # per binary and phase, appended as it goes (a cut-off run keeps them)
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path)) \
         if os.path.dirname(os.path.dirname(_path)) == os.path.join(REPO, "tests/suite/bin") else "other"
@@ -142,11 +145,21 @@ for _path in _bins:
                for k in _kinds if k != "ehpath" or _froms for k2, x in _want.items() if k2 != "dev"):
             _skipped += 1
             continue
+    _laps, _t = [], time.time()
+
+    def _lap(what):
+        global _t
+        _now = time.time()
+        _laps.append("%s=%.1f" % (what, _now - _t))
+        _t = _now
+
     _bv = _bn.load(_path)
+    _lap("load")
     try:
         # bncpp-4/52: the landing pads BN did not make functions, so their handlers are dumped too; one at a time, or
         # BN's parallel analysis of pads that share a tail splits it off in some runs only (bncpp-124)
         _lp.recover(_bv, serial=True)
+        _lap("pads")
         _texts = {}
         _views = [(k, l) for k, l in (("pc", "Pseudo C"), ("pcpp", _lang)) if k in _kinds]
         if _views:
@@ -160,16 +173,21 @@ for _path in _bins:
                     _texts[_key].append("// %s @ %#x" % (_f.symbol.full_name, _f.start))
                     _texts[_key].extend(_render(_f, _language))
                     _texts[_key].append("")
+            _lap("+".join(k for k, _ in _views))
         if "lsda" in _kinds:
             _texts["lsda"] = _dump_lsda(_bv)
+            _lap("lsda")
         if "classes" in _kinds:
             _texts["classes"] = _dump_classes(_bv)
+            _lap("classes")
         if "fields" in _kinds or _froms:  # after the others: changes the view
             _f = _dump_fields(_bv, _path)
             if "fields" in _kinds:
                 _texts["fields"] = _f
+            _lap("fields")
         if _froms:  # after the class pipeline (bncpp-117)
             _texts["ehpath"] = _dump_ehpath(_bv, _froms)
+            _lap("ehpath")
         os.makedirs(_dir, exist_ok=True)
         for _key, _lines in _texts.items():
             with open(os.path.join(_dir, "%s.%s" % (_base, _key)), "w", encoding="utf-8") as _fh:
@@ -179,5 +197,7 @@ for _path in _bins:
         _ok += 1
     finally:
         _bv.file.close()
+        with open(_timings, "a") as _fh:
+            _fh.write("%s\t%s/%s\t%s\n" % (time.strftime("%H:%M:%S"), _variant, _base, " ".join(_laps)))
 print("dumped %s of %d of %d binaries into %s%s" % ("+".join(_kinds), _ok, len(_bins), _out,
                                                      " (%d already current: RESUME)" % _skipped if _skipped else ""))
