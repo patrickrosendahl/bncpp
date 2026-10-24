@@ -1,4 +1,5 @@
-classes sized 0
+allocator by votes (no operator new name) 2
+classes sized 2
 ctors/dtors 0
 fields 1
 fields named (override) 0
@@ -19,9 +20,9 @@ stable 1
 structs 2
 structs with a base 1
 
-struct IoError  (0xc bytes, from members)  base AppError @ 0x0
+struct IoError  (0x20 bytes, from new)  base AppError @ 0x0
      0x0 vptr                     struct IoError::VTable*  [vptr]
-struct AppError  (0xc bytes, from members)
+struct AppError  (0x18 bytes, from new)
      0x0 vptr                     struct AppError::VTable*  [vptr]
      0x8 field_8                  int32_t  [access]
 
