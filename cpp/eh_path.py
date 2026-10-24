@@ -473,14 +473,51 @@ def rtti_bases(img):
     return lambda t: [b for b, _ in types[t].bases] if isinstance(t, int) and t in types else None
 
 
+def catch_types(tables):
+    """the distinct catch (T) types of the LSDAs {start: LSDA}, in table order"""
+    out = []
+    for table in tables.values():
+        for cs in table.call_sites:
+            for c in cs.clauses:
+                if c.kind == c.CATCH and c.type is not None and c.type not in out:
+                    out.append(c.type)
+    return out
+
+
+def call_target(func, addr):
+    """the direct callee of the call at addr in func, else None"""
+    try:
+        il = func.get_llil_at(addr)
+    except Exception:
+        return None
+    if il is None or not hasattr(il, "dest") or not hasattr(il.dest, "constant"):
+        return None
+    return il.dest.constant if il.operation.name in ("LLIL_CALL", "LLIL_TAILCALL") else None
+
+
 def register_command(prefix):
-    """'<prefix>\\Exception path from here' on a function: trace what it throws, comment the path"""
-    from binaryninja import BackgroundTaskThread, PluginCommand, log_info
+    """'<prefix>\\Exception path from here' on a function: trace what it throws, comment the path; '<prefix>\\What
+    catches an exception from this call' on a call site (bncpp-72). Without a known thrown type, ask for one (the
+    catch types of the binary's LSDAs, or unknown)."""
+    from binaryninja import BackgroundTaskThread, PluginCommand, get_choice_input, log_info
 
     class _Task(BackgroundTaskThread):
-        def __init__(self, bv, func):
-            BackgroundTaskThread.__init__(self, "Exception path from %s" % func.name, True)
-            self.bv, self.func = bv, func
+        def __init__(self, bv, func, site=None):
+            what = "the call at %#x" % site if site is not None else func.name
+            BackgroundTaskThread.__init__(self, "Exception path from %s" % what, True)
+            self.bv, self.func, self.site = bv, func, site
+
+        def ask(self, img, tables):
+            """the typeinfo the user picks ([] for unknown), None on cancel"""
+            from .eh_comments import type_name
+            types = catch_types(tables)
+            labels = [type_name(t) if not isinstance(t, int) else
+                      type_name(img.symbol_name(t) or "%#x" % t) for t in types]
+            pick = get_choice_input("Which exception type is thrown? (catch types of this binary's tables)",
+                                    "Exception path", labels + ["unknown (every catch (T) is 'may catch')"])
+            if pick is None:
+                return None
+            return [types[pick]] if pick < len(types) else []
 
         def run(self):
             from ..shared import bncache, callgraph
@@ -491,20 +528,47 @@ def register_command(prefix):
             edges = callgraph.edges(self.bv, cache)
             guards = [h.start for h, _t in landing_pads.terminate_helpers(self.bv)]
             thr = throwers(self.bv, img.demangle)
-            sites = [a for a, _t in throw_sites(self.func, thr)]
+            if self.site is not None:  # an exception out of this call: the callee's known throws
+                callee = call_target(self.func, self.site)
+                cf = self.bv.get_function_at(callee) if callee is not None else None
+                thrown = list(thr.get(callee, ())) or (thrown_types(cf, thr) if cf is not None else [])
+                sites = [self.site]
+            else:
+                thrown = thrown_types(self.func, thr)
+                sites = [a for a, _t in throw_sites(self.func, thr)]
             from . import rtti, rtti_names
             from .eh_virtual import VirtualCallers
             types = rtti.scan(img)
+            t = Trace(self.bv, img, edges, thrown, rtti_bases(img), guards, None)
+            if not thrown:
+                thrown = self.ask(img, t.tables)
+                if thrown is None:
+                    return
+                t.thrown = [t.keys(x) for x in thrown]
             labels = rtti_names.labels(types, img.demangle, rtti_names.label_overrides(types, img.symbol_at))
-            t = Trace(self.bv, img, edges, thrown_types(self.func, thr), rtti_bases(img), guards,
-                      VirtualCallers(self.bv, types, labels, cache))
+            t.vcallers = VirtualCallers(self.bv, types, labels, cache)
             t.run(sites=sites) if sites else t.run([self.func.start])  # no throw here: it leaves this function
             t.annotate()
             log_info("%s: exception path from %s (thrown: %s)\n%s" % (
-                prefix, self.func.symbol.full_name, ", ".join(map(str, thrown_types(self.func, thr))) or "unknown",
-                "\n".join(t.report())))
+                prefix, "the call at %#x" % self.site if self.site is not None else self.func.symbol.full_name,
+                ", ".join(map(str, thrown)) or "unknown", "\n".join(t.report())))
+
+    def _call_func(bv, addr):
+        """the function in which addr is a call instruction, else None"""
+        for f in bv.get_functions_containing(addr):
+            il = f.get_llil_at(addr)
+            if il is not None and il.operation.name in ("LLIL_CALL", "LLIL_TAILCALL"):
+                return f
+        return None
 
     PluginCommand.register_for_function(
         prefix + "\\Exception path from here",
         "Follow what this function throws up the direct callers: who catches it, where it terminates; comments "
-        "at every call site on the path (bncpp-24)", lambda bv, f: _Task(bv, f).start())
+        "at every call site on the path (bncpp-24); asks for the type when the function throws none itself",
+        lambda bv, f: _Task(bv, f).start())
+    PluginCommand.register_for_address(
+        prefix + "\\What catches an exception from this call",
+        "The exception path from this call site: its own function's exception table first, then the callers "
+        "(bncpp-72); the callee's thrown types, or asks for one",
+        lambda bv, a: _Task(bv, _call_func(bv, a), a).start(),
+        lambda bv, a: _call_func(bv, a) is not None)
