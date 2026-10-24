@@ -13,10 +13,21 @@ offline reference (cross-checks, bug reports), never as the product.
 
 Hooks of the class modules (cpp/rtti_names.py, cpp/rtti_types.py): demangle, call_targets, symbol_at.
 """
-from binaryninja import QualifiedName, SectionSemantics, SymbolType, demangle_gnu3
+from binaryninja import MediumLevelILOperation, QualifiedName, SectionSemantics, SymbolType, demangle_gnu3
 
 _IMPORTS = (SymbolType.ImportAddressSymbol, SymbolType.ImportedDataSymbol, SymbolType.ImportedFunctionSymbol,
             SymbolType.ExternalSymbol)
+
+
+def mlil_offset(e):
+    """the value of an MLIL constant used as an offset, else None: BN gives the 0x30 in [rax + 0x30] as MLIL_CONST in
+    one function and MLIL_CONST_PTR in another (bncpp-115); a CONST_PTR that is an address in the view is a table
+    ([rdx + 0x100859630]), not an offset"""
+    if e.operation == MediumLevelILOperation.MLIL_CONST:
+        return e.constant
+    if e.operation == MediumLevelILOperation.MLIL_CONST_PTR and not e.function.source_function.view.is_valid_offset(e.constant):
+        return e.constant
+    return None
 
 
 class BNImage:

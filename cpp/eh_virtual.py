@@ -17,6 +17,7 @@ A lambda's operator() behind a std::function is called through the std::function
 cpp/eh_closures.py follows the closure from its construction to those calls (bncpp-109).
 """
 from . import rtti_fields
+from .bnimage import mlil_offset
 from .rtti_names import _primary_base
 
 DYNAMIC_CAST = ("___dynamic_cast", "__dynamic_cast")
@@ -78,7 +79,7 @@ def _load(e, Op):
         if d is None or d.operation != Op.MLIL_SET_VAR_SSA or d.src.operation not in (Op.MLIL_VAR_SSA, Op.MLIL_ADD):
             break
         a = d.src
-    if a.operation == Op.MLIL_ADD and a.right.operation == Op.MLIL_CONST:
+    if a.operation == Op.MLIL_ADD and mlil_offset(a.right) is not None:
         return a.left, a.right.constant
     return a, 0
 

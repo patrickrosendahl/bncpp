@@ -47,6 +47,7 @@ _names = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_names")
 _fields = importlib.import_module(_dev["pkgname"] + ".cpp.rtti_fields")
 _bnimage = importlib.import_module(_dev["pkgname"] + ".cpp.bnimage")
 _bncache = importlib.import_module(_dev["pkgname"] + ".shared.bncache")
+_offset = _bnimage.mlil_offset  # MLIL_CONST or a CONST_PTR that is no address (bncpp-115)
 _env = globals().get("env") or {}
 _apply = (_env.get("APPLY") or os.environ.get("APPLY")) == "1"
 _limit = int(_env.get("LIMIT") or 0) or None
@@ -177,7 +178,7 @@ def _store_site(mi):
             or mi.src.operation not in (Op.MLIL_CONST, Op.MLIL_CONST_PTR) or mi.src.constant not in _points:
         return None
     d, off = mi.dest, mi.offset if mi.operation == Op.MLIL_STORE_STRUCT else 0
-    if d.operation == Op.MLIL_ADD and d.right.operation == Op.MLIL_CONST:
+    if d.operation == Op.MLIL_ADD and _offset(d.right) is not None:
         off, d = off + d.right.constant, d.left
     return (d.src, off, mi.src.constant) if d.operation == Op.MLIL_VAR else None
 
@@ -409,7 +410,7 @@ def _copies(ssa, v):
 def _base_off(e):
     """(SSA var, offset) of an address 'var' / 'var + c', else None"""
     off = 0
-    if e.operation == Op.MLIL_ADD and e.right.operation == Op.MLIL_CONST:
+    if e.operation == Op.MLIL_ADD and _offset(e.right) is not None:
         e, off = e.left, e.right.constant
     return (e.src, off) if e.operation == Op.MLIL_VAR_SSA else None
 
@@ -825,7 +826,7 @@ def _walk(f, i, acc=True):
         if e.operation == Op.MLIL_VAR_SSA and e.src in track:
             return track[e.src]
         if e.operation == Op.MLIL_ADD and e.left.operation == Op.MLIL_VAR_SSA and e.left.src in track \
-                and e.right.operation == Op.MLIL_CONST:
+                and _offset(e.right) is not None:
             return track[e.left.src] + e.right.constant
         return None
 
