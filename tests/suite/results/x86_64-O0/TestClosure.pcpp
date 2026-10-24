@@ -311,10 +311,8 @@
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
 
     if (*(uint32_t*)((char*)arg5 - 0x1c) != 1)
-    {
-        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
-        /* no return */
-    }
+        /* tailcall */
+        return sub_400d88(arg5);
 
     *(uint64_t*)((char*)arg5 - 0x28) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
     *(uint64_t*)((char*)arg5 - 0x30) = (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))();
@@ -332,13 +330,19 @@
     *(uint64_t*)((char*)arg5 - 0x18) = arg4;
     *(uint32_t*)((char*)arg5 - 0x1c) = arg3;
     ___cxa_end_catch();
-    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
-    /* no return */
+    /* tailcall */
+    return sub_400d88(arg5);
 }
 
 // sub_400d7e @ 0x400d7e
 {
     return *(uint64_t*)((char*)arg1 - 8);
+}
+
+// sub_400d88 @ 0x400d88
+{
+    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x18));
+    /* no return */
 }
 
 // sub_400d91 @ 0x400d91
@@ -1190,8 +1194,9 @@
 
 // pick_fn(int32_t const*, int32_t, int32_t)::$_0::operator()(struct pick_fn(int32_t const*, int32_t, int32_t)::$_0* this, int32_t) const @ 0x402260
 {
-    int32_t var_24 = arg2 < 0 || arg2 >= *(uint32_t*)((char*)this + 8) ?
-        *(uint32_t*)((char*)this + 0xc) : *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
+    int32_t var_24 = arg2 < 0 || arg2 >= *(uint32_t*)((char*)this + 8)
+        ? *(uint32_t*)((char*)this + 0xc)
+        : *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
 
     return (uint64_t)var_24;
 }

@@ -627,7 +627,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         """Run per HLIL block so a temporary folds into its use within the same block, in order."""
         self.inline = {}
         self._ternary_stmt = {}  # if instr index -> (value, definition instr index, the if's instr indexes)
-        folded_idx, names = set(), {}
+        folded_idx, names, lowbyte_rets = set(), {}, {}
         hlil = self.function.hlil
         zones, compound = getattr(self, "_zones", {}), getattr(self, "_compound", set())
         try:
@@ -655,6 +655,10 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                         lo = hi + 1
                 for k in plan.get("folded", ()):
                     folded_idx.add(body[k].instr_index)
+                for m, (value, run) in plan.get("lowbyte_ret", {}).items():
+                    if len({zone[i] for i in run | {m}}) == 1 and not run & set(plan.get("folded", ())):
+                        folded_idx.update(body[i].instr_index for i in run)
+                        lowbyte_rets[body[m].instr_index] = value
                 for j, (_x, value) in plan.get("ternary", {}).items():
                     d = body[plan["ternary_def"][j]].instr_index
                     inner = {i.instr_index for i in walk(body[j]) if i.instr_index < 1 << 63}  # (a NOP's is -1)
@@ -684,6 +688,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                     line = self._bool_return(i, set())
                     if line is not None:
                         self._bool_rets[i.instr_index] = line
+            for idx, value in lowbyte_rets.items():
+                self._bool_rets[idx] = [tok(TT.KeywordToken, "return"), tok(TT.TextToken, " ")] + \
+                    self._render_value(value, set(), True) + [tok(TT.TextToken, ";")]
         except Exception:
             self._bool_rets = {}
         return folded_idx
@@ -697,7 +704,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if ret.operation != Op.HLIL_RET or len(ret.src) != 1 or ret.src[0].operation != Op.HLIL_VAR or m == 0:
                 continue
             r, k, ops, first = ret.src[0].var, m - 1, [], None
-            if self.def_count(r) != 2 or r in self._addr_taken() or not self.foldable_var(r):
+            if r in self._addr_taken() or not self.foldable_var(r):
                 continue
             while k >= 0 and k not in plan.get("skip", ()) and body[k].operation == Op.HLIL_ASSIGN and \
                     _low_byte(body[k].dest, r):
@@ -709,7 +716,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 if not self.refs(v, r):
                     first = k
                 break
-            if first is None or self.var_count(r) != sum(self.refs(body[i], r) for i in range(first, m)) + 1:
+            if first is None:
+                continue
+            if self.def_count(r) != 2 or self.var_count(r) != sum(self.refs(body[i], r) for i in range(first, m)) + 1:
+                # r defined / read before the run too (bncpp-129): the run still defines the whole bool when it
+                # ends in `&= 1`, and only the return reads it -- printed as `return <run>;`, the run's lines
+                # dropped (r keeps its other uses)
+                if ops and ops[0][0] == Op.HLIL_AND and _bool_const(ops[0][1]) == 1:
+                    plan.setdefault("lowbyte_ret", {})[m] = (("lowbyte", r, body[first].src, ops[::-1]),
+                                                             set(range(first, m)))
                 continue
             value = ("lowbyte", r, body[first].src, ops[::-1])
             plan.setdefault("own", {})[m - 1] = (r, value, all(self.pure(e) for e in self.value_parts(value)),
@@ -738,23 +753,25 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 lines = [n for n, (_t, key) in enumerate(keyed) if own(key) in inner]
                 if lines:
                     drop.update(range(lines[0], lines[-1] + 1))
-            elif at and len(head) == 1 and head[0] < at[0]:
+            elif at and head and head == list(range(head[0], head[-1] + 1)) and head[-1] < at[0]:
+                # (a long declaration that Pseudo C wrapped over several lines is joined first, bncpp-128)
                 drop.update(n for n, (_t, key) in enumerate(keyed) if own(key) == d)
-                repl[at[0]] = (at[-1], self._ternary_decl(keyed[head[0]][0], value))
+                repl[at[0]] = (at[-1], self._ternary_decl(_join_lines([keyed[h][0] for h in head]), value))
         for idx, line in self._bool_rets.items():
             at = [n for n, (t, key) in enumerate(keyed) if own(key) == idx and not empty(t)]
             if len(at) == 1 and at[0] not in repl:
                 toks = keyed[at[0]][0]
                 indent = "".join(t.text for t in toks)
                 indent = indent[:len(indent) - len(indent.lstrip())]
-                repl[at[0]] = (at[0], ([tok(TT.TextToken, indent)] if indent else []) + line)
+                repl[at[0]] = (at[0], [([tok(TT.TextToken, indent)] if indent else []) + line])
         out, blank = [], False
         n = -1
         while n + 1 < len(keyed):
             n += 1
             toks, key = keyed[n]
+            more = []
             if n in repl:
-                n, toks = repl[n]
+                n, (toks, *more) = repl[n]
             elif n in drop or own(key) in folded:
                 blank = blank or empty(toks)  # a folded definition: its value moved into a later statement
                 continue
@@ -766,7 +783,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             elif blank and not empty(toks) and out and not empty(out[-1][0]) and not closing:
                 out.append(([], None))  # the dropped lines' blank separator stays
             blank = False
-            out.append((self._subst_inline(list(toks)), key))
+            out.extend((self._subst_inline(list(ts)), key) for ts in [toks] + more)
         return out
 
     def _subst_inline(self, toks, seen=None):
@@ -952,8 +969,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 continue
             text = "".join(t.text for t in eh_throw._flat([list(l.tokens) for l in self.base().get_expr_text(
                 b, None, P.TopLevelOperatorPrecedence, False)]))
-            if text:
-                toks = _replace_spans(toks, re.compile(re.escape(text)), lambda m, rep=rep: rep)
+            if text:  # nested pairs right around the ?: collapse into one: `-((c ? 1 : 0))` -> `-(c)` (bncpp-126)
+                toks = _replace_spans(toks, re.compile(r"(\(*)%s(\)*)" % re.escape(text)),
+                                      lambda m, rep=rep: _ungroup(m, rep))
         return toks
 
     def _bool_return(self, ret, seen):
@@ -982,7 +1000,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         return group(cond) + [tok(TT.TextToken, " ? ")] + group(a) + [tok(TT.TextToken, " : ")] + b
 
     def _ternary_decl(self, head, value):
-        """`T x = c ? a : b;` from the line declaring x (`T x;`) or initializing it (`T x = b;`)"""
+        """[`T x = c ? a : b;`] from the line declaring x (`T x;`) or initializing it (`T x = b;`); wider than
+        _MAX_WIDTH, three lines `T x = c` / `? a` / `: b;` indented one step (bncpp-128)"""
         toks = list(head)
         cut = next((n for n, t in enumerate(toks) if t.text.strip() == "="), None)
         if cut is not None:
@@ -991,7 +1010,16 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             toks.pop()
         if toks and toks[-1].text.endswith(";"):
             toks[-1] = tok(toks[-1].type, toks[-1].text[:-1])
-        return toks + [tok(TT.TextToken, " = ")] + self._ternary_tokens(value, set()) + [tok(TT.TextToken, ";")]
+        toks.append(tok(TT.TextToken, " = "))
+        line = toks + self._ternary_tokens(value, set()) + [tok(TT.TextToken, ";")]
+        if len(_tokens_text(self._subst_inline(list(line))).rstrip()) <= _MAX_WIDTH or self._ternary_bool(value, set()):
+            return [line]
+        _, _x, iff, a, b = value
+        cond, a, b = (self._expr_tokens(e, set()) for e in (iff.condition, a, b))
+        group = lambda ts: [tok(TT.TextToken, "(")] + ts + [tok(TT.TextToken, ")")] if _top_ternary(ts) else ts
+        step = [tok(TT.TextToken, " " * (len(_tokens_text(toks)) - len(_tokens_text(toks).lstrip()) + 4))]
+        return [toks + group(cond), step + [tok(TT.TextToken, "? ")] + group(a),
+                step + [tok(TT.TextToken, ": ")] + b + [tok(TT.TextToken, ";")]]
 
     def emit_token_lines(self, lines, tokens, statement):
         for i, line in enumerate(_brace_do(lines)):
@@ -1198,6 +1226,36 @@ def _replace_spans(toks, rx, fn):
         out += piece(cur, a) + (list(rep) if isinstance(rep, list) else [tok(TT.TextToken, rep)])
         cur = b
     return out + piece(cur, len(text))
+
+
+def _tokens_text(toks):
+    return "".join(t.text for t in toks)
+
+
+def _join_lines(lines):
+    """token lines of one statement that Pseudo C wrapped, as one line (the continuations' indent dropped; a
+    space after a line that does not end in an opening bracket)"""
+    out = list(lines[0])
+    for more in lines[1:]:
+        more = list(more)
+        while more and not more[0].text.strip():
+            more.pop(0)
+        if more and more[0].text != more[0].text.lstrip():
+            more[0] = tok(more[0].type, more[0].text.lstrip())
+        if out and not _tokens_text(out).endswith(("(", "[", " ")):
+            out.append(tok(TT.TextToken, " "))
+        out += more
+    return out
+
+
+def _ungroup(m, rep):
+    """a match `(*span)*` -> rep inside the same parentheses, two or more pairs right around span kept as one (the
+    outermost: it may be a call's)"""
+    opens, closes = m.group(1), m.group(2)
+    k = min(len(opens), len(closes))
+    if k >= 2:
+        opens, closes = opens[:len(opens) - k + 1], closes[k - 1:]
+    return ([tok(TT.TextToken, opens)] if opens else []) + list(rep) + ([tok(TT.TextToken, closes)] if closes else [])
 
 
 def _indent(line):

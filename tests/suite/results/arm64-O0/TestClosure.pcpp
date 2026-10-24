@@ -309,10 +309,8 @@
     //   from 0x400e50..0x400e54: catch (Err) #1
 
     if (arg2 != 1)
-    {
-        __Unwind_Resume(arg1);
-        /* no return */
-    }
+        /* tailcall */
+        return sub_400ee8(arg1);
 
     *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     ___cxa_end_catch();
@@ -328,13 +326,19 @@
     int32_t x1;
     int32_t arg_14 = x1;
     ___cxa_end_catch();
-    __Unwind_Resume(arg1);
-    /* no return */
+    /* tailcall */
+    return sub_400ee8(arg1);
 }
 
 // sub_400ed8 @ 0x400ed8
 {
     return *(uint64_t*)((char*)arg1 - 8);
+}
+
+// sub_400ee8 @ 0x400ee8
+{
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_400ef0 @ 0x400ef0
@@ -1206,8 +1210,9 @@
 
 // pick_fn(int32_t const*, int32_t, int32_t)::$_0::operator()(struct pick_fn(int32_t const*, int32_t, int32_t)::$_0* this, int32_t) const @ 0x402688
 {
-    int32_t var_1c = arg2 & 0x80000000 || arg2 >= *(uint32_t*)((char*)this + 8) ?
-        *(uint32_t*)((char*)this + 0xc) : *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
+    int32_t var_1c = arg2 & 0x80000000 || arg2 >= *(uint32_t*)((char*)this + 8)
+        ? *(uint32_t*)((char*)this + 0xc)
+        : *(uint32_t*)(*(uint64_t*)this + ((int64_t)arg2 << 2));
 
     return (uint64_t)var_1c;
 }
