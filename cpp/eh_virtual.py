@@ -193,7 +193,8 @@ class VirtualCallers:
     def calls_at(self, func, addr):
         """the indirect calls a slot load at addr belongs to: the call itself, or the calls of the loaded variable"""
         from binaryninja import MediumLevelILOperation as Op
-        calls = (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA)
+        # a virtual tail call may be lifted as a jump through the slot (`jump([rax + 8])`, bncpp-125)
+        calls = (Op.MLIL_CALL_SSA, Op.MLIL_TAILCALL_SSA, Op.MLIL_JUMP)
         m = func.mlil
         if m is None:
             return []
@@ -207,7 +208,7 @@ class VirtualCallers:
                 out += [u for u in ssa.get_ssa_var_uses(s.dest) if u.operation in calls and
                         u.dest.operation == Op.MLIL_VAR_SSA and u.dest.src == s.dest]
             i += 1
-        return [(c.address, func.start, c.operation == Op.MLIL_TAILCALL_SSA) for c in out
+        return [(c.address, func.start, c.operation != Op.MLIL_CALL_SSA) for c in out
                 if c.dest.operation not in (Op.MLIL_CONST_PTR, Op.MLIL_IMPORT)]
 
     def member_calls(self, key):
