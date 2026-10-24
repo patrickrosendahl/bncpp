@@ -10,7 +10,7 @@ change improves the output, review the diff and accept it as the new reference.
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
   python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
   python3 tests/suite/suite.py accept TestX ...          # output -> reference (after reviewing the diff)
-  python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [TestX ...]  # no-loss + flaws
+  python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [--compare] [TestX ...]  # no-loss + flaws
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
   python3 tests/suite/suite.py lint                      # pyflakes over the plugin and tests/ (exit 1: a finding)
@@ -19,6 +19,9 @@ check (bncpp-8, shared/compare.py): per function, every call and string literal 
 BN prints it) must still be in its Pseudo Cpp, plus flaw counters (temporaries, gotos, exception plumbing, render
 errors, a catch clause in the LSDA but no try, ...) and the class APPLYs in .fields that stopped at the round
 limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --max K=V). check runs lint first.
+--compare (bncpp-131) adds the totals of the references (results/: their .pcpp and .fields with the current .pc and
+.lsda) and the deltas -- the before / after numbers for a ticket; lost_calls etc. of the references are only
+indicative when BN's functions changed since they were accepted.
 
 lint (bncpp-133): pyflakes over the plugin (__init__.py, constants.py, cpp/, shared/) and tests/ -- a redefined
 function or an undefined name is silent in BN until a 10 min dump shows the damage. The bridge scripts (tests/)
@@ -411,17 +414,19 @@ def _lsda_catches(path):
     return out
 
 
-def check(names, maxes, worst, show):
-    """the no-loss check and the flaw counters of every test's Pseudo Cpp against its Pseudo C (bn_dump.py output)"""
+def _check_rows(names, root, show, quiet=False):
+    """per-function rows and the totals of check: .pcpp and .fields from root (OUT, or RESULTS for the before
+    numbers), .pc and .lsda always from OUT (the references hold no .pc)"""
     sys.path.insert(0, REPO)
     from shared import compare as C
+    say = (lambda *a: None) if quiet else print
     rows, missing = [], 0
     for arch, opt in VARIANTS:
         v = variant_name(arch, opt)
         for t in names:
-            pcpp, pc = (os.path.join(OUT, v, "%s.%s" % (t, ext)) for ext in ("pcpp", "pc"))
+            pcpp, pc = os.path.join(root, v, t + ".pcpp"), os.path.join(OUT, v, t + ".pc")
             if not (os.path.exists(pcpp) and os.path.exists(pc)):
-                print("%-10s %-26s no output" % (v, t))
+                say("%-10s %-26s no output" % (v, t))
                 missing += 1
                 continue
             ref = dict((k, body) for k, _h, body in C.split_functions(open(pc).read(), _FUNC))
@@ -440,7 +445,7 @@ def check(names, maxes, worst, show):
                         first[name]["missing_try"] = 0
                 r["function"] = "%s %s %s" % (v, t, name)
                 rows.append(r)
-                if show and show in r["function"]:
+                if show and show in r["function"] and not quiet:
                     print("=" * 30, r["function"], {k: x for k, x in r.items() if x and k != "function"})
                     print("\n".join(body))
     keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
@@ -450,12 +455,26 @@ def check(names, maxes, worst, show):
     total["unsettled"] = 0  # bncpp-60: a class APPLY in the .fields dump that stopped at the round limit
     for arch, opt in VARIANTS:
         for t in names:
-            path = os.path.join(OUT, variant_name(arch, opt), t + ".fields")
+            path = os.path.join(root, variant_name(arch, opt), t + ".fields")
             for line in open(path).read().splitlines() if os.path.exists(path) else ():
                 if line.startswith("not settled after "):
-                    print("%-10s %-26s %s" % (variant_name(arch, opt), t, line))
+                    say("%-10s %-26s %s" % (variant_name(arch, opt), t, line))
                     total["unsettled"] += 1
+    return rows, total
+
+
+def check(names, maxes, worst, show, against_ref=False):
+    """the no-loss check and the flaw counters of every test's Pseudo Cpp against its Pseudo C (bn_dump.py output);
+    against_ref (--compare, bncpp-131): also the totals of the reference outputs and the deltas (before / after)"""
+    sys.path.insert(0, REPO)
+    from shared import compare as C
+    rows, total = _check_rows(names, OUT, show)
     print("TOTAL", " ".join("%s=%d" % kv for kv in total.items()))
+    if against_ref:
+        _rows, before = _check_rows(names, RESULTS, None, quiet=True)
+        print("REF  ", " ".join("%s=%d" % kv for kv in before.items()))
+        delta = [(k, total[k] - before.get(k, 0)) for k in total if total[k] != before.get(k, 0)]
+        print("DELTA", " ".join("%s=%+d" % kv for kv in delta) or "none")
     flaws = ("lost_calls", "lost_strings", "render_errors", "unbalanced", "truncated", "leaked_catch_var",
              "plumbing", "dead_code", "gotos", "missing_try", "temps")
     score = lambda r: sum((len(r.get(k, ())) if isinstance(r.get(k), list) else r.get(k, 0)) *
@@ -522,7 +541,7 @@ def main(argv):
         maxes = [a for a in args if re.match(r"^\w+=\d+$", a)]
         names = [n for n in names if n in TESTS]
         linted = lint()
-        failed = check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None))
+        failed = check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None), "--compare" in args)
         for w in stamp_warnings(names or TESTS):
             print("WARNING", w)
         return failed or int(linted != 0)
