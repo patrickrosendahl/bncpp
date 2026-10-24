@@ -8,9 +8,9 @@ change improves the output, review the diff and accept it as the new reference.
   python3 tests/suite/suite.py build [TestX ...]         # clang++ every (or the named) test for every variant
   bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
-  python3 tests/suite/suite.py compare [--diff] [TestX ...]   # exit 1 if any output differs from its reference
-  python3 tests/suite/suite.py accept TestX ...          # output -> reference (after reviewing the diff)
-  python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [--compare] [TestX ...]  # no-loss + flaws
+  python3 tests/suite/suite.py compare [--diff] [--strict] [TestX ...]   # exit 1 if any output differs from its reference
+  python3 tests/suite/suite.py accept [--force] TestX ...  # output -> reference (after reviewing the diff)
+  python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [--compare] [--strict] [TestX ...]  # no-loss + flaws
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
   python3 tests/suite/suite.py lint                      # pyflakes over the plugin and tests/ (exit 1: a finding)
@@ -22,6 +22,10 @@ limit ('unsettled', bncpp-60); exit 1 if a total exceeds its gate (GATES, or --m
 --compare (bncpp-131) adds the totals of the references (results/: their .pcpp and .fields with the current .pc and
 .lsda) and the deltas -- the before / after numbers for a ticket; lost_calls etc. of the references are only
 indicative when BN's functions changed since they were accepted.
+
+Stamps (bncpp-134): compare and check print a WARNING for outputs without a stamp, from several plugin states or not
+from the working tree's plugin / dump scripts / binaries; --strict makes such a warning exit 1, and accept refuses
+the named tests' outputs then unless --force (bncpp-141) -- a scripted 'compare && accept' takes no stale output.
 
 lint (bncpp-133): pyflakes over the plugin (__init__.py, constants.py, cpp/, shared/) and tests/ -- a redefined
 function or an undefined name is silent in BN until a 10 min dump shows the damage. The bridge scripts (tests/)
@@ -372,9 +376,15 @@ def compare(names, show_diff):
                 sys.stdout.writelines(difflib.unified_diff(open(ref).readlines(), open(out).readlines(),
                                                            "reference", "output"))
     print(", ".join("%d %s" % (n, k) for k, n in counts.items()))
-    for w in stamp_warnings(names):
-        print("WARNING", w)
     return 0 if counts["ok"] == sum(1 for _ in pairs(names)) else 1
+
+
+def warn_stamps(names):
+    """print the stamp warnings for names; their count"""
+    warnings = stamp_warnings(names)
+    for w in warnings:
+        print("WARNING", w)
+    return len(warnings)
 
 
 # flaw counters over a function's Pseudo Cpp (string literals removed, comments kept)
@@ -542,16 +552,19 @@ def main(argv):
         names = [n for n in names if n in TESTS]
         linted = lint()
         failed = check(names or TESTS, maxes, int(opt("--worst", 15)), opt("--show", None), "--compare" in args)
-        for w in stamp_warnings(names or TESTS):
-            print("WARNING", w)
-        return failed or int(linted != 0)
+        warned = warn_stamps(names or TESTS)
+        return failed or int(linted != 0) or int(bool(warned) and "--strict" in args)
     elif cmd == "lint":
         return int(lint() != 0)
     elif cmd == "compare":
-        return compare(names or TESTS, "--diff" in args)
+        differs = compare(names or TESTS, "--diff" in args)
+        warned = warn_stamps(names or TESTS)
+        return differs or int(bool(warned) and "--strict" in args)
     elif cmd == "accept":
         if not names and "--all" not in args:
             sys.exit("accept needs test names (or --all)")
+        if warn_stamps(names or TESTS) and "--force" not in args:
+            sys.exit("accept refused: stale or mixed outputs (rerun the dump, or --force)")
         accept(names or TESTS)
     else:
         sys.exit(__doc__)
