@@ -396,8 +396,11 @@ COUNTERS = {
     # a `do` without a `{` on the next line is Pseudo C's brace-less form (a braced do-while is no flaw, bncpp-83)
     "while_true": re.compile(r"\bwhile \(true\)|\bdo[ \t]*\n(?![ \t]*\{)", re.M),
     "tailcalls": re.compile(r"/\* tailcall \*/"),
+    # a cleanup pad's closing _Unwind_Resume (its last statement: only comments up to the function's '}') is the
+    # pad's normal end, not plumbing leaking into a catch body (bncpp-142)
     "plumbing": re.compile(r"(?<![\w$])_*(?:cxa_begin_catch|cxa_end_catch|cxa_rethrow|cxa_get_exception_ptr|"
-                           r"Unwind_Resume|clang_call_terminate)\s*\("),
+                           r"Unwind_Resume(?![^;]*;(?:\s|/\*.*?\*/|//[^\n]*)*\}\s*\Z)|clang_call_terminate)\s*\(",
+                           re.S),
     "render_errors": re.compile(r"could not render"),
 }
 DISTINCT = ("temps",)
