@@ -12,6 +12,9 @@
 #            --env TRACE=L1,L2 (print these structs' shape every round: a struct that does not settle, bncpp-58)
 #            --env HELPER_BUDGET=S (step 2e: stop walking helpers S seconds after the start; the line 'helper walks
 #            pending (budget) N' says how many are left, the cache keeps the rest for the next run)
+#            --env DEFINE_CHUNK=N (APPLY: define a round's structs N at a time, re-analysing after each chunk),
+#            --env DEFINE_BUDGET=S (APPLY: stop defining S seconds after the start; the line 'define budget: N
+#            structs pending' -- run again, the next run's plan skips what is defined; bncpp-61)
 # Step 1 (building the MLIL of ~7,000 functions: ~4-9 min on SynthV) is cached per binary (shared/bncache.py: next to
 # the database, <x>.bndb.bncpp-cache.json), section "ctors" with _CTORS_VERSION (bump it when step 1 changes).
 # bncpp-22: constructors / destructors get 'X* this', then the class structs get their size, base subobjects and
@@ -1191,6 +1194,26 @@ def _plan():
 # APPLY repeats 3 and 4 until the layouts no longer change: BN reports more accesses once a struct is wider (and
 # the derived ones as its bases'), so one pass is not a fixpoint and a second APPLY would still change structs
 _rounds, _prev = int(_env.get("ROUNDS") or 4), None
+# bncpp-61: a round defines only the structs whose type changes (the re-analysis after a define costs per struct:
+# > 9 min for SynthV's first round), in chunks, up to a time budget so one bridge job stays short
+_chunk = int(_env.get("DEFINE_CHUNK") or 0) or None
+_define_deadline = _t0 + float(_env.get("DEFINE_BUDGET") or 1e9)
+_pending = _defined = 0
+
+
+def _shape_now(qn):
+    """the struct's shape as BN has it now: width, bases (name, offset), members (offset, name, type text)"""
+    t = bv.get_type_by_name(qn)
+    if t is None or not hasattr(t, "members"):
+        return None
+    return (t.width, tuple((str(b.type.name), b.offset) for b in t.base_structures),
+            tuple((m.offset, m.name, str(m.type)) for m in t.members))
+
+
+def _plan_shape(sh):
+    """_plan's shape tuple in _shape_now's terms (bases by name)"""
+    _name, width, bases, members = sh
+    return (width, tuple((_lays[b].name, off) for b, off in bases), members)
 _trace = set(x for x in (_env.get("TRACE") or "").split(",") if x)
 for _round in range(1, (_rounds if _apply else 1) + 1):
     _lays, _round_counts, _round_review, _defs, _shape, _params = _plan()
@@ -1208,8 +1231,26 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
     _prev = _shape
     _final_review, _final_counts = _round_review, _round_counts
     # bncpp-61: the round's apply parts by themselves (the round lap above is the plan only)
+    _defined = 0
     if _apply and _defs:
-        bv.define_user_types([(n, s.immutable_copy()) for n, s in _defs], None)
+        # BN's type equality says 'changed' for a struct just defined from the same builder: compare the shapes
+        _todo = [(n, s.immutable_copy()) for (n, s), sh in zip(_defs, _shape) if _shape_now(n) != _plan_shape(sh)]
+        _step = _chunk or len(_todo) or 1
+        for _i in range(0, len(_todo), _step):
+            if time.time() > _define_deadline:
+                _pending = len(_todo) - _i
+                break
+            _tc = time.time()
+            bv.define_user_types(_todo[_i:_i + _step], None)
+            _defined += len(_todo[_i:_i + _step])
+            if _i + _step < len(_todo):
+                bv.update_analysis_and_wait()
+                print("  chunk %d: %d structs, %.1f s" % (_i // _step + 1, len(_todo[_i:_i + _step]), time.time() - _tc))
+        print("round %d: defined %d of %d changed structs (%d unchanged)%s" % (
+            _round, _defined, len(_todo), len(_defs) - len(_todo),
+            ", chunks of %d" % _step if _chunk else ""))
+        if 0 < len(_todo) <= 10:
+            print("  changed: %s" % " ".join(str(n) for n, _t in _todo))
         _lap("3+4 round %d define" % _round)
     if _apply:
         for _f, _i, _label in _params:
@@ -1224,15 +1265,19 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
             _f.type = Type.function(_ret, _ps, calling_convention=_f.calling_convention,
                                     variable_arguments=_old.has_variable_arguments)
         _lap("3+4 round %d params" % _round)
-    if _apply and (_defs or _params):
+    if _apply and (_defined or _params):
         bv.update_analysis_and_wait()
         _lap("3+4 round %d reanalysis" % _round)
+    if _pending:
+        break
 _count("rounds", _round)
 _count("stable", 1 if _changed == 0 or not _apply else 0)
 # bncpp-60: an APPLY that stopped at the round limit says so (tests/bn_dump.py writes it into .fields, suite.py check
 # gates on it): the structs that still changed in the last round
 _unsettled = None
-if _apply and _changed != 0:
+if _pending:
+    _unsettled = "define budget: %d structs pending (run again)" % _pending
+elif _apply and _changed != 0:
     _unsettled = "not settled after %d rounds: %s" % (_round, " ".join("%s(%#x)" % (x[0], x[1]) for x in _diff) or (
         "structs changed %d" % _changed if _changed else "only one round"))
 for _k, _v in _final_counts.items():
