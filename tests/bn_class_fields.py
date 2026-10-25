@@ -1066,6 +1066,7 @@ _override_names = set(n for n, _t in _overrides.values())
 def _plan():
     """steps 3 and 4 once: the layouts from the accesses BN sees now, the review lines and the struct definitions"""
     # 3. accesses and the current members, per class struct that exists
+    t_acc = time.time()
     accesses, existing, widths = {}, {}, {}
     for a in list(_types)[:_limit]:
         qn = QualifiedName([_labels[a]])
@@ -1082,6 +1083,7 @@ def _plan():
             continue
         accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0 or a in _no_vptr}
     _fclasses.clear()
+    t_acc = int(time.time() - t_acc)
     # the helpers' accesses (bncpp-33): offsets BN did not report, and float evidence for an int BN typed
     t_help = time.time()
     entries, helpers = _helper_accesses()
@@ -1121,7 +1123,7 @@ def _plan():
     # 4. the structs; the parameters typed from their callers (bncpp-28)
     counts, review, defs, shape = {}, h_review, [], []
     counts.update({"helper entries": len(entries), "helper walks": len(_walks), "helper accesses added": h_added,
-                   "helper floats over int": h_float, "s 2e helpers": t_help})
+                   "helper floats over int": h_float, "s 2e helpers": t_help, "s 3 accesses": t_acc})
     params = []
     for fa, i in sorted(_param_args):
         f = bv.get_function_at(fa)
@@ -1205,8 +1207,10 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
         break
     _prev = _shape
     _final_review, _final_counts = _round_review, _round_counts
+    # bncpp-61: the round's apply parts by themselves (the round lap above is the plan only)
     if _apply and _defs:
         bv.define_user_types([(n, s.immutable_copy()) for n, s in _defs], None)
+        _lap("3+4 round %d define" % _round)
     if _apply:
         for _f, _i, _label in _params:
             _old = _f.type
@@ -1219,8 +1223,10 @@ for _round in range(1, (_rounds if _apply else 1) + 1):
                 _ps[_i] = FunctionParameter(Type.pointer(bv.arch, _ref(_label)), _ps[_i].name)
             _f.type = Type.function(_ret, _ps, calling_convention=_f.calling_convention,
                                     variable_arguments=_old.has_variable_arguments)
+        _lap("3+4 round %d params" % _round)
     if _apply and (_defs or _params):
         bv.update_analysis_and_wait()
+        _lap("3+4 round %d reanalysis" % _round)
 _count("rounds", _round)
 _count("stable", 1 if _changed == 0 or not _apply else 0)
 # bncpp-60: an APPLY that stopped at the round limit says so (tests/bn_dump.py writes it into .fields, suite.py check

@@ -27,7 +27,7 @@
 # out/timings.tsv gets a line per binary with the seconds per phase (load, pads, pc+pcpp, ..; bncpp-15), appended:
 # delete it before a run you want to sum up.
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
-import glob, importlib, importlib.util, os, time
+import gc, glob, importlib, importlib.util, os, time
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -196,6 +196,10 @@ for _path in _bins:
         _suite.write_stamps(_dir, _base, {k: dict(_want, at=_at) for k in _texts})
         _ok += 1
     finally:
+        # no Function of this view may outlive its close: freed later (the namespace at the job's end, on a worker
+        # thread) BN crashed in BNFreeFunction (bncpp-102, 2026-10-25)
+        _f = _text = None
+        gc.collect()
         _bv.file.close()
         with open(_timings, "a") as _fh:
             _fh.write("%s\t%s/%s\t%s\n" % (time.strftime("%H:%M:%S"), _variant, _base, " ".join(_laps)))
