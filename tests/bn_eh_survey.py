@@ -7,7 +7,7 @@
 # Output: .scratch/eh/<variant>/TestX.survey, and a summary line per binary.
 # CREATE_PADS=1: first create a function at every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; the
 # view is a throwaway one, nothing is saved), then survey -> .scratch/eh-pads/.
-import glob, importlib, os
+import gc, glob, importlib, os, traceback
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -119,12 +119,19 @@ _total = {}
 for _path in _bins:
     _variant = os.path.basename(os.path.dirname(_path))
     _bv = _bn.load(_path)
+    _err = None
     try:
         _made = len(_lp.recover(_bv)[1]) if _create else 0
         _lines, _stats = _survey(_bv)
         _stats["created"] = _made
+    except BaseException:
+        # no Function of this view may outlive its close, not even in a traceback's frames (bncpp-102)
+        _err = traceback.format_exc()
     finally:
+        gc.collect()
         _bv.file.close()
+    if _err:
+        raise RuntimeError("%s:\n%s" % (_path, _err))
     if not _stats["owners"]:
         continue
     _dir = os.path.join(_out, _variant)

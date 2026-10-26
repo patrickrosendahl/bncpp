@@ -27,7 +27,7 @@
 # out/timings.tsv gets a line per binary with the seconds per phase (load, pads, pc+pcpp, ..; bncpp-15), appended:
 # delete it before a run you want to sum up.
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
-import gc, glob, importlib, importlib.util, os, time
+import gc, glob, importlib, importlib.util, os, time, traceback
 import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
@@ -195,6 +195,11 @@ for _path in _bins:
         _at = time.strftime("%Y-%m-%dT%H:%M:%S")
         _suite.write_stamps(_dir, _base, {k: dict(_want, at=_at) for k in _texts})
         _ok += 1
+    except BaseException:
+        # as text: the traceback's frames hold this view's Functions, freed after the close (bncpp-102, 01:44)
+        _err = traceback.format_exc()
+    else:
+        _err = None
     finally:
         # no Function of this view may outlive its close: freed later (the namespace at the job's end, on a worker
         # thread) BN crashed in BNFreeFunction (bncpp-102, 2026-10-25)
@@ -203,5 +208,7 @@ for _path in _bins:
         _bv.file.close()
         with open(_timings, "a") as _fh:
             _fh.write("%s\t%s/%s\t%s\n" % (time.strftime("%H:%M:%S"), _variant, _base, " ".join(_laps)))
+    if _err:
+        raise RuntimeError("%s/%s:\n%s" % (_variant, _base, _err))
 print("dumped %s of %d of %d binaries into %s%s" % ("+".join(_kinds), _ok, len(_bins), _out,
                                                      " (%d already current: RESUME)" % _skipped if _skipped else ""))
