@@ -64,6 +64,7 @@ TESTS = [
     "TestTryInBranch",        # try inside one branch of an if / else and inside a switch case (bncpp-67)
     "TestStringTemporary",    # library destructors on the unwind path
     "TestCatchClass",         # the program's own exception classes: throw statements, typed catch objects
+    "TestLoopTry",            # loop tests that can throw, inside / outside the try (bncpp-147, jvm-101)
     # readability passes (from binary-jvm)
     "TestFolding",            # fold single-use temporaries into their use, evaluation-order safe (bncpp-13)
     "TestTernary",

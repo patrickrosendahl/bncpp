@@ -115,8 +115,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
     def stmt_lines(self, block):
         """(statements of block, per statement Pseudo C's lines of it as [(tokens, instr index)]); a blank line goes
-        with the statement before it, as Pseudo C prints the whole block"""
-        stmts = eh_render.body(block)
+        with the statement before it, as Pseudo C prints the whole block; a block nested in it (BN's declaration +
+        do-while) adds its statements, Pseudo C prints them in line (bncpp-147)"""
+        stmts = _flat(block)
         owner_of = {}
         for k, st in enumerate(stmts):
             for i in walk(st):
@@ -148,20 +149,32 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
     def plan_list(self, stmts, groups, regions):
         """[("stmt", lines) | ("compound", segments) | ("try", items, handlers, blank after, unwind)]"""
         loops, rest = {}, []  # loops: statement index -> {body expr index: (body, [regions])}
+        heads = {}  # statement index of a while whose test is in a region's range -> [regions] (bncpp-147)
         for r in regions:
             found = eh_render.compound_for(stmts, r, self.cont(r))
+            head = self.test_in_try(stmts, r) if found is None else None
             if found is not None:
                 k, b = found
                 loops.setdefault(k, {}).setdefault(b.expr_index, (b, []))[1].append(r)
+                self._in_loop.add(id(r))
+            elif head is not None:
+                heads.setdefault(head, []).append(r)
                 self._in_loop.add(id(r))
             else:
                 rest.append(r)
         pcs = [eh_render.call_addrs(st) or None for st in stmts]
         by_range = {(r.start, r.end): r for r in rest}
-        runs = {i: (i, j, by_range[(g[0], g[1])])
-                for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in rest])}
+        runs = {}
+        for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in rest]):
+            r = by_range[(g[0], g[1])]
+            runs[i] = (i, self.run_to_cont(stmts, pcs, j, r), r)
         items, k = [], 0
         while k < len(stmts):
+            if k in heads:
+                regs = heads[k] + [r for _b, rs in loops.get(k, {}).values() for r in rs]
+                items.append(self.plan_head(stmts[k], groups[k], regs))
+                k += 1
+                continue
             if k not in runs:
                 items.append(self.plan_stmt(stmts[k], groups[k], list(loops[k].values()) if k in loops else None))
                 k += 1
@@ -217,6 +230,60 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         segs.append(("lines", lines[pos:]))
         self._compound.add(st.expr_index)
         return ("compound", segs)
+
+    def test_in_try(self, stmts, region):
+        """index of the while loop in stmts whose test makes a call in the region's range, the region's other calls
+        in its body and the handler going on in the loop, or None. Printed as `while (c)` the test would leave the
+        try, an exception from it would not be caught (bncpp-147, binary-jvm jvm-101): plan_head prints
+        `while (true) { try { if (!c) break; ... } catch ... }`"""
+        cont = self.cont(region)
+        inside = {a for s in stmts for a in eh_render.call_addrs(s) if region.start <= a < region.end}
+        if cont is None or not inside:
+            return None
+        for k, s in enumerate(stmts):
+            if s.operation != Op.HLIL_WHILE:
+                continue
+            test = set(eh_render.call_addrs(s.condition))
+            if not inside & test or not inside <= test | set(eh_render.call_addrs(s.body)):
+                continue
+            addrs = [i.address for i in walk(s)]
+            if min(addrs) <= cont <= max(addrs):
+                return k
+        return None
+
+    def plan_head(self, st, lines, regions):
+        """("compound", segments) of while loop st printed as `while (true)` with its test as the body's first
+        statement `if (!c) break;`, planned with the body (test_in_try); Pseudo C's lines when the test is not on
+        one `while (c)` line"""
+        text = _tokens_text(lines[0][0]) if lines else ""
+        head = text.lstrip()
+        if not (head.startswith("while (") and head.endswith(")")) or len(lines) < 2 or _text(lines[1]) != "{":
+            return ("stmt", lines)
+        at = len(text) - len(head)
+        _pre, cond, _post = _split_tokens(lines[0][0], [at + len("while ("), len(text.rstrip()) - 1])
+        inv = _invert_cmp(cond)
+        if inv is None:
+            inv = [tok(TT.TextToken, "!")] + _group(cond)
+        idx = lines[0][1]
+        test = [([tok(TT.KeywordToken, "if"), tok(TT.TextToken, " (")] + inv + [tok(TT.TextToken, ")")], idx),
+                ([tok(TT.TextToken, "    "), tok(TT.KeywordToken, "break"), tok(TT.TextToken, ";")], idx)]
+        stmts, groups = self.stmt_lines(st.body)
+        body = self.plan_list([st.condition] + stmts, [test] + groups, regions)
+        self._compound.add(st.expr_index)
+        return ("compound", [("lines", [([tok(TT.KeywordToken, "while"), tok(TT.TextToken, " ("),
+                                          tok(TT.KeywordToken, "true"), tok(TT.TextToken, ")")], idx)]),
+                             ("body", body, 1, False), ("lines", [])])
+
+    def run_to_cont(self, stmts, pcs, j, region):
+        """the last statement of a try run ending at j: in a loop the handler goes on at its continuation, so the
+        catch must fall through to it -- the statements without calls between the run and the continuation belong in
+        the try (bncpp-147). Only up to a later statement at the continuation's address: an -O2 continuation can be
+        a merge block or a jump BN printed no statement at"""
+        cont = self.cont(region)
+        if id(region) not in self._in_loop or cont is None:
+            return j
+        c = next((n for n in range(j + 1, len(stmts)) if any(i.address == cont for i in walk(stmts[n]))), None)
+        return c - 1 if c is not None and all(pcs[n] is None for n in range(j + 1, c)) else j
 
     def cont(self, region):
         """where the region's handlers go on in this function's own code (the first clause's that does)"""
@@ -1296,6 +1363,11 @@ def _cleanups(stmts):
         if s.operation != Op.HLIL_VAR_DECLARE:
             out.append(s)
     return out if any(i.operation in (Op.HLIL_CALL, Op.HLIL_TAILCALL) for s in out for i in walk(s)) else []
+
+
+def _flat(block):
+    """a block's statements, those of a block nested in it in their place"""
+    return [x for s in eh_render.body(block) for x in (_flat(s) if s.operation == Op.HLIL_BLOCK else [s])]
 
 
 def _key(s):
