@@ -187,6 +187,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 body.pop()
             base = func.language_representation(BASE_LANGUAGE)
             args = {}
+            for v in list(target.parameter_vars)[len(ins.params):]:
+                args[v.name] = None  # not passed: only handed on where nothing reads it (_read_params) -- dropped
             for v, a in zip(target.parameter_vars, ins.params):
                 lines = base.get_expr_text(a, None, P.TopLevelOperatorPrecedence, False)
                 at = [t for l in lines for t in l.tokens]
@@ -198,6 +200,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if wrap:
                 out.append((_lead(prev) + [tok(TT.BraceToken, "{")], key))
             for t, _k in body:
+                t = _drop_args(t, {n for n, a in args.items() if a is None})
                 t = [x for a in t for x in (args[a.text] if a.type == TT.LocalVariableToken and a.text in args
                                             else [a])]
                 out.append((lead + t[len(_lead(t)):] if "".join(x.text for x in t).strip() else [], key))
@@ -447,11 +450,6 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             return out
         ssa = pad.mlil.ssa_form
 
-        def holds(m, reg, w):  # w holds reg's value at the call m
-            kind = owner.get_reg_value_at(m.address, reg).type
-            entry = m.get_ssa_var_version(w) == 0
-            return entry if kind == RegisterValueType.EntryValue else \
-                not entry and kind == RegisterValueType.UndeterminedValue
         for v in pad.vars:
             if v.source_type != VariableSourceType.RegisterVariableSourceType:
                 continue
@@ -462,7 +460,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 if ssa is None or not loop and not ssa.get_ssa_var_uses(SSAVariable(v, 0)):
                     continue
                 got = {m.get_var_for_reg(reg) for m in calls}
-                if len(got) != 1 or not all(holds(m, reg, next(iter(got))) for m in calls):
+                if len(got) != 1 or not all(_holds(owner, m, reg, next(iter(got))) for m in calls):
                     continue
             except Exception:
                 continue
@@ -1617,10 +1615,62 @@ def _tail_shape(func):
                    eh_render.callee(i) in _NOT_TAIL for i in walk(hlil.root))
 
 
+def _holds(func, m, reg, w):
+    """func's variable w holds register reg's value at its MLIL instruction m: MLIL keeps a register's entry variable
+    after a load BN folded away, and its get_reg_value says 'entry' there too (bncpp-155) -- the function's (LLIL's)
+    value decides: an entry value for w's SSA version 0, else undetermined and a later version"""
+    kind = func.get_reg_value_at(m.address, reg).type
+    entry = m.get_ssa_var_version(w) == 0
+    return entry if kind == RegisterValueType.EntryValue else not entry and kind == RegisterValueType.UndeterminedValue
+
+
+def _read_params(target, depth=0):
+    """the indexes of target's parameters its code reads -- not one it only hands on as an argument of a tail call
+    to a function that does not read that parameter (bncpp-152: the trampoline `j_sub_400710: return
+    sub_400710(arg1, arg2)`, whose callers pass only arg1 and sub_400710 reads only its first)"""
+    params, out = list(target.parameter_vars), set()
+    for i in walk(target.hlil.root):
+        if i.operation != Op.HLIL_VAR or i.var not in params:
+            continue
+        if depth < 3 and _dead_arg(target, i, depth):
+            continue
+        out.add(params.index(i.var))
+    return out
+
+
+def _drop_args(toks, names):
+    """toks with each argument that is one of the variables names removed, with its separator"""
+    if not names:
+        return toks
+    out = []
+    for n, t in enumerate(toks):
+        if t.type == TT.LocalVariableToken and t.text in names:
+            if out and out[-1].text == ", ":
+                out.pop()
+            elif n + 1 < len(toks) and toks[n + 1].text == ", ":
+                toks[n + 1] = tok(TT.TextToken, "")
+            continue
+        out.append(t)
+    return out
+
+
+def _dead_arg(func, use, depth=0):
+    """use (an HLIL_VAR) is a whole argument of a tail call to a function that does not read that parameter"""
+    for t in walk(func.hlil.root):
+        if t.operation == Op.HLIL_TAILCALL and t.dest.operation == Op.HLIL_CONST_PTR:
+            for n, a in enumerate(t.params):
+                if a.expr_index == use.expr_index:
+                    callee = func.view.get_function_at(t.dest.constant)
+                    return callee is not None and callee.hlil is not None and \
+                        n not in _read_params(callee, depth + 1)
+    return False
+
+
 def _self_contained(target, callers):
     """target's code reads only its parameters and its own variables, none of them named like a caller's; each
     caller reaches it only through tail calls that pass every parameter it reads (BN may give it more than it
-    reads: `sub_400d7e(arg1, arg2)` called with one, bncpp-153): printed in their place it means the same"""
+    reads: `sub_400d7e(arg1, arg2)` called with one, bncpp-153; _read_params): printed in their place it means
+    the same"""
     params = list(target.parameter_vars)
     own = set()
     for i in walk(target.hlil.root):
@@ -1633,7 +1683,7 @@ def _self_contained(target, callers):
     if not all(i.var in params or i.var in own for i in walk(target.hlil.root) if i.operation == Op.HLIL_VAR):
         return False
     locals_ = {v.name for v in own - set(params)}
-    read = {params.index(i.var) for i in walk(target.hlil.root) if i.operation == Op.HLIL_VAR and i.var in params}
+    read = _read_params(target)
     need = max(read) + 1 if read else 0
     for c in callers:
         if c.hlil is None or c.hlil.root is None or locals_ & {v.name for v in c.vars}:
