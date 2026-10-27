@@ -13,7 +13,7 @@ import re
 
 from binaryninja import (BraceRequirement, HighLevelILOperation, LanguageRepresentationFunction,
                          LanguageRepresentationFunctionType, MediumLevelILOperation, OperatorPrecedence,
-                         VariableSourceType, log_warn)
+                         RegisterValueType, SSAVariable, VariableSourceType, log_warn)
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
@@ -257,6 +257,10 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             while last and not last[-1][0]:  # the blank line after the run goes after the catch
                 last.pop()
                 blank = True
+            # every pad of the region names its callee-saved registers as the owner does (bncpp-150)
+            for pf in {h[1] for h in self._handlers[id(r)]} | {u[0] for u in self._unwind.get(id(r)) or ()}:
+                if pf is not None:
+                    self.reg_map(pf, r, loop)
             handlers = [(c, pf, self.handler_body(pl, r, pf, stmts[i:j + 1], stmts[j + 1:] if loop else None)
                          if isinstance(pl, tuple) else pl, note, cont)
                         for c, pf, pl, note, cont in self._handlers[id(r)]]
@@ -417,9 +421,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         decls = [d for d in decls if mine_(d) and d.var in used and d.var not in known and d.var.name not in names]
         return eh_render.Plumbing(cut.stmts + decls + ext, cut.rethrow, cut.names, goes_on)
 
-    def reg_map(self, pad, region):
+    def reg_map(self, pad, region, loop=False):
         """{name of a pad variable in a callee-saved register: the owner's variable in that register at the
-        region's calls into the pad} (bncpp-149) -- the same at every such call and one the owner's HLIL shows"""
+        region's calls into the pad} (bncpp-149) -- the same at every such call and one the owner's HLIL shows.
+        Outside a loop body (loop: the region is in one) only a variable that carries the register's value into the pad (its SSA version 0 is read
+        there), not one the pad computes in that register (the exception value, bncpp-150) -- in a loop the pad
+        also hands values on to the owner in these registers (bncpp-149); only where the owner's variable holds the
+        register's value at the call: MLIL keeps the register's entry variable after a store BN folded away (`lea
+        r15, [rbp-0x50]`), and the MLIL instruction's get_reg_value says 'entry' there too -- the function's
+        (LLIL's) says stack frame offset"""
         if pad.start in self._regmaps:
             return self._regmaps[pad.start]
         out = self._regmaps[pad.start] = {}
@@ -433,8 +443,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         calls = [m for m in owner.mlil.instructions if any(a <= m.address < b for a, b in ranges)
                  and m.operation in (MOp.MLIL_CALL, MOp.MLIL_CALL_UNTYPED)]
         shown = set(owner.hlil.vars)
-        if not calls:
+        if not calls or pad.mlil is None:
             return out
+        ssa = pad.mlil.ssa_form
+
+        def holds(m, reg, w):  # w holds reg's value at the call m
+            kind = owner.get_reg_value_at(m.address, reg).type
+            entry = m.get_ssa_var_version(w) == 0
+            return entry if kind == RegisterValueType.EntryValue else \
+                not entry and kind == RegisterValueType.UndeterminedValue
         for v in pad.vars:
             if v.source_type != VariableSourceType.RegisterVariableSourceType:
                 continue
@@ -442,7 +459,11 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             if eh_render._full(pad.arch, reg) not in saved:
                 continue
             try:
+                if ssa is None or not loop and not ssa.get_ssa_var_uses(SSAVariable(v, 0)):
+                    continue
                 got = {m.get_var_for_reg(reg) for m in calls}
+                if len(got) != 1 or not all(holds(m, reg, next(iter(got))) for m in calls):
+                    continue
             except Exception:
                 continue
             if len(got) == 1 and next(iter(got)) in shown:
@@ -606,7 +627,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 f = s.function.source_function  # the pad, or the cleanup chain it jumps to
                 lr = lrs.get(f.start) or lrs.setdefault(f.start, f.language_representation(BASE_LANGUAGE))
                 for line in lr.get_expr_text(s, None, P.TopLevelOperatorPrecedence, True):
-                    text = "".join(t.text for t in self.frame_tokens(list(line.tokens), pf, f)).rstrip()
+                    toks = self.reg_tokens(self.frame_tokens(list(line.tokens), pf, f), pf, f, None)
+                    text = "".join(t.text for t in toks).rstrip()
                     if text.strip():
                         self.note(tokens, "// unwind: " + text)
                         tokens.new_line()
