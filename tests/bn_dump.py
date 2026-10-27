@@ -8,7 +8,9 @@
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
 # every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; serially, bncpp-124) and writes into
 # .scratch/suite/out/<variant>/TestX.*:
-#   .pcpp  each function in __text / .text in the latest dev-loaded Pseudo Cpp (checked by tests/suite/suite.py)
+#   .pcpp  each function in __text / .text in the latest dev-loaded Pseudo Cpp (checked by tests/suite/suite.py),
+#          but a landing pad's tail BN split off (printed in place in its pads, so the output does not depend on
+#          the split; bncpp-139)
 #   .pc    the same functions in Pseudo C (for comparison)
 #   .lsda  the decoded exception tables, read through BN (cpp/bnimage.py; checked, and cross-checked against
 #          the offline reference of `suite.py ref-lsda`)
@@ -170,6 +172,8 @@ for _path in _bins:
                 if _text is not None and not (_text.start <= _f.start < _text.end):
                     continue
                 for _key, _language in _views:
+                    if _key == "pcpp" and _pc.pad_tail(_f):  # printed in place in its pads (bncpp-139)
+                        continue
                     _texts[_key].append("// %s @ %#x" % (_f.symbol.full_name, _f.start))
                     _texts[_key].extend(_render(_f, _language))
                     _texts[_key].append("")

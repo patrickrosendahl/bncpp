@@ -45,8 +45,10 @@
     //   from 0x400674..0x40067b: cleanup
 
     Guard::~Guard((char*)arg2 - 0x10);
+    Guard::~Guard((char*)arg2 - 0x18);
+    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
     /* tailcall */
-    return sub_4006ad(arg1, arg2);
+    return __Unwind_Resume(arg1);
 }
 
 // j_sub_4006aa @ 0x4006a8
@@ -64,13 +66,7 @@
     //   from 0x40065b..0x400662: cleanup
 
     void* rbp;
-    /* tailcall */
-    return sub_4006ad(arg1, rbp);
-}
-
-// sub_4006ad @ 0x4006ad
-{
-    Guard::~Guard((char*)arg2 - 0x18);
+    Guard::~Guard((char*)rbp - 0x18);
     void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
     /* tailcall */
     return __Unwind_Resume(arg1);

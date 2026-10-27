@@ -39,8 +39,11 @@
     //   from 0x400620..0x400630: catch (std::runtime_error) #1, cleanup, cleanup
 
     if (arg2 != 1)
+    {
+        Guard::~Guard(arg3 - 0x10);
         /* tailcall */
-        return sub_400728(arg3);
+        return sub_400734();
+    }
 
     int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     _printf("caught %s\n");
@@ -59,8 +62,11 @@
     Guard::~Guard((char*)arg3 - 0x18);
 
     if (arg2 != 1)
+    {
+        Guard::~Guard(arg3 - 0x10);
         /* tailcall */
-        return sub_400728(arg3);
+        return sub_400734();
+    }
 
     int64_t arg_0 = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     _printf("caught %s\n");
@@ -82,8 +88,9 @@
     int32_t arg_1c = x1;
     ___cxa_end_catch();
     int64_t fp;
+    Guard::~Guard(fp - 0x10);
     /* tailcall */
-    return sub_400728(fp);
+    return sub_400734();
 }
 
 // j_sub_400710 @ 0x4006f8
@@ -102,21 +109,15 @@
     int32_t x1;
     int32_t arg_1c = x1;
     int64_t fp;
+    Guard::~Guard(fp - 0x10);
     /* tailcall */
-    return sub_400728(fp);
+    return sub_400734();
 }
 
 // sub_400710 @ 0x400710
 {
     Guard::~Guard((char*)arg1 - 0x10);
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400728 @ 0x400728
-{
-    Guard::~Guard(arg1 - 0x10);
-    /* tailcall */
-    return sub_400734();
 }
 
 // sub_400734 @ 0x400734

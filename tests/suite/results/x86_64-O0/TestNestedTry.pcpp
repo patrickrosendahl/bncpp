@@ -54,13 +54,17 @@
     }
 
     if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
-        /* tailcall */
-        return sub_4006df(arg5);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+        /* no return */
+    }
 
     *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
     _printf("outer %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffb;
+    ___cxa_end_catch();
     /* tailcall */
-    return sub_4006b3(arg5);
+    return sub_4006d6(arg5);
 }
 
 // sub_400669 @ 0x400669
@@ -73,21 +77,17 @@
     ___cxa_end_catch();
 
     if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
-        /* tailcall */
-        return sub_4006df(arg5);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+        /* no return */
+    }
 
     *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
     _printf("outer %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
-    /* tailcall */
-    return sub_4006b3(arg5);
-}
-
-// sub_4006b3 @ 0x4006b3
-{
-    *(uint32_t*)((char*)arg1 - 4) = 0xfffffffb;
+    *(uint32_t*)((char*)arg5 - 4) = 0xfffffffb;
     ___cxa_end_catch();
     /* tailcall */
-    return sub_4006d6(arg1);
+    return sub_4006d6(arg5);
 }
 
 // sub_4006c1 @ 0x4006c1
@@ -98,19 +98,13 @@
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_4006df(arg5);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
 }
 
 // sub_4006d6 @ 0x4006d6
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_4006df @ 0x4006df
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_4006e8 @ 0x4006e8

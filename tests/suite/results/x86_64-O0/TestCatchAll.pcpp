@@ -45,19 +45,13 @@
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_40065f(arg5);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
 }
 
 // sub_400656 @ 0x400656
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_40065f @ 0x40065f
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_400668 @ 0x400668

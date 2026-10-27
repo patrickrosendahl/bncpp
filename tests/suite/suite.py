@@ -444,11 +444,18 @@ def _check_rows(names, root, show, quiet=False):
                 say("%-10s %-26s no output" % (v, t))
                 missing += 1
                 continue
-            ref = dict((k, body) for k, _h, body in C.split_functions(open(pc).read(), _FUNC))
+            pc_funcs = C.split_functions(open(pc).read(), _FUNC)
+            ref = dict((k, body) for k, _h, body in pc_funcs)
+            # a function only in .pc is a landing pad's tail the .pcpp prints in place in its pads (bncpp-139):
+            # calls to it may vanish
+            shown = {k for k, _h, _b in C.split_functions(open(pcpp).read(), _FUNC)}
+            tails = [h[3:].rsplit(" @ ", 1)[0] for k, h, _b in pc_funcs if k not in shown]
+            ignore = re.compile("%s|%s" % (MAY_VANISH.pattern, "|".join(map(re.escape, tails)))) if tails \
+                else MAY_VANISH
             catches = _lsda_catches(os.path.join(OUT, v, t + ".lsda"))
             first = {}  # the .lsda names the function, not its address: C1/C2 ctors share a name, count it once
             for addr, header, body in C.split_functions(open(pcpp).read(), _FUNC):
-                r = C.check_function(body, ref.get(addr), COUNTERS, DISTINCT, MAY_VANISH, CATCH_VAR)
+                r = C.check_function(body, ref.get(addr), COUNTERS, DISTINCT, ignore, CATCH_VAR)
                 name = header[3:].rsplit(" @ ", 1)[0]
                 has_try = bool(re.search(r"\btry\b", C.strip_comments(C.strip_strings("\n".join(body)))))
                 r["missing_try"] = 0

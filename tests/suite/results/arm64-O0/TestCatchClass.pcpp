@@ -121,8 +121,10 @@
     }
 
     if (x8_1 != 1)
-        /* tailcall */
-        return sub_400994(arg3);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
 
     void* x0_6 = ___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
     int64_t arg_0 = *(uint64_t*)((char*)x0_6 + 0x10);
@@ -141,8 +143,8 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400994(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_40096c @ 0x40096c
@@ -153,19 +155,13 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400994(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_400984 @ 0x400984
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400994 @ 0x400994
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_40099c @ 0x40099c

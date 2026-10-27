@@ -309,8 +309,10 @@
     //   from 0x400e50..0x400e54: catch (Err) #1
 
     if (arg2 != 1)
-        /* tailcall */
-        return sub_400ee8(arg1);
+    {
+        __Unwind_Resume(arg1);
+        /* no return */
+    }
 
     *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     ___cxa_end_catch();
@@ -326,19 +328,13 @@
     int32_t x1;
     int32_t arg_14 = x1;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400ee8(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_400ed8 @ 0x400ed8
 {
     return *(uint64_t*)((char*)arg1 - 8);
-}
-
-// sub_400ee8 @ 0x400ee8
-{
-    __Unwind_Resume(arg1);
-    /* no return */
 }
 
 // sub_400ef0 @ 0x400ef0

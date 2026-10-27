@@ -47,19 +47,13 @@
     int32_t x1;
     int32_t arg_c = x1;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400684(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_400674 @ 0x400674
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400684 @ 0x400684
-{
-    __Unwind_Resume(arg1);
-    /* no return */
 }
 
 // sub_40068c @ 0x40068c

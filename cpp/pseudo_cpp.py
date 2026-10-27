@@ -64,11 +64,21 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             lines = eh_comments.lines(self.function.view, self.function.start)
         except Exception as ex:
             lines = ["[%s could not read the exception tables: %s: %s]" % (self.language_label, type(ex).__name__, ex)]
+        if not lines and self.tail(self.function):
+            lines = ["a landing pad's tail, printed in place in %s" % ", ".join(sorted(
+                {r.function.symbol.full_name for r in self.function.view.get_code_refs(self.function.start)}))]
         for line in lines:
             self.note(tokens, "// " + line)
             tokens.new_line()
         if lines:
             tokens.scope_separator()
+
+    def tail(self, func):
+        """pad_tail(func), once per rendering"""
+        cache = self.__dict__.setdefault("_tails", {})
+        if func.start not in cache:
+            cache[func.start] = pad_tail(func)
+        return cache[func.start]
 
     def perform_end_lines(self, instr, tokens):
         tokens.decrease_indent()
@@ -143,7 +153,59 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             plans[func.start] = eh_throw.plan(func)
         keyed = [(list(l.tokens), (func.start, l.il_instruction.instr_index) if l.il_instruction is not None
                   else None) for l in lines]
+        keyed = self.inline_tails(keyed, func)
         return eh_throw.rewrite(keyed, {func.start: plans[func.start]}) if rewrite and plans[func.start] else keyed
+
+    def inline_tails(self, keyed, func, depth=0):
+        """keyed lines of func with each tail call to a landing pad's tail (pad_tail) replaced by the tail's lines,
+        its parameters replaced by the call's arguments (bncpp-139): whether BN splits the tail off depends on its
+        analysis order, printed in place both forms read the same. A body of more than one line gets braces where
+        the call was the brace-less body of an if / else, as Pseudo C prints the tail when it is not split"""
+        hlil = func.hlil
+        if hlil is None or depth > 3:
+            return keyed
+        out, n = [], 0
+        while n < len(keyed):
+            toks, key = keyed[n]
+            ins = hlil[key[1]] if key is not None else None
+            target = None
+            if ins is not None and ins.operation == Op.HLIL_TAILCALL and ins.dest.operation == Op.HLIL_CONST_PTR:
+                target = func.view.get_function_at(ins.dest.constant)
+            if target is None or target.start == func.start or not self.tail(target):
+                out.append(keyed[n])
+                n += 1
+                continue
+            m = n
+            while m < len(keyed) and keyed[m][1] == key:
+                m += 1
+            lr = target.language_representation(BASE_LANGUAGE)
+            body = [(t, k) for t, k in self.inline_tails(
+                [(list(l.tokens), (target.start, l.il_instruction.instr_index) if l.il_instruction is not None
+                  else None) for l in lr.get_expr_text(target.hlil.root, None, P.TopLevelOperatorPrecedence, True)],
+                target, depth + 1)]
+            while body and not "".join(t.text for t in body[-1][0]).strip():
+                body.pop()
+            base = func.language_representation(BASE_LANGUAGE)
+            args = {}
+            for v, a in zip(target.parameter_vars, ins.params):
+                lines = base.get_expr_text(a, None, P.TopLevelOperatorPrecedence, False)
+                at = [t for l in lines for t in l.tokens]
+                args[v.name] = at if _atomic(at) else _group(at)
+            lead = _lead(keyed[n][0])
+            prev = out[-1][0] if out else []
+            head = _text(out[-1]).strip() if out else ""
+            wrap = len(body) > 1 and len(_lead(prev)) < len(lead) and head and head[-1] not in "{};"
+            if wrap:
+                out.append((_lead(prev) + [tok(TT.BraceToken, "{")], key))
+            for t, _k in body:
+                t = [x for a in t for x in (args[a.text] if a.type == TT.LocalVariableToken and a.text in args
+                                            else [a])]
+                out.append((lead + t[len(_lead(t)):] if "".join(x.text for x in t).strip() else [], key))
+            if wrap:
+                out.append((_lead(prev) + [tok(TT.BraceToken, "}")], key))
+            out.extend(k for k in keyed[n:m] if not "".join(t.text for t in k[0]).strip())  # the blank after it
+            n = m
+        return out
 
     def plan_block(self, block, regions, loop=False):
         stmts, groups = self.stmt_lines(block)
@@ -1489,6 +1551,84 @@ def _cleanups(stmts):
         if s.operation != Op.HLIL_VAR_DECLARE:
             out.append(s)
     return out if any(i.operation in (Op.HLIL_CALL, Op.HLIL_TAILCALL) for s in out for i in walk(s)) else []
+
+
+def _lead(toks):
+    """the indentation tokens at the start of a line"""
+    n = 0
+    while n < len(toks) and not toks[n].text.strip():
+        n += 1
+    return list(toks[:n])
+
+
+_TAIL_STMTS = 12
+_NOT_TAIL = ("cxa_begin_catch", "cxa_rethrow", "cxa_throw", "cxa_allocate_exception")
+
+
+def _tail_shape(func):
+    """func looks like a landing pad's tail: auto-named, no exception table or landing pad of its own, a few
+    statements that never return (an _Unwind_Resume, a no-return call, a tail call), no catch or throw"""
+    if not func.symbol.auto:
+        return False
+    ix = eh_comments.index(func.view)
+    if func.start in ix.pads or func.start in ix.owners:
+        return False
+    try:
+        hlil = func.hlil
+    except Exception:
+        return False
+    if hlil is None or hlil.root is None:
+        return False
+    stmts = _flat(hlil.root)
+    if not stmts or len(stmts) > _TAIL_STMTS:
+        return False
+    if stmts[-1].operation not in (Op.HLIL_NORET, Op.HLIL_TAILCALL, Op.HLIL_UNREACHABLE):
+        return False
+    return not any(i.operation == Op.HLIL_RET or eh_render.callee(i) in _NOT_TAIL for i in walk(hlil.root))
+
+
+def _self_contained(target, callers):
+    """target's code reads only its parameters and its own variables, none of them named like a caller's; each
+    caller reaches it only through tail calls that pass every parameter: printed in their place it means the same"""
+    params = list(target.parameter_vars)
+    own = set()
+    for i in walk(target.hlil.root):
+        if i.operation == Op.HLIL_VAR_INIT:
+            own.add(i.dest)
+        elif i.operation == Op.HLIL_VAR_DECLARE:
+            own.add(i.var)
+        elif i.operation == Op.HLIL_ASSIGN and i.dest.operation == Op.HLIL_VAR:
+            own.add(i.dest.var)
+    if not all(i.var in params or i.var in own for i in walk(target.hlil.root) if i.operation == Op.HLIL_VAR):
+        return False
+    locals_ = {v.name for v in own - set(params)}
+    for c in callers:
+        if c.hlil is None or c.hlil.root is None or locals_ & {v.name for v in c.vars}:
+            return False
+        nodes = [i for i in walk(c.hlil.root) if i.operation in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT)
+                 and i.constant == target.start]
+        calls = [i for i in walk(c.hlil.root) if i.operation == Op.HLIL_TAILCALL
+                 and i.dest.operation == Op.HLIL_CONST_PTR and i.dest.constant == target.start]
+        if not calls or len(calls) != len(nodes) or any(len(i.params) != len(params) for i in calls):
+            return False
+    return True
+
+
+def pad_tail(func, depth=0):
+    """func is a landing pad's tail BN split off (bncpp-139): _tail_shape, and only landing pads or other such tails
+    reach it (a jump trampoline j_sub_X to the shared _Unwind_Resume, bncpp-144) -- its code, printed in place in
+    them (inline_tails), reads the same whether BN split it off or not"""
+    if depth > 3 or not _tail_shape(func):
+        return False
+    bv = func.view
+    if list(bv.get_data_refs(func.start)):
+        return False
+    refs = list(bv.get_code_refs(func.start))
+    pads = eh_comments.index(bv).pads
+    if not refs or not all(r.function is not None and r.function.start != func.start and (
+            r.function.start in pads or pad_tail(r.function, depth + 1)) for r in refs):
+        return False
+    return _self_contained(func, list({r.function.start: r.function for r in refs}.values()))
 
 
 def _goes_on(stmts):

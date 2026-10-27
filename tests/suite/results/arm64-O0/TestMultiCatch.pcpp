@@ -57,8 +57,10 @@
     }
 
     if (x8_1 != 1)
-        /* tailcall */
-        return sub_400714(arg3);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
 
     arg_0 = (uint64_t)*(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10));
     _printf("int: %d\n");
@@ -76,8 +78,8 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400714(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_4006ec @ 0x4006ec
@@ -88,19 +90,13 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400714(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_400704 @ 0x400704
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400714 @ 0x400714
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_40071c @ 0x40071c
@@ -172,8 +168,10 @@
     }
 
     if (x8_1 != 1)
-        /* tailcall */
-        return sub_400838(arg3);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+        /* no return */
+    }
 
     log_line((
         *(uint64_t*)(*(uint64_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg3 - 0x10)) + 0x10))());
@@ -191,8 +189,8 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400838(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_400810 @ 0x400810
@@ -203,19 +201,13 @@
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400838(arg3);
+    __Unwind_Resume(*(uint64_t*)((char*)arg3 - 0x10));
+    /* no return */
 }
 
 // sub_400828 @ 0x400828
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400838 @ 0x400838
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_400840 @ 0x400840

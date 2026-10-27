@@ -98,8 +98,10 @@
     if (arg3 != 2)
     {
         if (arg3 != 1)
-            /* tailcall */
-            return sub_4006e8(arg4);
+        {
+            __Unwind_Resume(arg4);
+            /* no return */
+        }
 
         void* rax_2 = ___cxa_begin_catch(arg4);
         log_line((*(uint64_t*)(*(uint64_t*)rax_2 + 0x10))(rax_2));
@@ -121,8 +123,8 @@
     //   from 0x4006c5..0x4006cd (in sub_400682): cleanup
 
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_4006e8(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_4006e0 @ 0x4006e0
@@ -132,13 +134,7 @@
 
     ___cxa_end_catch();
     struct _Unwind_Exception* entry_rax;
-    /* tailcall */
-    return sub_4006e8(entry_rax);
-}
-
-// sub_4006e8 @ 0x4006e8
-{
-    __Unwind_Resume(arg1);
+    __Unwind_Resume(entry_rax);
     /* no return */
 }
 

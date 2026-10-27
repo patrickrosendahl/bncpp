@@ -113,8 +113,10 @@
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
 
     if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
-        /* tailcall */
-        return sub_400891(arg5);
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+        /* no return */
+    }
 
     *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
     _printf("runtime_error: %s\n", (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x20) + 0x10))());
@@ -132,19 +134,13 @@
     *(uint64_t*)((char*)arg5 - 0x10) = arg4;
     *(uint32_t*)((char*)arg5 - 0x14) = arg3;
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400891(arg5);
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
 }
 
 // sub_400888 @ 0x400888
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 4);
-}
-
-// sub_400891 @ 0x400891
-{
-    __Unwind_Resume(*(uint64_t*)((char*)arg1 - 0x10));
-    /* no return */
 }
 
 // sub_40089a @ 0x40089a
