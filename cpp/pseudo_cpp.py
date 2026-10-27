@@ -1594,7 +1594,9 @@ _NOT_TAIL = ("cxa_begin_catch", "cxa_rethrow", "cxa_throw", "cxa_allocate_except
 
 def _tail_shape(func):
     """func looks like a landing pad's tail: auto-named, no exception table or landing pad of its own, a few
-    statements that never return (an _Unwind_Resume, a no-return call, a tail call), no catch or throw"""
+    statements that never return (an _Unwind_Resume, a no-return call, a tail call) or end in the one return (the
+    owner's code after the try, reached only from its pads: `return *(uint64_t*)((char*)arg1 - 8);`, bncpp-153),
+    no catch or throw"""
     if not func.symbol.auto:
         return False
     ix = eh_comments.index(func.view)
@@ -1609,14 +1611,16 @@ def _tail_shape(func):
     stmts = _flat(hlil.root)
     if not stmts or len(stmts) > _TAIL_STMTS:
         return False
-    if stmts[-1].operation not in (Op.HLIL_NORET, Op.HLIL_TAILCALL, Op.HLIL_UNREACHABLE):
+    if stmts[-1].operation not in (Op.HLIL_NORET, Op.HLIL_TAILCALL, Op.HLIL_UNREACHABLE, Op.HLIL_RET):
         return False
-    return not any(i.operation == Op.HLIL_RET or eh_render.callee(i) in _NOT_TAIL for i in walk(hlil.root))
+    return not any(i.operation == Op.HLIL_RET and i.expr_index != stmts[-1].expr_index or
+                   eh_render.callee(i) in _NOT_TAIL for i in walk(hlil.root))
 
 
 def _self_contained(target, callers):
     """target's code reads only its parameters and its own variables, none of them named like a caller's; each
-    caller reaches it only through tail calls that pass every parameter: printed in their place it means the same"""
+    caller reaches it only through tail calls that pass every parameter it reads (BN may give it more than it
+    reads: `sub_400d7e(arg1, arg2)` called with one, bncpp-153): printed in their place it means the same"""
     params = list(target.parameter_vars)
     own = set()
     for i in walk(target.hlil.root):
@@ -1629,6 +1633,8 @@ def _self_contained(target, callers):
     if not all(i.var in params or i.var in own for i in walk(target.hlil.root) if i.operation == Op.HLIL_VAR):
         return False
     locals_ = {v.name for v in own - set(params)}
+    read = {params.index(i.var) for i in walk(target.hlil.root) if i.operation == Op.HLIL_VAR and i.var in params}
+    need = max(read) + 1 if read else 0
     for c in callers:
         if c.hlil is None or c.hlil.root is None or locals_ & {v.name for v in c.vars}:
             return False
@@ -1636,7 +1642,7 @@ def _self_contained(target, callers):
                  and i.constant == target.start]
         calls = [i for i in walk(c.hlil.root) if i.operation == Op.HLIL_TAILCALL
                  and i.dest.operation == Op.HLIL_CONST_PTR and i.dest.constant == target.start]
-        if not calls or len(calls) != len(nodes) or any(len(i.params) != len(params) for i in calls):
+        if not calls or len(calls) != len(nodes) or any(not need <= len(i.params) <= len(params) for i in calls):
             return False
     return True
 

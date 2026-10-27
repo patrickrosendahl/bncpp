@@ -128,14 +128,8 @@
     *(uint32_t*)((char*)arg5 - 0x20) =
         *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x18));
     log_line("caught");
-    /* tailcall */
-    return sub_400793(arg5);
-}
-
-// sub_400793 @ 0x400793
-{
     ___cxa_end_catch();
-    return (uint64_t)*(uint32_t*)((char*)arg1 - 0x10);
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 0x10);
 }
 
 // sub_4007a3 @ 0x4007a3

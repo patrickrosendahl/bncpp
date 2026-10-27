@@ -296,8 +296,7 @@
         var_30 = &e;
         var_38 = (*(uint64_t*)(*var_30 + 0x10))();
         var_10 = var_38;
-        /* tailcall */
-        return sub_400d7e(arg5);
+        return var_10;
     }
     /* no return */
 }
@@ -320,8 +319,7 @@
     *(uint64_t*)((char*)arg5 - 0x30) = (*(uint64_t*)(**(uint64_t**)((char*)arg5 - 0x28) + 0x10))();
     *(uint64_t*)((char*)arg5 - 8) = *(uint64_t*)((char*)arg5 - 0x30);
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400d7e(arg5);
+    return *(uint64_t*)((char*)arg5 - 8);
 }
 
 // sub_400d5e @ 0x400d5e
@@ -334,11 +332,6 @@
     ___cxa_end_catch();
     __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x18));
     /* no return */
-}
-
-// sub_400d7e @ 0x400d7e
-{
-    return *(uint64_t*)((char*)arg1 - 8);
 }
 
 // sub_400d91 @ 0x400d91

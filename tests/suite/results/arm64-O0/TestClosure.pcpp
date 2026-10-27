@@ -297,8 +297,7 @@
     catch (Err& e)
     {
         var_18 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
-        /* tailcall */
-        return sub_400ed8(arg3);
+        return var_18;
     }
     /* no return */
 }
@@ -316,8 +315,7 @@
 
     *(uint64_t*)((char*)arg3 - 8) = (*(uint64_t*)(*(uint64_t*)___cxa_begin_catch(arg1) + 0x10))();
     ___cxa_end_catch();
-    /* tailcall */
-    return sub_400ed8(arg3);
+    return *(uint64_t*)((char*)arg3 - 8);
 }
 
 // sub_400eb0 @ 0x400eb0
@@ -330,11 +328,6 @@
     ___cxa_end_catch();
     __Unwind_Resume(arg1);
     /* no return */
-}
-
-// sub_400ed8 @ 0x400ed8
-{
-    return *(uint64_t*)((char*)arg1 - 8);
 }
 
 // sub_400ef0 @ 0x400ef0
