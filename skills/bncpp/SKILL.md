@@ -33,8 +33,10 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
   MLIL instruction's `get_reg_value` still say r15's entry value (bncpp-155) -- check with
   `Function.get_reg_value_at` (`_holds` in `cpp/pseudo_cpp.py`). BN also types unpassed tail parameters as stack
   variables, so "map by storage" fails there (bncpp-152).
-- Probe scripts through the bridge: drop every Function reference and `gc.collect()` before `bv.file.close()`, and
-  keep an exception from holding them (format it as text first) -- the BNFreeFunction crashes (bncpp-102, -168).
+- Probe scripts through the bridge: open throwaway views with `tests/bn_probe.py` (`with probe_view(path,
+  pads=True) as bv:`, usage in its header) -- it drops the block's Function / IL references, keeps an exception as
+  text and runs `gc.collect()` before `bv.file.close()`; a hand-rolled close must do the same (the BNFreeFunction
+  crashes, bncpp-102, -168).
 
 ## Gotchas: classes and databases (details: wiki `classes.md`)
 - BN 6.1 resolves Mach-O binds through the nlist names: where an obfuscator hashed them (SynthV), the typeinfo
