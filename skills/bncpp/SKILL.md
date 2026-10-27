@@ -29,6 +29,12 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
   them (command, `bn_landing_pads.py`; `bn_dump.py` does it in its views). Never automatically on load (bncpp-4).
 - Shared code (`shared/`): no imports from `cpp/`, hooks for language specifics, provenance header, row in the
   wiki `code-structure.md` table; mirror the split in binary-jvm (jvm-68, bncpp-14).
+- MLIL's register view can lie: after a load MLIL folded away (`lea r15, [rbp-0x50]`) `get_var_for_reg` and the
+  MLIL instruction's `get_reg_value` still say r15's entry value (bncpp-155) -- check with
+  `Function.get_reg_value_at` (`_holds` in `cpp/pseudo_cpp.py`). BN also types unpassed tail parameters as stack
+  variables, so "map by storage" fails there (bncpp-152).
+- Probe scripts through the bridge: drop every Function reference and `gc.collect()` before `bv.file.close()`, and
+  keep an exception from holding them (format it as text first) -- the BNFreeFunction crashes (bncpp-102, -168).
 
 ## Gotchas: classes and databases (details: wiki `classes.md`)
 - BN 6.1 resolves Mach-O binds through the nlist names: where an obfuscator hashed them (SynthV), the typeinfo
