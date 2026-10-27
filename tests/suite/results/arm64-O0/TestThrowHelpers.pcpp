@@ -23,11 +23,11 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = at_index(arg1, arg2);
+        int32_t at_index_result = at_index(arg1, arg2);
     }
     catch (std::out_of_range& e)
     {
-        var_14 = 0xffffffff;
+        at_index_result = 0xffffffff;
         /* tailcall */
         return sub_4006f0(arg3);
     }
@@ -94,11 +94,11 @@
     int64_t var_10 = fp;
     try
     {
-        uint64_t var_18 = tail_of(arg1, arg2);
+        uint64_t tail_of_result = tail_of(arg1, arg2);
     }
     catch (std::logic_error& e)
     {
-        var_18 = 0;
+        tail_of_result = 0;
         /* tailcall */
         return sub_400884(arg3);
     }
@@ -167,11 +167,11 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = checked(arg1);
+        int32_t checked_result = checked(arg1);
     }
     catch (std::runtime_error& e)
     {
-        var_14 = 0;
+        checked_result = 0;
         /* tailcall */
         return sub_4009b8(arg3);
     }
@@ -214,11 +214,11 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = checked(arg1);
+        int32_t checked_result = checked(arg1);
     }
     catch (std::range_error& e)
     {
-        var_14 = 1;
+        checked_result = 1;
         /* tailcall */
         return sub_400a38(arg3);
     }

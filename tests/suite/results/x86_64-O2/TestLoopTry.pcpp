@@ -5,15 +5,15 @@
 
     int64_t rax;
     int64_t var_28 = rax;
-    int32_t r15 = 0;
+    int32_t i = 0;
     int32_t rbx = 0;
 
     try
     {
-        while (may_throw(r15) < arg1)
+        while (may_throw(i) < arg1)
         {
-            rbx += r15;
-            r15 += 1;
+            rbx += i;
+            i += 1;
         }
     }
     catch (std::runtime_error& e)
@@ -101,24 +101,24 @@
 
     int64_t rax;
     int64_t var_28 = rax;
-    int32_t r14 = 0;
+    int32_t i = 0;
     int32_t r15 = 0;
 
     while (true)
     {
         try
         {
-            if (may_throw(r14) >= arg1)
+            if (may_throw(i) >= arg1)
                 break;
         }
         catch (std::runtime_error& e)
         {
             r15 -= 1;
-            r14 += 1;
+            i += 1;
             continue;
         }
-        r15 += r14;
-        r14 += 1;
+        r15 += i;
+        i += 1;
     }
     return (uint64_t)r15;
 }
@@ -137,15 +137,15 @@
     ___cxa_begin_catch(arg4);
     ___cxa_end_catch();
     int32_t rcx = -1;
-    int32_t rax_1;
+    int32_t may_throw_result;
 
     do
     {
         arg7 += rcx;
         arg6 += 1;
-        rax_1 = may_throw(arg6);
+        may_throw_result = may_throw(arg6);
         rcx = arg6;
-    } while (rax_1 < arg5);
+    } while (may_throw_result < arg5);
     return (uint64_t)arg7;
 }
 
@@ -154,16 +154,16 @@
     // exception table (LSDA 0x400844): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x4006f4..0x4006fb -> 0x400707 sub_400707: catch (std::runtime_error) #1, cleanup, cleanup
 
-    int32_t rbx = 0;
+    int32_t i = 0;
     int32_t r15 = 0;
 
     while (true)
     {
-        int32_t r12_1 = r15 + rbx;
+        int32_t r12_1 = r15 + i;
 
         try
         {
-            if (may_throw(rbx) >= arg1)
+            if (may_throw(i) >= arg1)
                 break;
         }
         catch (std::runtime_error& e)
@@ -171,11 +171,11 @@
             r12_1 -= 1;
         }
 
-        rbx += 1;
+        i += 1;
         r15 = r12_1;
     }
 
-    return (uint64_t)(r15 + rbx);
+    return (uint64_t)(r15 + i);
 }
 
 // sub_400707 @ 0x400707

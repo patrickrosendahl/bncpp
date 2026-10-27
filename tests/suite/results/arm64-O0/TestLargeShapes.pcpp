@@ -33,33 +33,33 @@
 // scan(int32_t const*, int32_t, int32_t) @ 0x400754
 {
     int32_t var_2c = 0;
-    int32_t var_30 = 0;
+    int32_t i = 0;
     int32_t var_14;
 
     while (true)
     {
-        if (var_30 >= arg2)
+        if (i >= arg2)
         {
             var_14 = var_2c;
             break;
         }
 
-        if (!(arg1[(int64_t)var_30] & 0x80000000))
+        if (!(arg1[(int64_t)i] & 0x80000000))
         {
-            int32_t var_34_1 = 0;
+            int32_t j = 0;
 
             while (true)
             {
-                if (var_34_1 < arg3)
+                if (j < arg3)
                 {
-                    int32_t x8_8 = arg1[(int64_t)((var_30 + var_34_1) % arg2)];
+                    int32_t x8_8 = arg1[(int64_t)((i + j) % arg2)];
 
                     if (x8_8 == 7)
                         break;
 
                     if (x8_8 <= 0x64)
                     {
-                        var_34_1 += 1;
+                        j += 1;
                         continue;
                     }
 
@@ -77,7 +77,7 @@
             }
         }
 
-        var_30 += 1;
+        i += 1;
     }
 
     return (uint64_t)var_14;

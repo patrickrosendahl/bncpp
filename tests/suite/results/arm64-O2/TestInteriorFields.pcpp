@@ -11,13 +11,13 @@
 
     if (arg2)
     {
-        int64_t x8_1 = 0;
+        int64_t i = 0;
 
         do
         {
-            *(uint64_t*)(*(uint64_t*)arg1 + (x8_1 << 3)) = 0;
-            x8_1 += 1;
-        } while (arg2 != x8_1);
+            *(uint64_t*)(*(uint64_t*)arg1 + (i << 3)) = 0;
+            i += 1;
+        } while (arg2 != i);
     }
 
     return result;

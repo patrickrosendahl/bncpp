@@ -5,11 +5,11 @@
 
     do
     {
-        int32_t x0 = next_value();
+        int32_t value = next_value();
 
-        result = x0 ? (uint64_t)((uint32_t)result + 1) : (uint64_t)(uint32_t)result;
+        result = value ? (uint64_t)((uint32_t)result + 1) : (uint64_t)(uint32_t)result;
 
-        i -= x0 != 0;
+        i -= value != 0;
     } while (i > 0);
 
     return result;
@@ -17,12 +17,12 @@
 
 // init_call_first(int32_t) @ 0x4005e0
 {
-    int32_t x0 = next_value();
+    int32_t value = next_value();
 
     if (next_value() > 0)
         return (uint64_t)arg1;
 
-    return (uint64_t)x0;
+    return (uint64_t)value;
 }
 
 // init_read_first(int32_t) @ 0x400610
@@ -37,9 +37,9 @@
 
 // store_between_calls() @ 0x400640
 {
-    int32_t x0 = next_value();
+    int32_t value = next_value();
     _g_state += 1;
-    return (uint64_t)(next_value() + x0);
+    return (uint64_t)(next_value() + value);
 }
 
 // not_less(float, float) @ 0x400678

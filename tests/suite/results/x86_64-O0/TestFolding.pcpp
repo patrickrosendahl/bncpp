@@ -10,9 +10,9 @@
 
 // side_effect_between(int32_t) @ 0x4005f0
 {
-    int32_t rax = next_value();
+    int32_t value = next_value();
     log_line("between");
-    return (uint64_t)(rax + arg1);
+    return (uint64_t)(value + arg1);
 }
 
 // two_calls(int32_t) @ 0x400620
@@ -22,7 +22,7 @@
 
 // used_twice(int32_t) @ 0x400650
 {
-    int32_t rax = next_value();
-    return (uint64_t)(rax * rax + arg1);
+    int32_t value = next_value();
+    return (uint64_t)(value * value + arg1);
 }
 

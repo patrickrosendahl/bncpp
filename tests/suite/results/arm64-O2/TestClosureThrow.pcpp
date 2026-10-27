@@ -25,7 +25,7 @@
     void** const* var_30 = &var_48;
     try
     {
-        uint64_t x0_1 = apply(&var_48, arg1);
+        uint64_t apply_result = apply(&var_48, arg1);
     }
     // unwind: if (var_30 == &var_48)
     // unwind:     (*(uint64_t*)var_30)[4]();
@@ -47,14 +47,14 @@
     {
         if (!var_30)
             /* tailcall */
-            return sub_400744(x0_1, fp_1, entry_x20, entry_x19, var_10);
+            return sub_400744(apply_result, fp_1, entry_x20, entry_x19, var_10);
 
         x8_2 = 0x28;
     }
 
     (*(uint64_t*)(*(uint64_t*)var_30 + x8_2))();
     /* tailcall */
-    return sub_400744(x0_1, fp_1, entry_x20, entry_x19, var_10);
+    return sub_400744(apply_result, fp_1, entry_x20, entry_x19, var_10);
 }
 
 // sub_400744 @ 0x400744

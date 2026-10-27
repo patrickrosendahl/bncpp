@@ -110,20 +110,20 @@
         return 0;
 
     uint64_t result = 0;
-    int32_t x21_1 = 0;
+    int32_t i = 0;
 
     do
     {
         try
         {
-            result = (uint64_t)(may_throw(x21_1) + (uint32_t)result);
+            result = (uint64_t)(may_throw(i) + (uint32_t)result);
         }
         catch (std::runtime_error& e)
         {
             result = (uint64_t)(-1 + (uint32_t)result);
         }
-        x21_1 += 1;
-    } while (arg1 != x21_1);
+        i += 1;
+    } while (arg1 != i);
 
     return result;
 }

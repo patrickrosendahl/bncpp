@@ -1,19 +1,19 @@
 // count_until(int32_t) @ 0x400558
 {
-    int32_t var_18 = 0;
+    int32_t i = 0;
 
     while (true)
     {
-        int32_t x0 = next_value();
-        int32_t var_1c_1 = x0;
+        int32_t value = next_value();
+        int32_t var_1c_1 = value;
 
-        if (x0 >= arg1)
+        if (value >= arg1)
             break;
 
-        var_18 += 1;
+        i += 1;
     }
 
-    return (uint64_t)var_18;
+    return (uint64_t)i;
 }
 
 // sum_odd(int32_t const*, int32_t) @ 0x4005a8

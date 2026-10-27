@@ -2,9 +2,9 @@
 {
     int64_t rax;
     int64_t var_28 = rax;
-    int32_t rax_1 = next_value();
+    int32_t value = next_value();
 
-    return (uint64_t)(arg1 > 0 ? arg2 + rax_1 : arg3 - rax_1);
+    return (uint64_t)(arg1 > 0 ? arg2 + value : arg3 - value);
 }
 
 // sign_name(int32_t) @ 0x4005d0

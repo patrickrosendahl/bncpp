@@ -30,13 +30,13 @@
 
     struct Guard var_28;
     Guard::Guard(&var_28, "a");
-    int32_t x0_2 = may_throw(arg1);
+    int32_t may_throw_result = may_throw(arg1);
     struct Guard var_30;
     Guard::Guard(&var_30, "b");
-    int32_t x0_5 = may_throw(x0_2);
+    int32_t may_throw_result2 = may_throw(may_throw_result);
     Guard::~Guard(&var_30);
     Guard::~Guard(&var_28);
-    return (uint64_t)(x0_5 + x0_2);
+    return (uint64_t)(may_throw_result2 + may_throw_result);
 }
 
 // sub_4006d0 @ 0x4006d0

@@ -1,11 +1,11 @@
 // pick(int32_t, int32_t, int32_t) @ 0x4005a8
 {
-    int32_t x0 = next_value();
+    int32_t value = next_value();
 
     if (arg1 > 0)
-        return (uint64_t)(x0 + arg2);
+        return (uint64_t)(value + arg2);
 
-    return (uint64_t)(arg3 - x0);
+    return (uint64_t)(arg3 - value);
 }
 
 // sign_name(int32_t) @ 0x4005e8

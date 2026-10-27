@@ -9,14 +9,14 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (...)
     {
         int32_t x1;
         int32_t var_24 = x1;
         log_line("something");
-        var_14 = 0xfffffffd;
+        may_throw_result = 0xfffffffd;
         /* tailcall */
         return sub_400674(arg2);
     }
@@ -86,17 +86,17 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (int32_t e)
     {
-        var_14 = e;
+        may_throw_result = e;
         /* tailcall */
         return sub_400724(arg3);
     }
     catch (...)
     {
-        var_14 = 0xfffffffd;
+        may_throw_result = 0xfffffffd;
         /* tailcall */
         return sub_400724(arg3);
     }

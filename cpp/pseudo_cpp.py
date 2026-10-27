@@ -9,17 +9,20 @@ statement by statement, the statements of a region wrapped in `try { }` and foll
 clause with the handler's code from the landing-pad function. The plan is made before anything is emitted; if
 it fails, the function is printed as Pseudo C prints it.
 """
+import dataclasses
 import re
 
 from binaryninja import (BraceRequirement, HighLevelILOperation, LanguageRepresentationFunction,
                          LanguageRepresentationFunctionType, MediumLevelILOperation, OperatorPrecedence,
-                         RegisterValueType, SSAVariable, VariableSourceType, log_warn)
+                         RegisterValueType, SSAVariable, TypeClass, VariableSourceType, log_warn)
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render, eh_throw
 from ..shared import regions as _regions
 from ..shared.folding import FoldMixin, walk_printed
+from ..shared import names
+from ..shared.names import NamesMixin
 from ..shared.hlil import children, walk
 
 Op = HighLevelILOperation
@@ -29,11 +32,19 @@ _DEREF_CAST = re.compile(r"^\*\s*\([\w:<> ]+\*\)$")  # '*(uint32_t*)' before a b
 # a load / field / array read; cpp's reads_memory hook (folding.py: a value that is not pure cannot move past one)
 _READS_MEM = (Op.HLIL_DEREF, Op.HLIL_DEREF_FIELD, Op.HLIL_ARRAY_INDEX, Op.HLIL_STRUCT_FIELD)
 # a node that, evaluated, runs a call or writes memory; folding.py refuses to move a value past one
+# names for auto-named variables (bncpp-107): a field or global BN named after its offset / address names nothing
+_AUTO_FIELD = re.compile(r"^(?:field_|__offset|_)?[0-9a-f]+$|^field_")
+_AUTO_DATA = re.compile(r"^(?:data|sub|j_sub|off|byte|word|dword|qword|_?unk)_[0-9a-f]+$")
+_CPP_KEYWORDS = set("""alignas alignof and asm auto bool break case catch char class const constexpr continue decltype
+    default delete do double else enum explicit export extern false float for friend goto if inline int long mutable
+    namespace new noexcept not nullptr operator or private protected public register return short signed sizeof
+    static struct switch template this throw true try typedef typeid typename union unsigned using virtual void
+    volatile while xor""".split())
 _SIDE_EFFECT = (Op.HLIL_CALL, Op.HLIL_TAILCALL, Op.HLIL_SYSCALL, Op.HLIL_ASSIGN, Op.HLIL_VAR_INIT,
                 Op.HLIL_ASSIGN_UNPACK)
 
 
-class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
+class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentationFunction):
     comment_start_string = "// "
     annotation_start_string = "/* "
     annotation_end_string = " */"
@@ -562,7 +573,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
         def flush():
             if run:
-                keyed = self.fold_lines([(t, (start, i) if i is not None else None) for t, i in run])
+                keyed = self.rename_lines(self.fold_lines([(t, (start, i) if i is not None else None)
+                                                           for t, i in run]))
                 out.append(("stmt", [(t, k[1] if k is not None else None) for t, k in keyed]))
                 del run[:]
         for it in items:
@@ -718,8 +730,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 while lead < k and not toks[lead].text.strip():
                     lead += 1
                 toks = toks[:lead] + toks[k:]
-        return [tok(TT.TextToken, names[t.text]) if t.type == TT.LocalVariableToken and t.text in names else t
-                for t in toks]
+        return [tok(TT.TextToken, self.shown_name(names[t.text])) if t.type == TT.LocalVariableToken and
+                t.text in names else t for t in toks]
 
     def catch_folds(self, func, plumb):
         """the fold plan for func's statements in a catch body (bncpp-84): the shown statements alone decide (a
@@ -762,8 +774,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             fv = self._fvars[pad.start] = (eh_render.frame_vars(pad), eh_render.pad_slots(pad, self._frame))
         fv, slots = fv
         if func.start == pad.start and slots:  # the pad's own stack slots in the owner's frame
-            toks = [tok(TT.TextToken, slots[t.text]) if t.type == TT.LocalVariableToken and t.text in slots else t
-                    for t in toks]
+            toks = [tok(TT.TextToken, self.shown_name(slots[t.text])) if t.type == TT.LocalVariableToken and
+                    t.text in slots else t for t in toks]
         names = fv.get(func.start)
         if not names or self._frame.fp is None:
             return toks
@@ -773,7 +785,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
 
         def name(m, prefix=""):
             n = eh_render.slot_name(self._frame, self._frame.fp - int(m.group(1), 0))
-            return prefix + n if n else None
+            return prefix + self.shown_name(n) if n else None
         toks = _replace_spans(toks, deref, name)
         return _replace_spans(toks, addr, lambda m: name(m, "&"))
 
@@ -833,7 +845,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         keyed = self.throws(lines)
         hlil = self.function.hlil
         if statement and hlil is not None and hlil.root is not None and instr.expr_index == hlil.root.expr_index:
-            keyed = self.fold_lines(keyed)  # readability passes on the whole function (bncpp-13)
+            keyed = self.rename_lines(self.fold_lines(keyed))  # readability passes on the whole function (bncpp-13)
         self.emit_token_lines([t for t, _k in keyed], tokens, statement)
 
     # --- readability passes (folding single-use temporaries, bncpp-13) -------------------------------------
@@ -861,6 +873,91 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
     def value_parts(self, value):
         """FoldMixin hook: a ("lowbyte", ...) value evaluates its first value, then each operand (bncpp-85)"""
         return [value[2]] + [x for _op, x in value[3]] if value[0] == "lowbyte" else ()
+
+    # --- names for BN's auto-named variables (bncpp-107) ---------------------------------------------------
+
+    def auto_named(self, var):
+        """NamesMixin hook: var has BN's storage name (rax_12, entry_rdi, x8_1, var_38), no user's, no parameter"""
+        rx = getattr(self, "_auto_rx", None)
+        if rx is None:
+            regs = sorted(self.function.arch.regs, key=len, reverse=True)
+            rx = self._auto_rx = re.compile(r"^(?:(?:entry_)?(?:%s)|var_[0-9a-f]+)(?:_\d+)?$" %
+                                            "|".join(map(re.escape, regs)))
+        return bool(rx.match(var.name)) and var not in self.function.parameter_vars and \
+            not self.function.is_var_user_defined(var)
+
+    def name_hint(self, e):
+        """NamesMixin hook: a field load names its variable after the field, a named callee's result after the
+        callee (name_from_call), a global's load after the global"""
+        while e.operation in (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART):
+            e = e.src
+        o = e.operation
+        if o == Op.HLIL_CALL:
+            return names.name_from_call(self._symbol_short(e.dest))
+        if o in (Op.HLIL_DEREF_FIELD, Op.HLIL_STRUCT_FIELD):
+            t = e.src.expr_type  # a structure's field, not a wide value's part (var_98.q of an int128_t)
+            if t is not None and o == Op.HLIL_DEREF_FIELD and t.type_class == TypeClass.PointerTypeClass:
+                t = t.target
+            if t is None or t.type_class not in (TypeClass.StructureTypeClass, TypeClass.NamedTypeReferenceClass):
+                return None
+            m = re.search(r"(?:->|\.)([A-Za-z_]\w*)$", str(e))
+            return m.group(1) if m and not _AUTO_FIELD.match(m.group(1)) and m.group(1) not in _CPP_KEYWORDS \
+                else None
+        if o == Op.HLIL_DEREF:
+            n = self._symbol_short(e.src)
+            return n if n and re.match(r"^[A-Za-z]\w*$", n) and not _AUTO_DATA.match(n) else None
+        return None
+
+    def taken_names(self):
+        """NamesMixin hook: C++ keywords and the names of the functions and globals this function refers to"""
+        out = set(_CPP_KEYWORDS)
+        for i in walk(self.hlil.root):
+            if i.operation in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT):
+                n = self._symbol_short(i)
+                if n:
+                    out.add(n)
+        return out
+
+    def _symbol_short(self, e):
+        """the unqualified name of the symbol at a constant pointer / import (`ns::C::size() const` -> size), else
+        None (no symbol, a template)"""
+        if e.operation not in (Op.HLIL_CONST_PTR, Op.HLIL_IMPORT):
+            return None
+        sym = self.function.view.get_symbol_at(e.constant)
+        if sym is None:
+            return None
+        name, depth, cut = sym.full_name, 0, None
+        for k, c in enumerate(name):  # the name ends at the parameter list outside template arguments
+            depth += c == "<"
+            depth -= c == ">"
+            if c == "(" and depth == 0:
+                cut = k
+                break
+        name = name[:cut].rsplit("::", 1)[-1]
+        return None if "<" in name or ">" in name else name
+
+    def shown_name(self, name):
+        """name as Pseudo Cpp prints this function's variable called name (display_names)"""
+        if self._shown is None:
+            self._shown = {v.name: n for v, n in self.display_names().items()}
+        return self._shown.get(name, name)
+
+    _shown = None
+
+    def rename_lines(self, keyed):
+        """keyed [(tokens, key)] with this function's own lines' variables under their display names; the lines
+        of other functions (landing pads) keep theirs"""
+        if not self.display_names():
+            return keyed
+        start = self.function.start
+        out = []
+        for toks, key in keyed:
+            if key is not None and key[0] == start:
+                toks = [dataclasses.replace(t, text=self.shown_name(t.text), width=0)
+                        if t.type == TT.LocalVariableToken and self.shown_name(t.text) != t.text else t
+                        for t in toks]
+            out.append((toks, key))
+        return out
 
     def _fold_plan(self):
         """{instruction index of a folded definition} for this function; fills self.inline (var -> value). A

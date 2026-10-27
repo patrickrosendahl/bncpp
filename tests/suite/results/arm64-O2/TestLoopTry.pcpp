@@ -3,15 +3,15 @@
     // exception table (LSDA 0x400840): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x4005c4..0x4005cc -> 0x4005e0 sub_4005e0: catch (std::runtime_error) #1, cleanup, cleanup
 
-    int32_t x21 = 0;
+    int32_t i = 0;
     uint64_t result = 0;
 
     try
     {
-        while (may_throw(x21) < arg1)
+        while (may_throw(i) < arg1)
         {
-            result = (uint64_t)((uint32_t)result + x21);
-            x21 += 1;
+            result = (uint64_t)((uint32_t)result + i);
+            i += 1;
         }
     }
     catch (std::runtime_error& e)
@@ -94,24 +94,24 @@
     // exception table (LSDA 0x400874): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400694..0x40069c -> 0x4006b4 sub_4006b4: catch (std::runtime_error) #1, cleanup, cleanup
 
-    int32_t x21 = 0;
+    int32_t i = 0;
     uint64_t result = 0;
 
     while (true)
     {
         try
         {
-            if (may_throw(x21) >= arg1)
+            if (may_throw(i) >= arg1)
                 break;
         }
         catch (std::runtime_error& e)
         {
             result = (uint64_t)(-1 + (uint32_t)result);
-            x21 += 1;
+            i += 1;
             continue;
         }
-        result = (uint64_t)(x21 + (uint32_t)result);
-        x21 += 1;
+        result = (uint64_t)(i + (uint32_t)result);
+        i += 1;
     }
     return result;
 }
@@ -130,15 +130,15 @@
     ___cxa_begin_catch(arg1);
     ___cxa_end_catch();
     int32_t x8 = -1;
-    int32_t x0_2;
+    int32_t may_throw_result;
 
     do
     {
         arg4 = (uint64_t)(x8 + (uint32_t)arg4);
         arg5 += 1;
-        x0_2 = may_throw(arg5);
+        may_throw_result = may_throw(arg5);
         x8 = arg5;
-    } while (x0_2 < arg3);
+    } while (may_throw_result < arg3);
     return arg4;
 }
 
@@ -147,16 +147,16 @@
     // exception table (LSDA 0x40088c): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400704..0x40070c -> 0x400720 sub_400720: catch (std::runtime_error) #1, cleanup, cleanup
 
-    int32_t x20 = 0;
+    int32_t i = 0;
     int32_t x22 = 0;
 
     while (true)
     {
-        int32_t x21_1 = x22 + x20;
+        int32_t x21_1 = x22 + i;
 
         try
         {
-            if (may_throw(x20) >= arg1)
+            if (may_throw(i) >= arg1)
                 break;
         }
         catch (std::runtime_error& e)
@@ -164,11 +164,11 @@
             x21_1 -= 1;
         }
 
-        x20 += 1;
+        i += 1;
         x22 = x21_1;
     }
 
-    return (uint64_t)(x22 + x20);
+    return (uint64_t)(x22 + i);
 }
 
 // sub_400720 @ 0x400720

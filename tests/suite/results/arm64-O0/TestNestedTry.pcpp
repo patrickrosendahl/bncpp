@@ -10,14 +10,14 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (int32_t e)
     {
         uint64_t var_40;
         var_40 = (uint64_t)e;
         _printf("inner int %d\n");
-        var_14 = may_throw(e + 0xa);
+        may_throw_result = may_throw(e + 0xa);
         /* tailcall */
         return sub_400714(arg3);
     }
@@ -26,7 +26,7 @@
         uint64_t var_40;
         var_40 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("outer %s\n");
-        var_14 = 0xfffffffb;
+        may_throw_result = 0xfffffffb;
         /* tailcall */
         return sub_400714(arg3);
     }
@@ -169,8 +169,8 @@
         if (*(uint32_t*)((char*)arg3 - 0xc) >= *(uint32_t*)((char*)arg3 - 4))
             break;
 
-        int32_t x0_5 = may_throw(*(uint32_t*)((char*)arg3 - 0xc));
-        *(uint32_t*)((char*)arg3 - 8) += x0_5;
+        int32_t may_throw_result = may_throw(*(uint32_t*)((char*)arg3 - 0xc));
+        *(uint32_t*)((char*)arg3 - 8) += may_throw_result;
     }
 
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);

@@ -10,14 +10,14 @@
     int64_t var_8 = rbp;
     try
     {
-        int32_t var_c = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (int32_t e)
     {
         var_20 = e;
         _printf("inner int %d\n", (uint64_t)var_20);
         var_30 = may_throw(var_20 + 0xa);
-        var_c = var_30;
+        may_throw_result = var_30;
         /* tailcall */
         return sub_4006d6(arg5);
     }
@@ -25,7 +25,7 @@
     {
         var_28 = &e;
         _printf("outer %s\n", (*(uint64_t*)(*var_28 + 0x10))());
-        var_c = 0xfffffffb;
+        may_throw_result = 0xfffffffb;
         /* tailcall */
         return sub_4006d6(arg1);
     }

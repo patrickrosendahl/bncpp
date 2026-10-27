@@ -23,7 +23,7 @@
     try
     {
         std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(&var_48);
-        int32_t rax_2 = apply(&var_48, arg1);
+        int32_t apply_result = apply(&var_48, arg1);
     }
     // unwind: std::function<int32_t (int32_t)>::~function(&var_48);
     catch (std::runtime_error& e)
@@ -39,7 +39,7 @@
     std::function<int32_t (int32_t)>::~function(&var_48);
 
     if (*(uint64_t*)___stack_chk_guard == rax)
-        return (uint64_t)rax_2;
+        return (uint64_t)apply_result;
 
     ___stack_chk_fail();
     /* no return */

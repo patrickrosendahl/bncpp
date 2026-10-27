@@ -6,14 +6,14 @@
     int64_t fp;
     int64_t var_10 = fp;
     int32_t var_18 = 0;
-    int32_t var_1c = 0;
+    int32_t i = 0;
 
     try
     {
-        while (may_throw(var_1c) < arg1)
+        while (may_throw(i) < arg1)
         {
-            var_18 += var_1c;
-            var_1c += 1;
+            var_18 += i;
+            i += 1;
         }
     }
     catch (std::runtime_error& e)
@@ -91,8 +91,8 @@
 
     while (next_value() < *(uint32_t*)((char*)arg3 - 4))
     {
-        int32_t x0_6 = may_throw(*(uint32_t*)((char*)arg3 - 8));
-        *(uint32_t*)((char*)arg3 - 8) += x0_6;
+        int32_t may_throw_result = may_throw(*(uint32_t*)((char*)arg3 - 8));
+        *(uint32_t*)((char*)arg3 - 8) += may_throw_result;
     }
 
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
@@ -104,21 +104,21 @@
     //   0x40072c..0x400734 -> 0x400750 sub_400750: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
-    int32_t var_1c = 0;
+    int32_t i = 0;
 
     while (true)
     {
         try
         {
-            if (may_throw(var_1c) >= arg1)
+            if (may_throw(i) >= arg1)
                 break;
-            var_18 += var_1c;
+            var_18 += i;
         }
         catch (std::runtime_error& e)
         {
             var_18 -= 1;
         }
-        var_1c += 1;
+        i += 1;
     }
     return (uint64_t)var_18;
 }
@@ -157,23 +157,23 @@
     //   0x400804..0x40080c -> 0x400828 sub_400828: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
-    int32_t var_1c = 0;
+    int32_t i = 0;
     char var_1d = 1;
-    int32_t x0_1;
+    int32_t may_throw_result;
 
     do
     {
-        var_18 += var_1c;
+        var_18 += i;
         try
         {
-            x0_1 = may_throw(var_1c);
+            may_throw_result = may_throw(i);
         }
         catch (std::runtime_error& e)
         {
             var_18 -= 1;
         }
-        var_1c += 1;
-    } while ((uint32_t)(uint8_t)(x0_1 < arg1) & 1);
+        i += 1;
+    } while ((uint32_t)(uint8_t)(may_throw_result < arg1) & 1);
     return (uint64_t)var_18;
 }
 
@@ -247,8 +247,8 @@
 
     while (may_throw(*(uint32_t*)((char*)arg3 - 8)) < *(uint32_t*)((char*)arg3 - 4))
     {
-        int32_t x0_7 = may_throw(*(uint32_t*)((char*)arg3 - 8));
-        *(uint32_t*)((char*)arg3 - 8) += x0_7;
+        int32_t may_throw_result = may_throw(*(uint32_t*)((char*)arg3 - 8));
+        *(uint32_t*)((char*)arg3 - 8) += may_throw_result;
     }
 
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);

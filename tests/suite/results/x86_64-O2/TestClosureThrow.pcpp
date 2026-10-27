@@ -27,7 +27,7 @@
         * const* var_38 = &var_58;
     try
     {
-        int32_t rax_1 = apply(&var_58, arg1);
+        int32_t apply_result = apply(&var_58, arg1);
     }
     // unwind: int64_t* rdi = var_38;
     // unwind: int64_t rcx_1;
@@ -59,12 +59,12 @@
 
         if (!var_38)
             /* tailcall */
-            return sub_40071d(rax_1, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
+            return sub_40071d(apply_result, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
     }
 
     (*(uint64_t*)(*(uint64_t*)var_38 + rax_2))();
     /* tailcall */
-    return sub_40071d(rax_1, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
+    return sub_40071d(apply_result, rbp_1, entry_rbx, entry_r14, entry_r15, var_8);
 }
 
 // sub_40071d @ 0x40071d

@@ -57,15 +57,15 @@
         return 0;
 
     uint64_t rdi = (uint64_t)arg2;
-    int64_t r13_1 = 0;
+    int64_t i = 0;
     int32_t r12 = 0;
     uint64_t var_38_1 = rdi;
 
     do
     {
-        if (arg1[r13_1] >= 0)
+        if (arg1[i] >= 0)
         {
-            int32_t rcx_1 = (uint32_t)r13_1;
+            int32_t rcx_1 = (uint32_t)i;
             int32_t rsi = arg3;
 
             if (arg3 <= 0)
@@ -103,8 +103,8 @@
             }
         }
 
-        r13_1 += 1;
-    } while (r13_1 != rdi);
+        i += 1;
+    } while (i != rdi);
 
     return (uint64_t)r12;
 }

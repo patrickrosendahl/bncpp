@@ -11,7 +11,7 @@
     try
     {
         Guard::Guard(&var_30, "inner");
-        int64_t x0_3 = may_throw(arg1);
+        int64_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_30);
     catch (std::runtime_error& e)
@@ -26,7 +26,7 @@
     int64_t entry_x20;
     int64_t entry_fp;
     /* tailcall */
-    return sub_400648(x0_3, entry_x20, entry_x19, entry_fp);
+    return sub_400648(may_throw_result, entry_x20, entry_x19, entry_fp);
 }
 
 // sub_400648 @ 0x400648
@@ -101,7 +101,7 @@
     {
         Guard::Guard(&var_28, "inner");
         log_line("in");
-        int64_t x0_2 = may_throw(arg1);
+        int64_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_28);
     catch (int32_t e)
@@ -114,7 +114,7 @@
     int64_t entry_x20;
     int64_t entry_fp;
     /* tailcall */
-    return sub_400710(x0_2, entry_x20, entry_x19, entry_fp);
+    return sub_400710(may_throw_result, entry_x20, entry_x19, entry_fp);
 }
 
 // sub_400710 @ 0x400710

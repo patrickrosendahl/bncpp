@@ -6,9 +6,9 @@
     int64_t rax;
     int64_t var_18 = rax;
     Guard::Guard(&var_18, "cleanup_only");
-    int32_t rax_1 = may_throw(arg1);
+    int32_t may_throw_result = may_throw(arg1);
     Guard::~Guard(&var_18);
-    return (uint64_t)rax_1;
+    return (uint64_t)may_throw_result;
 }
 
 // sub_400623 @ 0x400623
@@ -30,10 +30,10 @@
 
     struct Guard var_20;
     Guard::Guard(&var_20, "a");
-    int32_t rax = may_throw(arg1);
+    int32_t may_throw_result = may_throw(arg1);
     struct Guard var_18;
     Guard::Guard(&var_18, "b");
-    int32_t rax_2 = may_throw(rax) + rax;
+    int32_t rax_2 = may_throw(may_throw_result) + may_throw_result;
     Guard::~Guard(&var_18);
     Guard::~Guard(&var_20);
     return (uint64_t)rax_2;

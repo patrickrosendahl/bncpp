@@ -10,14 +10,14 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (std::runtime_error& e)
     {
         uint64_t var_40;
         var_40 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("runtime_error: %s\n");
-        var_14 = 0xffffffff;
+        may_throw_result = 0xffffffff;
         /* tailcall */
         return sub_400704(arg3);
     }
@@ -26,7 +26,7 @@
         uint64_t var_40;
         var_40 = (uint64_t)e;
         _printf("int: %d\n");
-        var_14 = 0xfffffffe;
+        may_throw_result = 0xfffffffe;
         /* tailcall */
         return sub_400704(arg3);
     }
@@ -127,19 +127,19 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (std::invalid_argument& e)
     {
         log_line((*(uint64_t*)(*(uint64_t*)&e + 0x10))());
-        var_14 = 0xffffffff;
+        may_throw_result = 0xffffffff;
         /* tailcall */
         return sub_400828(arg3);
     }
     catch (std::exception& e)
     {
         log_line((*(uint64_t*)(*(uint64_t*)&e + 0x10))());
-        var_14 = 0xfffffffe;
+        may_throw_result = 0xfffffffe;
         /* tailcall */
         return sub_400828(arg3);
     }

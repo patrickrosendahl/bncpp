@@ -15,14 +15,14 @@
     try
     {
         Guard::Guard(&var_20, "inner");
-        int32_t var_c = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_20);
     catch (std::runtime_error& e)
     {
         var_38 = &e;
         _printf("caught %s\n", (*(uint64_t*)(*var_38 + 0x10))());
-        var_c = 0xfffffffc;
+        may_throw_result = 0xfffffffc;
         var_30 = 1;
         /* tailcall */
         return j_sub_4006db(arg1);
@@ -146,7 +146,7 @@
     {
         Guard::Guard(&var_18, "inner");
         log_line("in");
-        int32_t rax = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_18);
     catch (int32_t e)
@@ -156,7 +156,7 @@
         return (uint64_t)var_c;
     }
     Guard::~Guard(&var_18);
-    return (uint64_t)rax;
+    return (uint64_t)may_throw_result;
 }
 
 // sub_400769 @ 0x400769

@@ -158,13 +158,13 @@
     int64_t var_10 = fp;
     try
     {
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     catch (int32_t e)
     {
         int32_t _g_count_1 = _g_count;
         _g_count = _g_count_1 + 1;
-        var_14 = _g_count_1;
+        may_throw_result = _g_count_1;
         /* tailcall */
         return sub_4008b4(arg3);
     }

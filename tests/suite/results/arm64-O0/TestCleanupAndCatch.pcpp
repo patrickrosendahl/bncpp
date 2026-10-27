@@ -15,14 +15,14 @@
     try
     {
         Guard::Guard(&var_28, "inner");
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_28);
     catch (std::runtime_error& e)
     {
         int64_t var_50 = (*(uint64_t*)(*(uint64_t*)&e + 0x10))();
         _printf("caught %s\n");
-        var_14 = 0xfffffffc;
+        may_throw_result = 0xfffffffc;
         int32_t var_38 = 1;
         /* tailcall */
         return sub_400710(arg3);
@@ -149,12 +149,12 @@
     {
         Guard::Guard(&var_20, "inner");
         log_line("in");
-        int32_t var_14 = may_throw(arg1);
+        int32_t may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_20);
     catch (int32_t e)
     {
-        var_14 = e;
+        may_throw_result = e;
         /* tailcall */
         return sub_400800(arg3);
     }

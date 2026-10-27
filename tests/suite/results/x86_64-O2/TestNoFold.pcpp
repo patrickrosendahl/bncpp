@@ -16,9 +16,9 @@
 
 // init_call_first(int32_t) @ 0x4005c0
 {
-    int32_t rax = next_value();
+    int32_t value = next_value();
 
-    return (uint64_t)(next_value() > 0 ? arg1 : rax);
+    return (uint64_t)(next_value() > 0 ? arg1 : value);
 }
 
 // init_read_first(int32_t) @ 0x4005f0
@@ -32,9 +32,9 @@
 {
     int64_t rax;
     int64_t var_18 = rax;
-    int32_t rax_1 = next_value();
+    int32_t value = next_value();
     _g_state += 1;
-    return (uint64_t)(next_value() + rax_1);
+    return (uint64_t)(next_value() + value);
 }
 
 // not_less(float, float) @ 0x400650
