@@ -9,7 +9,7 @@ change improves the output, review the diff and accept it as the new reference.
   bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
   bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
   python3 tests/suite/suite.py compare [--diff] [--strict] [TestX ...]   # exit 1 if any output differs from its reference
-  python3 tests/suite/suite.py accept [--force] TestX ...  # output -> reference (after reviewing the diff)
+  python3 tests/suite/suite.py accept [--force] TestX ...|--differing|--all  # differing outputs -> references
   python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [--compare] [--strict] [TestX ...]  # no-loss + flaws
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
@@ -26,6 +26,8 @@ indicative when BN's functions changed since they were accepted.
 Stamps (bncpp-134): compare and check print a WARNING for outputs without a stamp, from several plugin states or not
 from the working tree's plugin / dump scripts / binaries; --strict makes such a warning exit 1, and accept refuses
 the named tests' outputs then unless --force (bncpp-141) -- a scripted 'compare && accept' takes no stale output.
+accept copies only the outputs that differ from their references and checks only their stamps: an equal output from
+an older dump needs no accept (bncpp-154); 'accept --differing' takes every test with such an output.
 
 lint (bncpp-133): pyflakes over the plugin (__init__.py, constants.py, cpp/, shared/) and tests/ -- a redefined
 function or an undefined name is silent in BN until a 10 min dump shows the damage. The bridge scripts (tests/)
@@ -265,9 +267,9 @@ def write_stamps(variant_dir, test, stamps):
     os.replace(tmp, os.path.join(variant_dir, STAMPS))
 
 
-def stamp_warnings(names):
-    """warnings about the outputs pairs(names) reads: unstamped, from several plugin states, not from the working
-    tree's sources / scripts / binaries"""
+def stamp_warnings(names, only=None):
+    """warnings about the outputs pairs(names) reads (only those in only, a set of (variant, test, kind), if given):
+    unstamped, from several plugin states, not from the working tree's sources / scripts / binaries"""
     plugin, scripts = plugin_hash(), scripts_hash()
     devs, unstamped, stale = {}, 0, {"plugin": 0, "scripts": 0, "input": 0}
     inputs, cache = {}, {}
@@ -277,6 +279,8 @@ def stamp_warnings(names):
             cache[v] = read_stamps(os.path.join(OUT, v))
         for t in names:
             for k in kinds(t):
+                if only is not None and (v, t, k) not in only:
+                    continue
                 if not os.path.exists(os.path.join(OUT, v, "%s.%s" % (t, k))):
                     continue
                 st = cache[v].get(t, {}).get(k)
@@ -380,9 +384,9 @@ def compare(names, show_diff):
     return 0 if counts["ok"] == sum(1 for _ in pairs(names)) else 1
 
 
-def warn_stamps(names):
-    """print the stamp warnings for names; their count"""
-    warnings = stamp_warnings(names)
+def warn_stamps(names, only=None):
+    """print the stamp warnings for names (only: see stamp_warnings); their count"""
+    warnings = stamp_warnings(names, only)
     for w in warnings:
         print("WARNING", w)
     return len(warnings)
@@ -537,12 +541,19 @@ def lint():
     return found
 
 
-def accept(names):
-    for v, t, out, ref in pairs(names):
-        if os.path.exists(out):
+def differing(names):
+    """the outputs of pairs(names) an accept would change (no reference, or other content): {(variant, test, kind)}"""
+    return {(v, f.rsplit(".", 1)[0], f.rsplit(".", 1)[1]) for v, f, out, ref in pairs(names)
+            if os.path.exists(out) and not (os.path.exists(ref) and filecmp.cmp(out, ref, shallow=False))}
+
+
+def accept(names, only):
+    """copy the outputs in only (see differing) to their references"""
+    for v, f, out, ref in pairs(names):
+        if (v, f.rsplit(".", 1)[0], f.rsplit(".", 1)[1]) in only:
             os.makedirs(os.path.dirname(ref), exist_ok=True)
             shutil.copy(out, ref)
-            print("accepted", v, t)
+            print("accepted", v, f)
 
 
 def main(argv):
@@ -573,11 +584,19 @@ def main(argv):
         warned = warn_stamps(names or TESTS)
         return differs or int(bool(warned) and "--strict" in args)
     elif cmd == "accept":
-        if not names and "--all" not in args:
-            sys.exit("accept needs test names (or --all)")
-        if warn_stamps(names or TESTS) and "--force" not in args:
-            sys.exit("accept refused: stale or mixed outputs (rerun the dump, or --force)")
-        accept(names or TESTS)
+        # only the outputs that differ from their references are accepted, and only their stamps count: equal ones
+        # from an older dump need no accept (bncpp-154); --differing = every test with such an output
+        if not names and "--all" not in args and "--differing" not in args:
+            sys.exit("accept needs test names (or --all / --differing)")
+        only = differing(names or TESTS)
+        if not only:
+            print("nothing to accept: every output equals its reference")
+            return 0
+        names = names or sorted({t for _, t, _ in only}, key=TESTS.index)
+        if warn_stamps(names, only) and "--force" not in args:
+            sys.exit("accept refused: stale or mixed outputs among the %d differing (rerun the dump, or --force)"
+                     % len(only))
+        accept(names, only)
     else:
         sys.exit(__doc__)
     return 0
