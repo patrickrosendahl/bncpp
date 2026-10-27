@@ -121,6 +121,7 @@
         catch (std::runtime_error& e)
         {
             int32_t x0 = -1;
+            result = (uint64_t)(x0 + (uint32_t)result);
         }
         x21_1 += 1;
     } while (arg1 != x21_1);

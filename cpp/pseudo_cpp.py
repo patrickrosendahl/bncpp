@@ -12,7 +12,8 @@ it fails, the function is printed as Pseudo C prints it.
 import re
 
 from binaryninja import (BraceRequirement, HighLevelILOperation, LanguageRepresentationFunction,
-                         LanguageRepresentationFunctionType, OperatorPrecedence, log_warn)
+                         LanguageRepresentationFunctionType, MediumLevelILOperation, OperatorPrecedence,
+                         VariableSourceType, log_warn)
 
 from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
@@ -22,6 +23,7 @@ from ..shared.folding import FoldMixin
 from ..shared.hlil import children, walk
 
 Op = HighLevelILOperation
+MOp = MediumLevelILOperation
 P = OperatorPrecedence
 _DEREF_CAST = re.compile(r"^\*\s*\([\w:<> ]+\*\)$")  # '*(uint32_t*)' before a begin_catch
 # a load / field / array read; cpp's reads_memory hook (folding.py: a value that is not pure cannot move past one)
@@ -102,6 +104,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         self._unwind = {}  # id(region) -> [(pad function, statements run on unwinding before the dispatch)]
         self._frame = eh_render.owner_frame(self.function, regions[0].start)  # bncpp-68: the owner's stack slots
         self._fvars = {}  # pad start -> eh_render.frame_vars
+        self._regmaps = {}  # pad start -> reg_map (bncpp-149)
         self._handlers = {id(r): self.plan_handlers(r) for r in regions}
         self._in_loop = set()  # regions placed inside a compound statement (handlers end at the continuation)
         self._zones = {}  # statement expr index -> the innermost try run it is printed in (folds stay in one)
@@ -142,12 +145,13 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                   else None) for l in lines]
         return eh_throw.rewrite(keyed, {func.start: plans[func.start]}) if rewrite and plans[func.start] else keyed
 
-    def plan_block(self, block, regions):
+    def plan_block(self, block, regions, loop=False):
         stmts, groups = self.stmt_lines(block)
-        return self.plan_list(stmts, groups, regions)
+        return self.plan_list(stmts, groups, regions, loop)
 
-    def plan_list(self, stmts, groups, regions):
-        """[("stmt", lines) | ("compound", segments) | ("try", items, handlers, blank after, unwind)]"""
+    def plan_list(self, stmts, groups, regions, loop=False):
+        """[("stmt", lines) | ("compound", segments) | ("try", items, handlers, blank after, unwind)]; loop: stmts
+        are a loop's body"""
         loops, rest = {}, []  # loops: statement index -> {body expr index: (body, [regions])}
         heads = {}  # statement index of a while whose test is in a region's range -> [regions] (bncpp-147)
         for r in regions:
@@ -191,7 +195,8 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             while last and not last[-1][0]:  # the blank line after the run goes after the catch
                 last.pop()
                 blank = True
-            handlers = [(c, pf, pl[0 if id(r) in self._in_loop else 1] if isinstance(pl, tuple) else pl, note, cont)
+            handlers = [(c, pf, self.handler_body(pl, r, pf, stmts[i:j + 1], stmts[j + 1:] if loop else None)
+                         if isinstance(pl, tuple) else pl, note, cont)
                         for c, pf, pl, note, cont in self._handlers[id(r)]]
             items.append(("try", self.plan_list(stmts[i:j + 1], sub[:-1] + [last], inner), handlers, blank,
                           self._unwind.get(id(r))))
@@ -226,7 +231,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 pos += 1
             else:
                 closes = pos < len(lines) and _text(lines[pos]).startswith("}")  # do { } while (c);
-            segs.append(("body", self.plan_block(body, regs), levels, closes))
+            segs.append(("body", self.plan_block(body, regs, st.operation in eh_render.LOOPS), levels, closes))
         segs.append(("lines", lines[pos:]))
         self._compound.add(st.expr_index)
         return ("compound", segs)
@@ -268,7 +273,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
         test = [([tok(TT.KeywordToken, "if"), tok(TT.TextToken, " (")] + inv + [tok(TT.TextToken, ")")], idx),
                 ([tok(TT.TextToken, "    "), tok(TT.KeywordToken, "break"), tok(TT.TextToken, ";")], idx)]
         stmts, groups = self.stmt_lines(st.body)
-        body = self.plan_list([st.condition] + stmts, [test] + groups, regions)
+        body = self.plan_list([st.condition] + stmts, [test] + groups, regions, True)
         self._compound.add(st.expr_index)
         return ("compound", [("lines", [([tok(TT.KeywordToken, "while"), tok(TT.TextToken, " ("),
                                           tok(TT.KeywordToken, "true"), tok(TT.TextToken, ")")], idx)]),
@@ -288,6 +293,99 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
     def cont(self, region):
         """where the region's handlers go on in this function's own code (the first clause's that does)"""
         return next((h[4] for h in self._handlers[id(region)] if h[4] is not None), None)
+
+    def handler_body(self, pl, region, pad, run, after):
+        """the catch body of a handler that goes on in this function, pl = (cut at the continuation, whole): outside
+        a loop the whole; in a loop the cut, plus the pad's copy of the owner's code from the continuation
+        (bncpp-149). An -O2 handler hands its values on in registers into a block the normal path shares (a merge
+        block's phi BN does not see in the owner: `s -= 1` is `rcx = -1` and the owner's `r15 += rcx`, printed
+        `r15 += r14`): the pad's statements at the try's own addresses (the rest of the statement the continuation
+        is in) always, those at the addresses of the loop body after the try (after: those statements, None outside
+        a loop body) when a value the catch computed is read there under a name the owner does not know -- then the
+        body ends with `continue;`, the whole rest of the loop body copied"""
+        if id(region) not in self._in_loop:
+            return pl[1]
+        cut, whole = pl
+        if pad is None:
+            return cut
+        names = self.reg_map(pad, region)
+        keys = [_key(s) for s in whole.stmts]
+        at = keys.index(_key(cut.stmts[-1])) + 1 if cut.stmts and _key(cut.stmts[-1]) in keys else \
+            0 if not cut.stmts else None
+        if at is None:
+            return cut
+        mine = {i.address for s in run for i in walk(s)}
+        rest = {i.address for s in after or () for i in walk(s)}
+        ext_a, ext_b, decls, phase = [], [], [], 0
+        for s in _goes_on(whole.stmts[at:]):
+            if s is None:
+                break
+            if s.operation == Op.HLIL_VAR_DECLARE:
+                decls.append(s)
+                continue
+            if s.operation == Op.HLIL_NOP:
+                continue
+            if phase == 0 and s.address in mine:
+                ext_a.append(s)
+                continue
+            phase = 1
+            if s.address not in rest:
+                break
+            ext_b.append(s)
+
+        def mine_(s):
+            return s.function.source_function.start == pad.start
+        made = set()  # what the catch computed, under a name the owner does not know
+        for s in cut.stmts + ext_a:
+            if mine_(s) and s.operation == Op.HLIL_VAR_INIT:
+                made.add(s.dest)
+            elif mine_(s) and s.operation == Op.HLIL_ASSIGN and s.dest.operation == Op.HLIL_VAR:
+                made.add(s.dest.var)
+        made = {v for v in made if v.name not in names}
+        covered = {i.address for s in ext_b for i in walk(s)}
+        goes_on = bool(ext_b) and all(st.address in covered for st in after or ()
+                                      if st.operation not in (Op.HLIL_NOP, Op.HLIL_VAR_DECLARE)) and any(
+            i.operation == Op.HLIL_VAR and i.var in made for s in ext_b if mine_(s) for i in walk(s))
+        ext = ext_a + (ext_b if goes_on else [])
+        if not ext:
+            return cut
+        used = {i.var for s in ext if mine_(s) for i in walk(s) if i.operation == Op.HLIL_VAR}
+        known = {i.var if i.operation == Op.HLIL_VAR_DECLARE else i.dest for s in cut.stmts if mine_(s)
+                 for i in [s] if i.operation in (Op.HLIL_VAR_DECLARE, Op.HLIL_VAR_INIT)}
+        decls = [d for d in decls if mine_(d) and d.var in used and d.var not in known and d.var.name not in names]
+        return eh_render.Plumbing(cut.stmts + decls + ext, cut.rethrow, cut.names, goes_on)
+
+    def reg_map(self, pad, region):
+        """{name of a pad variable in a callee-saved register: the owner's variable in that register at the
+        region's calls into the pad} (bncpp-149) -- the same at every such call and one the owner's HLIL shows"""
+        if pad.start in self._regmaps:
+            return self._regmaps[pad.start]
+        out = self._regmaps[pad.start] = {}
+        owner = self.function
+        cc = owner.calling_convention
+        if cc is None or owner.mlil is None or owner.hlil is None:
+            return out
+        saved = set(cc.callee_saved_regs) - {owner.arch.stack_pointer} - set(eh_render.FRAME_REG.get(
+            owner.arch.name, ()))
+        ranges = [(cs.start, cs.end) for cs in region.sites if cs.landing_pad == pad.start]
+        calls = [m for m in owner.mlil.instructions if any(a <= m.address < b for a, b in ranges)
+                 and m.operation in (MOp.MLIL_CALL, MOp.MLIL_CALL_UNTYPED)]
+        shown = set(owner.hlil.vars)
+        if not calls:
+            return out
+        for v in pad.vars:
+            if v.source_type != VariableSourceType.RegisterVariableSourceType:
+                continue
+            reg = pad.arch.get_reg_name(v.storage)
+            if eh_render._full(pad.arch, reg) not in saved:
+                continue
+            try:
+                got = {m.get_var_for_reg(reg) for m in calls}
+            except Exception:
+                continue
+            if len(got) == 1 and next(iter(got)) in shown:
+                out[v.name] = next(iter(got)).name
+        return out
 
     def plan_handlers(self, region):
         """per clause (Clause, pad function | None, plumbing, note | None, continuation | None); plumbing: an
@@ -496,7 +594,9 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 continue
             f, _stmts, lines = run
             for t, k in self.catch_folds(f, plumb).fold_lines(lines):
-                t = self.frame_tokens(t, pad, f)
+                t = self.reg_tokens(self.frame_tokens(t, pad, f), pad, f, k)
+                if t is None:
+                    continue
                 keyed.append((self.catch_tokens(t, plumb.names, var) if var is not None else t, k))
         lines = []
         for t, _k in eh_throw.rewrite(keyed, plans):
@@ -511,6 +611,32 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 lines.append(t)
         if lines:
             self.emit_token_lines(lines, tokens, True)
+        if plumb.goes_on:
+            self.kw(tokens, "continue")
+            tokens.append_semicolon()
+            tokens.new_line()
+
+    def reg_tokens(self, toks, pad, func, key):
+        """a catch body line from the pad with its variables in callee-saved registers named as the owner names
+        them there (reg_map, bncpp-149); the declaration of one (key: the line's statement) becomes an assignment,
+        without a value it goes (None)"""
+        names = self._regmaps.get(pad.start) if pad is not None and func.start == pad.start else None
+        if not names:
+            return toks
+        st = func.hlil[key[1]] if key is not None and func.hlil is not None else None
+        var = st.dest if st is not None and st.operation == Op.HLIL_VAR_INIT else \
+            st.var if st is not None and st.operation == Op.HLIL_VAR_DECLARE else None
+        if var is not None and var.name in names:
+            if st.operation == Op.HLIL_VAR_DECLARE:
+                return None
+            k = next((n for n, t in enumerate(toks) if t.type == TT.LocalVariableToken and t.text == var.name), 0)
+            if all(t.type != TT.LocalVariableToken and "=" not in t.text for t in toks[:k]):  # the first line
+                lead = 0
+                while lead < k and not toks[lead].text.strip():
+                    lead += 1
+                toks = toks[:lead] + toks[k:]
+        return [tok(TT.TextToken, names[t.text]) if t.type == TT.LocalVariableToken and t.text in names else t
+                for t in toks]
 
     def catch_folds(self, func, plumb):
         """the fold plan for func's statements in a catch body (bncpp-84): only variables that are read and written
@@ -1363,6 +1489,21 @@ def _cleanups(stmts):
         if s.operation != Op.HLIL_VAR_DECLARE:
             out.append(s)
     return out if any(i.operation in (Op.HLIL_CALL, Op.HLIL_TAILCALL) for s in out for i in walk(s)) else []
+
+
+def _goes_on(stmts):
+    """the statements a pad runs, in order, into the loops it runs on in (a do-while or while (true): the owner's
+    loop, copied); None where the loop's body ends (it goes round: back to the top of the owner's loop)"""
+    for s in (x for s in stmts for x in (_flat(s) if s.operation == Op.HLIL_BLOCK else [s])):
+        if s.operation == Op.HLIL_DO_WHILE or (s.operation == Op.HLIL_WHILE and s.condition.operation == Op.HLIL_CONST
+                                               and s.condition.constant):
+            yield from _goes_on(_flat(s.body))
+            yield None
+            return
+        if s.operation in eh_render.LOOPS:
+            yield None
+            return
+        yield s
 
 
 def _flat(block):

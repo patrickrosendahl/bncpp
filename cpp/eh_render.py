@@ -375,10 +375,11 @@ class Plumbing:
       stmts     the statements that remain
       rethrow   (function start, expr index) of the `___cxa_rethrow()` statements, printed as `throw;`
       names     {variable name: text} -- a variable that holds the exception object's address prints as '&e',
-                one that holds a scalar exception's value as 'e'"""
+                one that holds a scalar exception's value as 'e'
+      goes_on   the body ends with `continue;`: it carries the rest of the loop body (bncpp-149)"""
 
-    def __init__(self, stmts, rethrow, names):
-        self.stmts, self.rethrow, self.names = stmts, rethrow, names
+    def __init__(self, stmts, rethrow, names, goes_on=False):
+        self.stmts, self.rethrow, self.names, self.goes_on = stmts, rethrow, names, goes_on
 
 
 def plumbing(pad_func, stmts, type_name):
