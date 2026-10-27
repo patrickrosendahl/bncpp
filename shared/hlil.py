@@ -1,5 +1,4 @@
-# shared with binary-jvm/pseudo_java.py (_children, _walk, _child_blocks, _stmts_preorder; synced at a01bc06);
-# keep language-neutral
+# shared with binary-jvm/shared/hlil.py (synced at binary-jvm d67a36e); keep language-neutral
 """HLIL walking: operands, pre-order walk, nested blocks, statements in source order."""
 from binaryninja import HighLevelILInstruction, HighLevelILOperation
 

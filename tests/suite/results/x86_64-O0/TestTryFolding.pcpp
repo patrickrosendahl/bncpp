@@ -156,9 +156,7 @@
     catch (int32_t e)
     {
         var_20 = e;
-        int32_t _g_count_1 = _g_count;
-        _g_count = _g_count_1 + 1;
-        var_c = _g_count_1;
+        var_c = _g_count++;
         return (uint64_t)var_c;
     }
 }
@@ -179,9 +177,7 @@
 
     *(uint32_t*)((char*)arg5 - 0x18) =
         *(uint32_t*)___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
-    int32_t _g_count_1 = _g_count;
-    _g_count = _g_count_1 + 1;
-    *(uint32_t*)((char*)arg5 - 4) = _g_count_1;
+    *(uint32_t*)((char*)arg5 - 4) = _g_count++;
     ___cxa_end_catch();
     return (uint64_t)*(uint32_t*)((char*)arg5 - 4);
 }

@@ -1,5 +1,6 @@
-# from binary-jvm tests/bn_pseudo_java_compare.py (no-loss checks) and tests/vineflower_compare.py (counters,
-# statements, dead_after_return, leaked_catch_var, --max gates); bncpp-8, 2026-10-17. Keep language-neutral:
+# shared with binary-jvm/shared/compare.py (synced at binary-jvm d67a36e): from binary-jvm's
+# tests/bn_pseudo_java_compare.py (no-loss checks) and tests/vineflower_compare.py (counters, statements,
+# dead_after_return, leaked_catch_var, --max gates), bncpp-8. Keep language-neutral:
 # the language passes its regexes (counters, catch variables) and the names that may vanish.
 """Check a decompiler's output against a reference rendering of the same function, offline.
 

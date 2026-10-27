@@ -1,5 +1,4 @@
-# shared with binary-jvm/pseudo_java.py (PseudoJavaFunction: kw / txt / op / type_tok / note, emit_error;
-# synced at a01bc06); keep language-neutral
+# shared with binary-jvm/shared/tokens.py (synced at binary-jvm d67a36e); keep language-neutral
 """Token helpers and emit_error for a LanguageRepresentationFunction.
 
 TokenMixin needs from the language class:

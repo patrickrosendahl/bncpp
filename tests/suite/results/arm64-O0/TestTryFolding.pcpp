@@ -162,9 +162,7 @@
     }
     catch (int32_t e)
     {
-        int32_t _g_count_1 = _g_count;
-        _g_count = _g_count_1 + 1;
-        may_throw_result = _g_count_1;
+        may_throw_result = _g_count++;
         /* tailcall */
         return sub_4008b4(arg3);
     }
@@ -184,9 +182,7 @@
     }
 
     int32_t arg_8 = *(uint32_t*)___cxa_begin_catch(arg1);
-    int32_t _g_count_1 = _g_count;
-    _g_count = _g_count_1 + 1;
-    *(uint32_t*)((char*)arg3 - 4) = _g_count_1;
+    *(uint32_t*)((char*)arg3 - 4) = _g_count++;
     ___cxa_end_catch();
     /* tailcall */
     return sub_4008b4(arg3);
