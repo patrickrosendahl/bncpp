@@ -19,7 +19,7 @@ from ..constants import BASE_LANGUAGE, LANGUAGE_NAME
 from ..shared.tokens import TT, TokenMixin, tok
 from . import eh_comments, eh_render, eh_throw
 from ..shared import regions as _regions
-from ..shared.folding import FoldMixin
+from ..shared.folding import FoldMixin, walk_printed
 from ..shared.hlil import children, walk
 
 Op = HighLevelILOperation
@@ -681,6 +681,7 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 t = self.reg_tokens(self.frame_tokens(t, pad, f), pad, f, k)
                 if t is None:
                     continue
+                t = _compound(t)
                 keyed.append((self.catch_tokens(t, plumb.names, var) if var is not None else t, k))
         lines = []
         for t, _k in eh_throw.rewrite(keyed, plans):
@@ -723,8 +724,10 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
                 for t in toks]
 
     def catch_folds(self, func, plumb):
-        """the fold plan for func's statements in a catch body (bncpp-84): only variables that are read and written
-        nowhere else in func, not the exception's and not a throw's (eh_throw works on the lines unfolded)"""
+        """the fold plan for func's statements in a catch body (bncpp-84): the shown statements alone decide (a
+        definition read once there, by the next statement, folds though the pad writes the variable again in code
+        not shown, bncpp-151); not the exception's variables and not a throw's (eh_throw works on the lines
+        unfolded)"""
         shown = {i.instr_index for s in plumb.stmts if _key(s) not in plumb.rethrow
                  and s.function.source_function.start == func.start for i in walk(s)}
         cache = getattr(self, "_catch_folds", None)
@@ -739,13 +742,15 @@ class PseudoCppFunction(FoldMixin, TokenMixin, LanguageRepresentationFunction):
             for i in walk(func.hlil.root) if func.hlil is not None else ():
                 v = i.var if i.operation in (Op.HLIL_VAR, Op.HLIL_VAR_DECLARE) else \
                     i.dest if i.operation == Op.HLIL_VAR_INIT else None
-                if v is not None and (i.instr_index not in shown or i.instr_index in throw):
+                if v is not None and i.instr_index in throw:
                     protect.add(v)
             protect |= {v for v in func.vars if v.name in plumb.names}
             # the hidden ___cxa_end_catch() ends the handler: C++ evaluates `return v;` before it, so v may move past
             end = {i.instr_index for i in walk(func.hlil.root) if i.instr_index not in shown and
                    i.operation == Op.HLIL_CALL and eh_render.callee(i) == "cxa_end_catch"} if func.hlil else set()
-            cache[key] = _CatchFolds(func, protect, end)
+            seq = [st for st in plumb.stmts if _key(st) not in plumb.rethrow
+                   and st.function.source_function.start == func.start]
+            cache[key] = _CatchFolds(func, protect, end, shown, seq)
         return cache[key]
 
     def frame_tokens(self, toks, pad, func):
@@ -1747,17 +1752,76 @@ def _has_try(items):
                for it in items)
 
 
+_COMPOUND = re.compile(r"(\s*)([A-Za-z_]\w*) = \2 (\+|-|\*|&|\||\^|<<|>>) ([\w.]+);\s*$")
+_NEG_STEP = re.compile(r"(\s*)([A-Za-z_]\w*) ([+-])= -(\w+);\s*$")
+
+
+def _compound(toks):
+    """a catch body line `x = x op y;` (y one token) as `x op= y;`, `x += -n;` as `x -= n;` (bncpp-151): the forms
+    Pseudo C prints itself, lost where a mapped declaration (reg_map) or a folded constant made the line"""
+    text = "".join(t.text for t in toks)
+    m = _COMPOUND.match(text) or _NEG_STEP.match(text)
+    if m is None:
+        return toks
+    lead = 0
+    while lead < len(toks) and not toks[lead].text.strip():
+        lead += 1
+    if lead == len(toks) or toks[lead].text != m.group(2):
+        return toks
+    if m.re is _COMPOUND:
+        op, rest = m.group(3), m.group(4)
+    else:
+        op, rest = "-" if m.group(3) == "+" else "+", m.group(4)
+    tail = next((n for n in range(len(toks) - 1, lead, -1) if toks[n].text == rest), None)
+    if tail is None:
+        # the value printed as one token "-n" (a folded constant)
+        tail = next((n for n in range(len(toks) - 1, lead, -1) if toks[n].text == "-" + rest), None)
+        if tail is None:
+            return toks
+        t = toks[tail]
+        rest_tok = tok(t.type, rest, value=-t.value if isinstance(t.value, int) else t.value)
+        return toks[:lead + 1] + [tok(TT.TextToken, " %s= " % op), rest_tok] + toks[tail + 1:]
+    return toks[:lead + 1] + [tok(TT.TextToken, " %s= " % op)] + toks[tail:]
+
+
 class _CatchFolds(PseudoCppFunction):
     """PseudoCppFunction's readability passes on a catch body's lines from func (the landing pad or a function its
     handler tail-calls), with no language representation of its own (bncpp-84); protect: the variables that must
     not fold; end_catch: the instruction indexes of the hidden ___cxa_end_catch() calls (nothing in between)"""
     function = hlil = None  # plain attributes here, not the API's properties
 
-    def __init__(self, func, protect, end_catch):
+    def __init__(self, func, protect, end_catch, shown, seq):
         self.function, self.hlil, self._protect, self._end_catch = func, func.hlil, protect, end_catch
+        self._shown, self._seq = shown, seq
+
+    def fold_lists(self, root):
+        """the HLIL blocks, and the catch body's own statements of func in the order printed (bncpp-151): the
+        straight path from the pad's entry, so a definition reaches the next one there even where the pad's HLIL
+        puts it in another block (`int32_t rax = -1;` before the pad's copy of the loop, `r14 += rax;` its first
+        statement)"""
+        yield from super().fold_lists(root)
+        if len(self._seq) > 1:
+            yield list(self._seq)
 
     def __del__(self):
         pass  # no core handle to free
+
+    def _counts(self):
+        """FoldMixin's use / definition counts over the shown statements only (shown: their instruction
+        indexes): the lines printed are those, and a fold needs its use to be the next statement"""
+        if getattr(self, "_fold_counts", None) is None:
+            uses, defs = {}, {}
+            for i in walk_printed(self.hlil.root) if self.hlil is not None else ():
+                if i.instr_index not in self._shown:
+                    continue
+                if i.operation == Op.HLIL_VAR:
+                    uses[i.var] = uses.get(i.var, 0) + 1
+                elif i.operation == Op.HLIL_VAR_INIT:
+                    defs[i.dest] = defs.get(i.dest, 0) + 1
+                elif i.operation == Op.HLIL_VAR_DECLARE:
+                    defs[i.var] = defs.get(i.var, 0) + 2
+            self._fold_counts = (uses, defs)
+        return self._fold_counts
 
     def foldable_var(self, var):
         return var not in self._protect

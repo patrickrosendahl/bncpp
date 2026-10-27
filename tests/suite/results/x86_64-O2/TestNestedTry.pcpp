@@ -102,8 +102,7 @@
         }
         catch (std::runtime_error& e)
         {
-            int32_t rax = -1;
-            rbx += rax;
+            rbx -= 1;
         }
         r15_1 += 1;
     } while (arg1 != r15_1);

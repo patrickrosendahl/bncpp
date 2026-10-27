@@ -58,8 +58,7 @@
             }
             catch (std::runtime_error& e)
             {
-                int32_t rax = -1;
-                r14 += rax;
+                r14 -= 1;
             }
         } while (next_value() < arg1);
     }
@@ -114,8 +113,7 @@
         }
         catch (std::runtime_error& e)
         {
-            int32_t rcx = -1;
-            r15 += rcx;
+            r15 -= 1;
             r14 += 1;
             continue;
         }
@@ -170,7 +168,7 @@
         }
         catch (std::runtime_error& e)
         {
-            r12_1 = r12_1 - 1;
+            r12_1 -= 1;
         }
 
         rbx += 1;
@@ -219,8 +217,7 @@
         }
         catch (std::runtime_error& e)
         {
-            int32_t rax = -2;
-            rbx += rax;
+            rbx -= 2;
         }
     } while (may_throw(rbx) < arg1);
     return (uint64_t)rbx;
