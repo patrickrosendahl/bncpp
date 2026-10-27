@@ -75,13 +75,9 @@
             }
             else
             {
-                while (true)
+                int32_t rax_3;
+                while ((rax_3 = arg1[(uint64_t)(COMBINE(0, rcx_1) % arg2)]) != 7)
                 {
-                    int32_t rax_3 = arg1[(uint64_t)(COMBINE(0, rcx_1) % arg2)];
-
-                    if (rax_3 == 7)
-                        break;
-
                     if (rax_3 >= 0x65)
                     {
                         rdi = var_38_1;

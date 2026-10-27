@@ -2,14 +2,9 @@
 {
     int32_t i = 0;
 
-    while (true)
+    int32_t var_14_1;
+    while ((var_14_1 = next_value()) < arg1)
     {
-        int32_t value = next_value();
-        int32_t var_14_1 = value;
-
-        if (value >= arg1)
-            break;
-
         i += 1;
     }
 

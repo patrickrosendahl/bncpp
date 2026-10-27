@@ -33,7 +33,6 @@
 
     if (result)
     {
-
         do
         {
             *(uint64_t*)(*(uint64_t*)arg1 + (i << 3)) = 0;

@@ -135,13 +135,8 @@
     int32_t result_1 = 0;
     uint64_t result;
 
-    while (true)
+    while ((int32_t)(result = (uint64_t)result_1) < arg2)
     {
-        result = (uint64_t)result_1;
-
-        if ((int32_t)result >= arg2)
-            break;
-
         int64_t* rdi = arg1[(int64_t)result_1];
         var_20 = (*(uint64_t*)(*(uint64_t*)rdi + 0x10))(rdi) + var_20;
         result_1 += 1;

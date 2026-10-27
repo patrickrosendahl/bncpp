@@ -872,6 +872,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
 
     def value_parts(self, value):
         """FoldMixin hook: a ("lowbyte", ...) value evaluates its first value, then each operand (bncpp-85)"""
+        if value[0] == "assignx":  # (x = e): e (bncpp-87)
+            return [value[2]]
         return [value[2]] + [x for _op, x in value[3]] if value[0] == "lowbyte" else ()
 
     # --- names for BN's auto-named variables (bncpp-107) ---------------------------------------------------
@@ -1070,7 +1072,80 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                     self._render_value(value, set(), True) + [tok(TT.TextToken, ";")]
         except Exception:
             self._bool_rets = {}
+        try:
+            self._loop_heads = self._plan_loops(folded_idx)
+        except Exception:
+            self._loop_heads = {}
         return folded_idx
+
+    # --- loop conditions (bncpp-87) ------------------------------------------------------------------------
+
+    def _plan_loops(self, folded_idx):
+        """{while instr index: (condition, {var: ("assignx", x, value)}, {instr index not printed}, [hoisted def])}
+        for `while (true) { defs; if (c) break; rest }` -> `while (!c) { rest }`. The defs before the test go into
+        it: none left (they folded); one `x = e` (e not reading x) read once by c -> `(x = e)` there, x declared
+        before the loop when the def declared it; `v = e; y = v;` with v read only by the copy and once by c ->
+        `(y = e)`. Only where nothing c evaluates before that read has a side effect (or reads memory, for a value
+        that is not pure): moving e there keeps the order. A `continue` re-runs the test either way."""
+        out = {}
+        addr = self._addr_taken()
+        zones = getattr(self, "_zones", {})
+        for w in walk(self.function.hlil.root):
+            if w.operation != Op.HLIL_WHILE or w.condition.operation != Op.HLIL_CONST or \
+                    not w.condition.constant or w.body.operation != Op.HLIL_BLOCK:
+                continue
+            stmts, defs, k = list(w.body.body), [], None
+            for n, s in enumerate(stmts):
+                if s.instr_index in folded_idx or s.operation == Op.HLIL_NOP:
+                    continue
+                if s.operation in (Op.HLIL_VAR_INIT, Op.HLIL_ASSIGN) and _def_var(s) is not None:
+                    defs.append(s)
+                    continue
+                k = n
+                break
+            if k is None or not _break_if(stmts[k]) or any(zones.get(s.expr_index) is not None for s in stmts):
+                continue
+            c = stmts[k].condition
+            subst = {}
+            if len(defs) == 1:
+                x, e = _def_var(defs[0]), defs[0].src
+                tgt, hoist = x, defs
+            elif len(defs) == 2 and defs[1].src.operation == Op.HLIL_VAR and defs[1].src.var == _def_var(defs[0]):
+                x, e = _def_var(defs[0]), defs[0].src
+                tgt, hoist = _def_var(defs[1]), defs[1:]
+                if self.var_count(x) != 2 or self.def_count(x) != 1:
+                    continue
+            elif defs:
+                continue
+            if defs:
+                if x in addr or tgt in addr or x in (self.inline or {}) or tgt in (self.inline or {}) or \
+                        self.refs(c, x) != 1 or self.refs(e, x) or self.refs(e, tgt):
+                    continue  # (an update `x = x + y` is a statement of the body, not a value fetched for the test)
+                before, found = self.eval_nodes(c, x)
+                if found is not True or any(self.side_effect(i) for i in before) or \
+                        not self.pure(e) and any(self.reads_memory(i) for i in before):
+                    continue
+                subst[x] = ("assignx", tgt, e)
+            drop = {i.instr_index for d in defs for i in walk(d)} | {i.instr_index for i in walk(stmts[k])}
+            out[w.instr_index] = (c, subst, drop, [d for d in hoist if d.operation == Op.HLIL_VAR_INIT])
+        return out
+
+    def _loop_head(self, w_idx, indent):
+        """the `while (!c)` line of a planned loop (_plan_loops), the `(x = e)` substitutions only in it"""
+        c, subst, _drop, _hoist = self._loop_heads[w_idx]
+        saved, names = self.inline, self._fold_names
+        if subst:
+            self.inline = dict(saved or {})
+            self.inline.update(subst)
+            self._fold_names = dict(names or {})
+            self._fold_names.update({v.name: v for v in subst})
+        try:
+            cond = self._cond_tokens(c, set(), True)
+        finally:
+            self.inline, self._fold_names = saved, names
+        return ([tok(TT.TextToken, indent)] if indent else []) + [tok(TT.KeywordToken, "while"),
+                                                                  tok(TT.TextToken, " (")] + cond + \
+            [tok(TT.TextToken, ")")]
 
     def plan_lowbyte(self, body, plan):
         """`T r; (uint8_t)r = c1; (uint8_t)r &= c2; return r;` (bncpp-85): x86_64 returns a bool in al, and BN writes
@@ -1114,13 +1189,15 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         read replaced by its value, rendered through the base language and spliced in (recursively, so a chain of
         folds collapses). key: (function start, HLIL instruction index) or None."""
         folded = self._fold_plan()
-        if not folded and not self.inline and not self._ternary_stmt and not self._bool_rets and \
+        loops = getattr(self, "_loop_heads", None) or {}
+        if not folded and not self.inline and not self._ternary_stmt and not self._bool_rets and not loops and \
                 not self._has_bool_to_int():
             return keyed
         start = self.function.start
         own = lambda key: key[1] if key is not None and key[0] == start else None
         drop, repl = set(), {}  # repl: first line of an if -> (its last line, the `T x = c ? a : b;` line)
         empty = lambda ts: not "".join(t.text for t in ts).strip()
+        txt = lambda ts: "".join(t.text for t in ts)
         for value, d, inner in self._ternary_stmt.values():
             # (a blank line carries the key of the statement before it: it stays)
             at = [n for n, (t, key) in enumerate(keyed) if own(key) in inner and not empty(t)]
@@ -1141,6 +1218,24 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                 indent = "".join(t.text for t in toks)
                 indent = indent[:len(indent) - len(indent.lstrip())]
                 repl[at[0]] = (at[0], [([tok(TT.TextToken, indent)] if indent else []) + line])
+        for w_idx, (_c, _subst, gone, hoist) in loops.items():  # while (true) { .. if (c) break; } (bncpp-87)
+            at = [n for n, (t, key) in enumerate(keyed) if own(key) == w_idx and txt(t).strip() == "while (true)"]
+            if len(at) != 1 or at[0] in repl:
+                continue
+            text = txt(keyed[at[0]][0])
+            indent = text[:len(text) - len(text.lstrip())]
+            decls = []
+            for d in hoist:  # `T x = e;` in the loop -> `T x;` before it
+                first = next((t for t, key in keyed if own(key) == d.instr_index and not empty(t)), None)
+                k = next((m for m, t in enumerate(first or ()) if t.type == TT.LocalVariableToken and
+                          t.text == d.dest.name), None)
+                if k is None:
+                    break
+                decls.append([tok(TT.TextToken, indent)] + _lstrip_tokens(first[:k + 1]) + [tok(TT.TextToken, ";")])
+            else:
+                head = self._loop_head(w_idx, indent)
+                repl[at[0]] = (at[0], decls + [head])
+                drop.update(n for n, (_t, key) in enumerate(keyed) if own(key) in gone)
         out, blank = [], False
         n = -1
         while n + 1 < len(keyed):
@@ -1157,7 +1252,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             closing = "".join(t.text for t in toks).strip().startswith("}")
             if closing and out and empty(out[-1][0]):
                 out.pop()  # no blank line left before a closing brace (the block's last statements folded away)
-            elif blank and not empty(toks) and out and not empty(out[-1][0]) and not closing:
+            elif blank and not empty(toks) and out and not empty(out[-1][0]) and not closing and \
+                    txt(out[-1][0]).strip() != "{":  # (not first in a block)
                 out.append(([], None))  # the dropped lines' blank separator stays
             blank = False
             out.extend((self._subst_inline(list(ts)), key) for ts in [toks] + more)
@@ -1205,6 +1301,9 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             return [op] + toks if pre else toks + [op]
         if isinstance(value, tuple) and value[0] == "ternary":
             return paren(self._ternary_tokens(value, seen))
+        if isinstance(value, tuple) and value[0] == "assignx":  # `(x = e)` in a loop's test (bncpp-87)
+            return [tok(TT.TextToken, "("), tok(TT.LocalVariableToken, value[1].name), tok(TT.TextToken, " = ")] + \
+                self._expr_tokens(value[2], seen) + [tok(TT.TextToken, ")")]
         if isinstance(value, tuple) and value[0] == "lowbyte":
             toks = self._lowbyte_bool(value, seen)
             if toks is None:
@@ -2029,3 +2128,21 @@ def render_function(func, language=LANGUAGE_NAME):
         return ["{", "    // " + why, "}"]
     lr = representation(func) if language == LANGUAGE_NAME else func.language_representation(language)
     return ["".join(t.text for t in line.tokens).rstrip() for line in lr.get_linear_lines(hlil.root)]
+
+
+def _def_var(s):
+    """the variable a VAR_INIT / an ASSIGN to a variable defines, else None"""
+    if s.operation == Op.HLIL_VAR_INIT:
+        return s.dest
+    return s.dest.var if s.operation == Op.HLIL_ASSIGN and s.dest.operation == Op.HLIL_VAR else None
+
+
+def _break_if(s):
+    """s is `if (c) break;` -- no else"""
+    if s.operation != Op.HLIL_IF or (s.false is not None and s.false.operation != Op.HLIL_NOP):
+        return False
+    t = s.true
+    if t.operation == Op.HLIL_BLOCK:
+        body = [x for x in t.body if x.operation != Op.HLIL_NOP]
+        t = body[0] if len(body) == 1 else t
+    return t.operation == Op.HLIL_BREAK
