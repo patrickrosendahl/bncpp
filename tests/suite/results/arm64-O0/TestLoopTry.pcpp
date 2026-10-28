@@ -1,7 +1,7 @@
-// while_in_try(int32_t) @ 0x400648
+// while_in_try(int32_t) @ 0x400698
 {
-    // exception table (LSDA 0x400b5c): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x400668..0x400670 -> 0x4006a8 sub_4006a8: catch (std::runtime_error) #1
+    // exception table (LSDA 0x400cfc): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4006b8..0x4006c0 -> 0x4006f8 sub_4006f8: catch (std::runtime_error) #1
 
     int64_t fp;
     int64_t var_10 = fp;
@@ -20,17 +20,17 @@
     {
         var_18 = 0xffffffff;
         /* tailcall */
-        return sub_4006e4(arg3);
+        return sub_400734(arg3);
     }
 
     /* tailcall */
-    return sub_4006e4(&var_10, var_10);
+    return sub_400734(&var_10, var_10);
 }
 
-// sub_4006a8 @ 0x4006a8
+// sub_4006f8 @ 0x4006f8
 {
-    // landing pad of while_in_try(int32_t) @ 0x400648
-    //   from 0x400668..0x400670: catch (std::runtime_error) #1
+    // landing pad of while_in_try(int32_t) @ 0x400698
+    //   from 0x4006b8..0x4006c0: catch (std::runtime_error) #1
 
     if (arg2 != 1)
     {
@@ -42,18 +42,18 @@
     *(uint32_t*)((char*)arg3 - 8) = 0xffffffff;
     ___cxa_end_catch();
     /* tailcall */
-    return sub_4006e4(arg3);
+    return sub_400734(arg3);
 }
 
-// sub_4006e4 @ 0x4006e4
+// sub_400734 @ 0x400734
 {
     return (uint64_t)*(uint32_t*)((char*)arg1 - 8);
 }
 
-// try_in_while(int32_t) @ 0x400700
+// try_in_while(int32_t) @ 0x400750
 {
-    // exception table (LSDA 0x400b70): 1 of 3 call sites have a landing pad; #n = the selector value
-    //   0x400730..0x400738 -> 0x400750 sub_400750: catch (std::runtime_error) #1
+    // exception table (LSDA 0x400d10): 1 of 3 call sites have a landing pad; #n = the selector value
+    //   0x400780..0x400788 -> 0x4007a0 sub_4007a0: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
 
@@ -71,10 +71,10 @@
     return (uint64_t)var_18;
 }
 
-// sub_400750 @ 0x400750
+// sub_4007a0 @ 0x4007a0
 {
-    // landing pad of try_in_while(int32_t) @ 0x400700
-    //   from 0x400730..0x400738: catch (std::runtime_error) #1
+    // landing pad of try_in_while(int32_t) @ 0x400750
+    //   from 0x400780..0x400788: catch (std::runtime_error) #1
 
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
@@ -98,10 +98,10 @@
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
 }
 
-// test_in_try(int32_t) @ 0x4007ac
+// test_in_try(int32_t) @ 0x4007fc
 {
-    // exception table (LSDA 0x400b88): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x4007cc..0x4007d4 -> 0x4007f0 sub_4007f0: catch (std::runtime_error) #1
+    // exception table (LSDA 0x400d28): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x40081c..0x400824 -> 0x400840 sub_400840: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
     int32_t i = 0;
@@ -123,10 +123,10 @@
     return (uint64_t)var_18;
 }
 
-// sub_4007f0 @ 0x4007f0
+// sub_400840 @ 0x400840
 {
-    // landing pad of test_in_try(int32_t) @ 0x4007ac
-    //   from 0x4007cc..0x4007d4: catch (std::runtime_error) #1
+    // landing pad of test_in_try(int32_t) @ 0x4007fc
+    //   from 0x40081c..0x400824: catch (std::runtime_error) #1
 
     if (arg2 != 1)
     {
@@ -151,10 +151,10 @@
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
 }
 
-// do_test_in_try(int32_t) @ 0x40086c
+// do_test_in_try(int32_t) @ 0x4008bc
 {
-    // exception table (LSDA 0x400b9c): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x4008a4..0x4008ac -> 0x4008c8 sub_4008c8: catch (std::runtime_error) #1
+    // exception table (LSDA 0x400d3c): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4008f4..0x4008fc -> 0x400918 sub_400918: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
     int32_t i = 0;
@@ -177,10 +177,10 @@
     return (uint64_t)var_18;
 }
 
-// sub_4008c8 @ 0x4008c8
+// sub_400918 @ 0x400918
 {
-    // landing pad of do_test_in_try(int32_t) @ 0x40086c
-    //   from 0x4008a4..0x4008ac: catch (std::runtime_error) #1
+    // landing pad of do_test_in_try(int32_t) @ 0x4008bc
+    //   from 0x4008f4..0x4008fc: catch (std::runtime_error) #1
 
     if (arg2 != 1)
     {
@@ -207,10 +207,10 @@
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
 }
 
-// do_cond_throws(int32_t) @ 0x40093c
+// do_cond_throws(int32_t) @ 0x40098c
 {
-    // exception table (LSDA 0x400bb0): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x400958..0x400960 -> 0x400978 sub_400978: catch (std::runtime_error) #1
+    // exception table (LSDA 0x400d50): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4009a8..0x4009b0 -> 0x4009c8 sub_4009c8: catch (std::runtime_error) #1
 
     int32_t var_18 = 0;
     do
@@ -227,10 +227,10 @@
     return (uint64_t)var_18;
 }
 
-// sub_400978 @ 0x400978
+// sub_4009c8 @ 0x4009c8
 {
-    // landing pad of do_cond_throws(int32_t) @ 0x40093c
-    //   from 0x400958..0x400960: catch (std::runtime_error) #1
+    // landing pad of do_cond_throws(int32_t) @ 0x40098c
+    //   from 0x4009a8..0x4009b0: catch (std::runtime_error) #1
 
     *(uint64_t*)((char*)arg3 - 0x10) = arg1;
     *(uint32_t*)((char*)arg3 - 0x14) = arg2;
@@ -254,10 +254,10 @@
     return (uint64_t)*(uint32_t*)((char*)arg3 - 8);
 }
 
-// step_chain(Step**) @ 0x4009ec
+// step_chain(Step**) @ 0x400a3c
 {
-    // exception table (LSDA 0x400bc4): 1 of 2 call sites have a landing pad; #n = the selector value
-    //   0x400a24..0x400a2c -> 0x400a3c sub_400a3c: catch (NextStep) #1
+    // exception table (LSDA 0x400d64): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400a74..0x400a7c -> 0x400a8c sub_400a8c: catch (NextStep) #1
 
     int32_t var_1c = 0;
 
@@ -278,10 +278,10 @@
     return (uint64_t)var_1c;
 }
 
-// sub_400a3c @ 0x400a3c
+// sub_400a8c @ 0x400a8c
 {
-    // landing pad of step_chain(Step**) @ 0x4009ec
-    //   from 0x400a24..0x400a2c: catch (NextStep) #1
+    // landing pad of step_chain(Step**) @ 0x400a3c
+    //   from 0x400a74..0x400a7c: catch (NextStep) #1
 
     if (arg2 != 1)
     {
@@ -303,5 +303,76 @@
             + ((int64_t)*(uint32_t*)((char*)arg3 - 0xc) << 3)))();
 
     return (uint64_t)*(uint32_t*)((char*)arg3 - 0xc);
+}
+
+// rethrow_in_loop(int32_t) @ 0x400b1c
+{
+    // exception table (LSDA 0x400d78): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400b5c..0x400b64 -> 0x400b7c sub_400b7c: catch (...) #1
+    //   0x400b94..0x400ba8 (in sub_400b7c) -> 0x400bac sub_400bac: cleanup
+    //   0x400bb8..0x400bbc (in sub_400bac) -> 0x400c0c sub_400c0c: catch (...) #1
+
+    int32_t var_18 = 0;
+
+    for (int32_t i = 0; i < arg1; i += 1)
+    {
+        log_line("step");
+        try
+        {
+            int32_t may_throw_result = may_throw(i);
+        }
+        catch (...)
+        {
+            int32_t x1;
+            int32_t var_2c = x1;
+            log_line("undo");
+            throw;
+        }
+        log_line("next");
+        var_18 = var_18 + may_throw_result + next_value();
+    }
+
+    return (uint64_t)var_18;
+}
+
+// sub_400b7c @ 0x400b7c
+{
+    // landing pad of rethrow_in_loop(int32_t) @ 0x400b1c
+    //   from 0x400b5c..0x400b64: catch (...) #1
+
+    int32_t x1;
+    int32_t arg_4 = x1;
+    ___cxa_begin_catch(arg1);
+    log_line("undo");
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// sub_400bac @ 0x400bac
+{
+    // landing pad of rethrow_in_loop(int32_t) @ 0x400b1c
+    //   from 0x400b94..0x400ba8 (in sub_400b7c): cleanup
+
+    int32_t x1;
+    int32_t arg_4 = x1;
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400c0c @ 0x400c0c
+{
+    // landing pad of rethrow_in_loop(int32_t) @ 0x400b1c
+    //   from 0x400bb8..0x400bbc (in sub_400bac): catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400c14
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
 }
 

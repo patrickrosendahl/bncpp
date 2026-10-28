@@ -18,4 +18,4 @@ catch clauses 6
 catch clauses: a class of the scan 1
 handlers with the object in a variable 1
 variables: no struct 1
-keep  catch sub_400a3c x0_1 no struct: NextStep  (from 0x400a3c #1)   [now: void*]
+keep  catch sub_400a8c x0_1 no struct: NextStep  (from 0x400a8c #1)   [now: void*]

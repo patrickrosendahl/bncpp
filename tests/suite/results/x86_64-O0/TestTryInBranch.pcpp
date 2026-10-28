@@ -1,6 +1,6 @@
 // try_in_if(int32_t) @ 0x4005f0
 {
-    // exception table (LSDA 0x400848): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4009b0): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x40060b..0x400610 -> 0x40061d sub_40061d: catch (std::runtime_error) #1
 
     int64_t rbp;
@@ -61,7 +61,7 @@
 
 // try_in_else(int32_t) @ 0x400680
 {
-    // exception table (LSDA 0x40085c): 1 of 3 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4009c4): 1 of 3 call sites have a landing pad; #n = the selector value
     //   0x40069e..0x4006a3 -> 0x4006b0 sub_4006b0: catch (...) #1
 
     int32_t var_10;
@@ -100,7 +100,7 @@
 
 // try_in_switch(int32_t) @ 0x4006f0
 {
-    // exception table (LSDA 0x400874): 1 of 3 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4009dc): 1 of 3 call sites have a landing pad; #n = the selector value
     //   0x400730..0x400735 -> 0x400742 sub_400742: catch (int32_t) #1
 
     int64_t rbp;
@@ -178,5 +178,122 @@
 // sub_4007a7 @ 0x4007a7
 {
     return (uint64_t)(*(uint32_t*)((char*)arg1 - 8) + 7);
+}
+
+// try_then_join(int32_t) @ 0x4007d0
+{
+    // exception table (LSDA 0x4009f4): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x4007eb..0x4007f0 -> 0x400800 sub_400800: catch (...) #1
+
+    int64_t rbp;
+    int64_t var_8 = rbp;
+    int64_t* rbp_1 = &var_8;
+    int32_t var_10 = 1;
+
+    if (arg1 <= 3)
+        /* tailcall */
+        return sub_40081c(rbp_1, var_8);
+
+    try
+    {
+        int32_t var_10_1 = may_throw(arg1) * 3;
+    }
+    catch (...)
+    {
+        /* tailcall */
+        return sub_40081c(arg5);
+    }
+    /* tailcall */
+    return sub_40081c(rbp_1, var_8);
+}
+
+// sub_400800 @ 0x400800
+{
+    // landing pad of try_then_join(int32_t) @ 0x4007d0
+    //   from 0x4007eb..0x4007f0: catch (...) #1
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    ___cxa_end_catch();
+    /* tailcall */
+    return sub_40081c(arg5);
+}
+
+// sub_40081c @ 0x40081c
+{
+    *(uint32_t*)((char*)arg1 - 0x1c) = *(uint32_t*)((char*)arg1 - 8);
+    int32_t value = next_value();
+    return (uint64_t)(*(uint32_t*)((char*)arg1 - 0x1c) + value);
+}
+
+// try_in_else_if(int32_t) @ 0x400840
+{
+    // exception table (LSDA 0x400a08): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x400877..0x40087c -> 0x400889 sub_400889: catch (...) #1
+    //   0x40089e..0x4008b1 (in sub_400889) -> 0x4008b3 sub_4008b3: cleanup
+    //   0x4008bf..0x4008c4 (in sub_4008b3) -> 0x4008eb sub_4008eb: catch (...) #1
+
+    int32_t var_10 = 0;
+
+    if (arg1 < 0)
+        var_10 = next_value();
+    else if (arg1 > 3)
+    {
+        log_line("big");
+        try
+        {
+            var_10 = may_throw(arg1);
+        }
+        catch (...)
+        {
+            log_line("undo");
+            throw;
+        }
+        log_line("done");
+    }
+
+    return (uint64_t)(var_10 + 1);
+}
+
+// sub_400889 @ 0x400889
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400840
+    //   from 0x400877..0x40087c: catch (...) #1
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    log_line("undo");
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// sub_4008b3 @ 0x4008b3
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400840
+    //   from 0x40089e..0x4008b1 (in sub_400889): cleanup
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// sub_4008eb @ 0x4008eb
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400840
+    //   from 0x4008bf..0x4008c4 (in sub_4008b3): catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400900
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
 }
 

@@ -57,7 +57,7 @@ def _in(func, addr):
 def is_terminate_guard(bv, pad, guards=()):
     """the pad's straight-line code calls a terminate helper (a function named *terminate*, or one of guards):
     destructors may run first (clang's guard after a cleanup); followed through unconditional jumps, stopped by a
-    return or a conditional branch. Reads instructions: needs no function at the pad"""
+    return, a conditional branch or a call that does not return. Reads instructions: needs no function at the pad"""
     from binaryninja import BranchType
     a = pad
     for _ in range(64):
@@ -70,6 +70,8 @@ def is_terminate_guard(bv, pad, guards=()):
                 f = bv.get_function_at(b.target)
                 if b.target in guards or (f is not None and "terminate" in f.name):
                     return True
+                if f is not None and not f.can_return:  # `catch (...) { ..; throw; }` runs on into the next pad's
+                    return False                         # terminate guard, which is not this one's (bncpp-197)
             elif b.type == BranchType.UnconditionalBranch:
                 nxt = b.target
             elif b.type in (BranchType.TrueBranch, BranchType.FalseBranch, BranchType.FunctionReturn,
@@ -476,13 +478,15 @@ def plumbing(pad_func, stmts, type_name):
 
 
 def sub_bodies(s):
-    """the bodies of a compound statement a try can sit in: a loop's, an if's two branches (not an `else if`, which
-    Pseudo C prints on the else line), a switch's cases and default"""
+    """the bodies of a compound statement a try can sit in: a loop's, an if's two branches (an `else if`, which
+    Pseudo C prints on the else line, through the bodies of that if: bncpp-197), a switch's cases and default"""
     if s.operation in LOOPS:
         return [s.body]
     if s.operation == Op.HLIL_IF:
         out = [s.true]
-        if s.false is not None and s.false.operation not in (Op.HLIL_IF, Op.HLIL_NOP):
+        if s.false is not None and s.false.operation == Op.HLIL_IF:
+            out += sub_bodies(s.false)
+        elif s.false is not None and s.false.operation != Op.HLIL_NOP:
             out.append(s.false)
         return out
     if s.operation == Op.HLIL_SWITCH:
@@ -497,22 +501,25 @@ def compound_for(stmts, region, cont, tail=()):
     """(index of the statement in stmts, the body of it) the region's try sits inside, or None: every call of the
     block in the region's range is in that body, and so is the handler's continuation -- after the catch, the body
     goes on (bncpp-64: loops; bncpp-67: if / else branches, switch cases). A handler that does not go on in this
-    function (cont None) places the try in an if branch or a case as well, never in a loop. tail: the addresses
-    where falling off the end of stmts goes on (an enclosing loop's test, bncpp-179) -- a continuation there also
-    places the try in a branch of the last statement"""
+    function (cont None) places the try in an if branch or a case as well, in a loop body only where no branch
+    holds the calls (bncpp-197). tail: the addresses where falling off the end of stmts goes on (an enclosing
+    loop's test, bncpp-179) -- a continuation there also places the try in a branch of the last statement"""
     inside = [a for s in stmts for a in call_addrs(s) if region.start <= a < region.end]
     if not inside:
         return None
     last = max((k for k, s in enumerate(stmts) if s.operation not in (Op.HLIL_NOP, Op.HLIL_VAR_DECLARE)), default=-1)
-    for k, s in enumerate(stmts):
-        for b in sub_bodies(s):
-            if b is None or (cont is None and s.operation in LOOPS):
-                continue
-            # a loop goes on in its update / condition too (`i += 1` is the for's, not its body's)
-            addrs = [i.address for i in walk(s if s.operation in LOOPS else b)]
-            falls = k == last and s.operation not in LOOPS and cont in tail
-            if (cont is None or falls or min(addrs) <= cont <= max(addrs)) and set(inside) <= set(call_addrs(b)):
-                return k, b
+    # a handler that does not go on prefers a branch; a loop's body only where no branch holds the calls -- the
+    # loop has calls outside the try, so the try cannot be around it (bncpp-197: catch (...) { ..; throw; })
+    for loops in ((False, True) if cont is None else (None,)):
+        for k, s in enumerate(stmts):
+            for b in sub_bodies(s):
+                if b is None or (loops is not None and loops != (s.operation in LOOPS)):
+                    continue
+                # a loop goes on in its update / condition too (`i += 1` is the for's, not its body's)
+                addrs = [i.address for i in walk(s if s.operation in LOOPS else b)]
+                falls = k == last and s.operation not in LOOPS and cont in tail
+                if (cont is None or falls or min(addrs) <= cont <= max(addrs)) and set(inside) <= set(call_addrs(b)):
+                    return k, b
     return None
 
 

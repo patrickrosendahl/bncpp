@@ -1,24 +1,32 @@
-while_in_try(int32_t)  lsda base+0xb5c  lpstart +0x0  2 call sites
+while_in_try(int32_t)  lsda base+0xcfc  lpstart +0x0  2 call sites
   +0x20  .. +0x28  lp +0x60  catch(typeinfo_for_std::runtime_error)
   +0x28  .. +0xb8  unwind
 
-try_in_while(int32_t)  lsda base+0xb70  lpstart +0x0  3 call sites
+try_in_while(int32_t)  lsda base+0xd10  lpstart +0x0  3 call sites
   +0x0   .. +0x30  unwind
   +0x30  .. +0x38  lp +0x50  catch(typeinfo_for_std::runtime_error)
   +0x38  .. +0xac  unwind
 
-test_in_try(int32_t)  lsda base+0xb88  lpstart +0x0  2 call sites
+test_in_try(int32_t)  lsda base+0xd28  lpstart +0x0  2 call sites
   +0x20  .. +0x28  lp +0x44  catch(typeinfo_for_std::runtime_error)
   +0x28  .. +0xc0  unwind
 
-do_test_in_try(int32_t)  lsda base+0xb9c  lpstart +0x0  2 call sites
+do_test_in_try(int32_t)  lsda base+0xd3c  lpstart +0x0  2 call sites
   +0x38  .. +0x40  lp +0x5c  catch(typeinfo_for_std::runtime_error)
   +0x40  .. +0xd0  unwind
 
-do_cond_throws(int32_t)  lsda base+0xbb0  lpstart +0x0  2 call sites
+do_cond_throws(int32_t)  lsda base+0xd50  lpstart +0x0  2 call sites
   +0x1c  .. +0x24  lp +0x3c  catch(typeinfo_for_std::runtime_error)
   +0x24  .. +0xb0  unwind
 
-step_chain(Step**)  lsda base+0xbc4  lpstart +0x0  2 call sites
+step_chain(Step**)  lsda base+0xd64  lpstart +0x0  2 call sites
   +0x38  .. +0x40  lp +0x50  catch(typeinfo_for_NextStep)
   +0x40  .. +0xe0  unwind
+
+rethrow_in_loop(int32_t)  lsda base+0xd78  lpstart +0x0  6 call sites
+  +0x0   .. +0x40  unwind
+  +0x40  .. +0x48  lp +0x60  catch(...)
+  +0x48  .. +0x78  unwind
+  +0x78  .. +0x8c  lp +0x90  cleanup
+  +0x9c  .. +0xa0  lp +0xf0  catch(...)
+  +0xa0  .. +0xf8  unwind

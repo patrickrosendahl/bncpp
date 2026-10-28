@@ -1,6 +1,6 @@
 // try_in_if(int32_t) @ 0x4005f8
 {
-    // exception table (LSDA 0x4007ec): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400900): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x40060c..0x400610 -> 0x40063c sub_40063c: catch (std::runtime_error) #1, cleanup, cleanup
 
     int64_t entry_x19;
@@ -55,7 +55,7 @@
 
 // try_in_else(int32_t) @ 0x400658
 {
-    // exception table (LSDA 0x400804): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400918): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x400668..0x40066c -> 0x400698 sub_400698: catch (...) #1
 
     int64_t entry_x19;
@@ -104,7 +104,7 @@
 
 // try_in_switch(int32_t) @ 0x4006a8
 {
-    // exception table (LSDA 0x400818): 1 of 2 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x40092c): 1 of 2 call sites have a landing pad; #n = the selector value
     //   0x4006d0..0x4006d4 -> 0x400728 sub_400728: catch (int32_t) #1, cleanup, cleanup
 
     int64_t entry_x19;
@@ -175,5 +175,105 @@
     ___cxa_end_catch();
     /* tailcall */
     return sub_4006d8();
+}
+
+// try_then_join(int32_t) @ 0x400744
+{
+    // exception table (LSDA 0x400944): 1 of 2 call sites have a landing pad; #n = the selector value
+    //   0x400758..0x40075c -> 0x400764 sub_400764: catch (...) #1
+
+    int32_t x19;
+
+    try
+    {
+        if (arg1 < 4)
+            x19 = 1;
+        else
+            x19 = may_throw(arg1) * 3;
+    }
+    catch (...)
+    {
+        return (uint64_t)(next_value() + 1);
+    }
+
+    return (uint64_t)(next_value() + x19);
+}
+
+// sub_400764 @ 0x400764
+{
+    // landing pad of try_then_join(int32_t) @ 0x400744
+    //   from 0x400758..0x40075c: catch (...) #1
+
+    ___cxa_begin_catch(arg1);
+    ___cxa_end_catch();
+    return (uint64_t)(next_value() + 1);
+}
+
+// try_in_else_if(int32_t) @ 0x400784
+{
+    // exception table (LSDA 0x400958): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x4007b0..0x4007b8 -> 0x4007ec sub_4007ec: catch (...) #1
+    //   0x4007f0..0x400800 (in sub_4007ec) -> 0x400804 sub_400804: cleanup
+    //   0x400808..0x40080c (in sub_400804) -> 0x400814 sub_400814: catch (...) #1
+
+    int32_t x19_1;
+
+    if (arg1 & 0x80000000)
+        x19_1 = next_value();
+    else if (arg1 < 4)
+        x19_1 = 0;
+    else
+    {
+        log_line("big");
+        try
+        {
+            x19_1 = may_throw(arg1);
+        }
+        catch (...)
+        {
+            log_line("undo");
+            throw;
+        }
+        log_line("done");
+    }
+
+    return (uint64_t)(x19_1 + 1);
+}
+
+// sub_4007ec @ 0x4007ec
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400784
+    //   from 0x4007b0..0x4007b8: catch (...) #1
+
+    ___cxa_begin_catch(arg1);
+    log_line("undo");
+    ___cxa_rethrow();
+    /* no return */
+}
+
+// sub_400804 @ 0x400804
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400784
+    //   from 0x4007f0..0x400800 (in sub_4007ec): cleanup
+
+    ___cxa_end_catch();
+    __Unwind_Resume(arg1);
+    /* no return */
+}
+
+// sub_400814 @ 0x400814
+{
+    // landing pad of try_in_else_if(int32_t) @ 0x400784
+    //   from 0x400808..0x40080c (in sub_400804): catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400818
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
 }
 

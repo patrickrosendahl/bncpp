@@ -96,3 +96,24 @@ TEST int step_chain(Step **steps) {
     }
     return i;
 }
+
+// bncpp-197: a try in a loop body whose handler does not go on here (cleans up, rethrows) -- the loop has calls
+// outside the try, so the try is in the body: `for (..) { log_line(..); try { sum += may_throw(i); } catch (...)
+// { log_line(..); throw; } log_line(..); sum += next_value(); }` (libc++'s catch (...) { deallocate; throw; } in
+// SynthV). The pad's straight line runs on into the next pad's terminate guard: not a guard itself. The second
+// log_line keeps BN from making `sum + may_throw(i) + next_value()` one statement (the try can't cut it)
+TEST int rethrow_in_loop(int n) {
+    int sum = 0;
+    for (int i = 0; i < n; i++) {
+        log_line("step");
+        try {
+            sum += may_throw(i);
+        } catch (...) {
+            log_line("undo");
+            throw;
+        }
+        log_line("next");
+        sum += next_value();
+    }
+    return sum;
+}

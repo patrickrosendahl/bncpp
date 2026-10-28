@@ -58,3 +58,34 @@ TEST int try_in_switch(int x) {
     }
     return r + 7;
 }
+
+// bncpp-197: a try in an if branch whose handler goes on after the if (shrink_to_fit's catch (...) {}): the
+// continuation is the join after the if, outside the branch's own addresses
+TEST int try_then_join(int x) {
+    int r = 1;
+    if (x > 3) {
+        try {
+            r = may_throw(x) * 3;
+        } catch (...) {
+        }
+    }
+    return r + next_value();
+}
+
+// bncpp-197: a try in an `else if` branch (Pseudo C prints it on the else line) whose handler rethrows
+TEST int try_in_else_if(int x) {
+    int r = 0;
+    if (x < 0) {
+        r = next_value();
+    } else if (x > 3) {
+        log_line("big");
+        try {
+            r = may_throw(x);
+        } catch (...) {
+            log_line("undo");
+            throw;
+        }
+        log_line("done");
+    }
+    return r + 1;
+}
