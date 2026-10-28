@@ -3,8 +3,14 @@
 Read-only. Decodes the file's classic dyld bind opcodes (cpp/macho.py, reference only) per stream (bind / weak /
 lazy) and looks each bound slot up in BN's relocations: 'has' = a relocation with the same symbol, 'other' = a
 relocation with a different symbol (BN's name from the symbol table), 'none' = no relocation with a symbol.
-  bnrun --bndb BINARY_OR_BNDB --timeout 300 tests/bn_bind_probe.py [-- PATH_OF_THE_RAW_BINARY]
+  BNDB=BINARY_OR_BNDB $B/bn --timeout 300 tests/bn_bind_probe.py [PATH_OF_THE_RAW_BINARY]
 """
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import collections, os, sys
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")

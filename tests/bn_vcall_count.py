@@ -4,8 +4,14 @@ Read-only. Over a sample of the functions named by the class directives (every N
 .scratch/classes/<binary>.directives, written by tests/bn_class_apply.py), counts the HLIL calls whose target is
 not a constant (indirect calls) and how many of those read as a named member call through the vptr
 ('->vptr->'), plus the functions whose first parameter is named 'this'.
-  bnrun --bndb DB --timeout 900 tests/bn_vcall_count.py [-- STRIDE]     (default stride 10)
+  BNDB=DB $B/bn --timeout 900 tests/bn_vcall_count.py [STRIDE] (default stride 10)
 """
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import os, sys, time
 from binaryninja import HighLevelILOperation as Op
 

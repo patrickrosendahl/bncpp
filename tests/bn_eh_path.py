@@ -1,6 +1,6 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 600 --env FROM=0x10032b410|name|part*of*name[,…] [--env TI=0x1009d0bb0|typeinfo_for_X[,…]] \
-#         [--env BASES=1] [--env VIRTUAL=0] [--env APPLY=1] tests/bn_eh_path.py
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB FROM='0x10032b410|name|part*of*name[,…]' [TI='0x1009d0bb0|typeinfo_for_X[,…]'] \
+#         [BASES=1] [VIRTUAL=0] [APPLY=1 [SAVE=1]] $B/bn --timeout 600 tests/bn_eh_path.py
 # bncpp-24: what the functions at FROM throw, followed up the direct callers (cpp/eh_path.py): who catches it,
 # where it terminates, where it leaves the known call graph. TI: the thrown typeinfos (default: the ones FROM passes
 # to ___cxa_throw or to a function that only throws (bncpp-92), starting at those throw sites; none: unknown, every
@@ -12,6 +12,12 @@
 # runs -- the report says how many are done).
 # APPLY=1 sets the comments (in RAM; never over another comment). NOCACHE=1: no bncache file (call graph and
 # dynamic_cast callers computed in full; tests/bn_dump.py's .ehpath, which takes _lines).
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, re, time
 import binaryninja as _bn
 
@@ -161,3 +167,4 @@ if __name__ != "__bn_dump__":  # bn_dump.py's .ehpath takes _lines (bncpp-117)
     print("%s %d comments, %d skipped (another comment there); review %s (%.1f s)" % (
         "set" if _get("APPLY") == "1" else "would set", _done, _skipped, os.path.join(_out, _name + ".path.review"),
         time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists APPLY's comments (tests/bn_engine.py)

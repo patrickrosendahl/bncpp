@@ -4,11 +4,17 @@ Read-only. Over a sample of the functions named by the class directives (every N
 .scratch/classes/<binary>.directives), finds the HLIL calls through a vtable struct member (X::VTable, from
 tests/bn_class_types.py) and compares each argument past 'this' with the parameter of the slot functions that
 the call can reach: X's slot and the same slot in every class whose primary-base chain contains X.
-  bnrun --bndb DB --timeout 900 tests/bn_vcall_args.py [-- STRIDE]     (default stride 10)
+  BNDB=DB $B/bn --timeout 900 tests/bn_vcall_args.py [STRIDE] (default stride 10)
 Per argument: the call site's type is a class pointer (a pointer to a struct that is not a VTable) or not; per
 reachable slot function, its parameter is the same type, another class pointer (a contradiction) or something
 less specific (a candidate). Per (class, slot, argument): the class pointer types seen across the sample's sites.
 """
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, sys, time
 import binaryninja as _bn
 from binaryninja import HighLevelILOperation as Op, TypeClass

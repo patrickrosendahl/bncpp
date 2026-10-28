@@ -1,7 +1,7 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 600 tests/bn_landing_pads.py                 # dry run: review file only
-#   bnrun --bndb DB --timeout 600 --env APPLY=1 tests/bn_landing_pads.py   # create them (in RAM), then save PATH
-#   bnrun --bndb DB --timeout 600 --env APPLY=noreturn tests/bn_landing_pads.py   # only bncpp-52's marks, recount
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB $B/bn --timeout 600 tests/bn_landing_pads.py                 # dry run: review file only
+#   BNDB=DB APPLY=1 $B/bn --timeout 600 tests/bn_landing_pads.py   # create them (in RAM; + SAVE=1: into DB)
+#   BNDB=DB APPLY=noreturn $B/bn --timeout 600 tests/bn_landing_pads.py   # only bncpp-52's marks, recount
 #   … --env APPLY=1 --env PADS=0:2000 …   # create only that slice of the pads still to create (bncpp-54: chunks)
 # bncpp-4: a user function at every LSDA landing pad that no function starts at (cpp/landing_pads.py), so the
 # handler code is in a view. Review: .scratch/eh/<binary>.pads.review, one line per pad:
@@ -9,6 +9,12 @@
 # bncpp-52, first: 'terminate helper' lines, 'padded calls' lines (bncpp-62: imports called last before padding)
 # and 'noreturn' lines for the helpers / terminate callees / padded imports APPLY marks
 # __noreturn (never over a user type; --env BASELINE=F as bn_class_types.py: only over a type BN inferred).
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, time
 import binaryninja as _bn
 
@@ -84,3 +90,4 @@ print("review -> %s" % _rv)
 print("%s: %s (%.1f s)" % ("applied" if _apply else "noreturn marked" if _mark else "dry run",
                            ", ".join("%s %d" % kv for kv in _counts.items()),
                            time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists the view's changes (tests/bn_engine.py)

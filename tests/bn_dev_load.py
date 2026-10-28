@@ -1,4 +1,5 @@
-# Run inside Binary Ninja via the script bridge:  bnrun --timeout 60 tests/bn_dev_load.py
+# For the GUI app's script console only (exec it there): the bnrun bridge is gone and the tests need no dev
+# loads -- every $B/bn process loads the installed plugin = this working tree (tests/bn_engine.py, bncpp-177).
 # Copies the plugin package to /tmp/cpp_devN/, renames the language to "Pseudo Cpp devN" and imports it, so
 # the language view can be iterated without restarting Binary Ninja (BN can't unregister a language
 # representation). Modelled on binary-jvm tests/bn_dev_load.py.

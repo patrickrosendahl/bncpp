@@ -6,8 +6,8 @@ description: Project skill for binary-cpp, a Binary Ninja plugin for readable C+
 # binary-cpp project workflow
 
 Documentation: miniwiki project `bncpp` (skill `miniwiki-api`); backlog: minitick project `bncpp` (skill
-`minitick-api`); environment, commands and rules: `CLAUDE.md`. Generic Binary Ninja mechanics (`bnrun`
-script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bridge`.
+`minitick-api`); environment, commands and rules: `CLAUDE.md`. Generic Binary Ninja mechanics (bnengine:
+Binary Ninja in the script's process, launcher `$B/bn`, per-file lock): skill `binaryninja-bridge`.
 
 ## Workflow per ticket
 1. `minitick get -p bncpp N --expand comment`; set it IN PROGRESS (`minitick update -p bncpp N -f
@@ -16,8 +16,8 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
    `http://musicmac.local:8000` / `:8001` -- never a numeric LAN address (musicmac's Wi-Fi one rotates).
 2. Read the binary-jvm equivalent first (wiki `reuse-from-binary-jvm.md`).
 3. Change the code; add or extend a suite test (`tests/suite/src/TestX.cpp` + `TESTS` in `suite.py`).
-4. `suite.py build` (if sources changed) → `bn_dev_load.py` → `bn_dump.py` → `suite.py compare --diff`;
-   review every difference, then `suite.py accept`.
+4. `suite.py build` (if sources changed) → `suite.py dump` (no dev loads: the engine loads this tree) →
+   `suite.py compare --diff`; review every difference, then `suite.py accept`.
 5. One commit; ticket comment with the numbers; RESOLVED. Findings into the wiki pages.
 
 ## Gotchas (details: wiki `plugin-architecture.md`, `eh-in-hlil.md`)
@@ -33,8 +33,8 @@ script bridge, usage lock, Personal-license workarounds): skill `binaryninja-bri
   MLIL instruction's `get_reg_value` still say r15's entry value (bncpp-155) -- check with
   `Function.get_reg_value_at` (`_holds` in `cpp/pseudo_cpp.py`). BN also types unpassed tail parameters as stack
   variables, so "map by storage" fails there (bncpp-152).
-- Probe scripts through the bridge: open throwaway views with `tests/bn_probe.py` (`with probe_view(path,
-  pads=True) as bv:`, usage in its header) -- it drops the block's Function / IL references, keeps an exception as
+- Probe scripts (`$B/bn`, after `tests/bn_engine.py` setup): open throwaway views with `tests/bn_probe.py`
+  (`with probe_view(path, pads=True) as bv:`, usage in its header) -- it drops the block's Function / IL references, keeps an exception as
   text and runs `gc.collect()` before `bv.file.close()`; a hand-rolled close must do the same (the BNFreeFunction
   crashes, bncpp-102, -168).
 

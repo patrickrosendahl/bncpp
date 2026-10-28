@@ -1,10 +1,16 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 300 --env ADDRS=0x10015d610,0x10032b410 [--env PADS=1] [--env OUT=DIR] tests/bn_render.py
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB ADDRS=0x10015d610,0x10032b410 [PADS=1] [OUT=DIR] $B/bn --timeout 300 tests/bn_render.py
 # Writes the functions at ADDRS in the latest dev-loaded Pseudo Cpp and in Pseudo C to OUT/<addr>.{pcpp,pc}
 # (default .scratch/render/<binary>/), plus OUT/<addr>.lsda (the decoded exception table, if any). For acceptance
 # cases in large databases (bncpp-19), where the suite dump's view-wide steps are too slow.
 # PADS=1 first creates a user function at each landing pad of these functions that has none (cpp/landing_pads.py,
 # only these owners' pads; in RAM -- the database changes only on a save, which this script never does).
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, time
 import binaryninja as _bn
 

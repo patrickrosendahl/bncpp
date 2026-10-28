@@ -1,8 +1,8 @@
-# A throwaway view for ad-hoc probe scripts through the script bridge, closed safely (bncpp-168):
+# A throwaway view for ad-hoc probe scripts ($B/bn, after tests/bn_engine.py setup), closed safely (bncpp-168):
 #   import importlib.util as _u
 #   _s = _u.spec_from_file_location("bn_probe", "/Users/patrick/dev/binary-cpp/tests/bn_probe.py")
 #   _probe = _u.module_from_spec(_s); _s.loader.exec_module(_probe)
-#   with _probe.probe_view(path, pads=True) as v:   # pads: cpp/landing_pads.recover (serial), after bn_dev_load.py
+#   with _probe.probe_view(path, pads=True) as v:   # pads: cpp/landing_pads.recover (serial)
 #       f = v.get_function_at(0x400774)
 #       print(f.mlil.ssa_form)
 # No Function of the view may outlive its close -- freed later (the namespace at the job's end, on a worker thread,

@@ -6,7 +6,6 @@
 #   DUMP_VARIANTS=x86_64-O2,arm64-O2 $B/bn tests/bn_dump.py # only these variants
 #   RESUME=1 $B/bn tests/bn_dump.py   # skip binaries whose requested outputs all carry the current stamp
 #   python3 tests/suite/suite.py dump [-j N] [K=V ...]      # one bn process per variant, in parallel
-#   bnrun --gui --parallel --timeout 600 tests/bn_dump.py   # the old way: in the app, after bn_dev_load.py
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
 # every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; serially, bncpp-124) and writes into
 # .scratch/suite/out/<variant>/TestX.*:

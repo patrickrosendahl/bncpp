@@ -1,9 +1,15 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 600 [--env N=100] [--env TAG=before] tests/bn_eh_sample.py
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB [N=100] [TAG=before] $B/bn --timeout 600 tests/bn_eh_sample.py
 # bncpp-54: what landing-pad functions buy in the Pseudo Cpp view, measured on a fixed sample: every k-th function
 # with an LSDA that has a catch clause (N of them, by address). Per function: try blocks placed, catch clauses whose
 # landing pad is in no function, clauses shown as the whole pad (dispatch not found), render time. Writes
 # .scratch/eh/<binary>.sample.<TAG> (one line per function, then the totals) and prints the totals.
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, time
 import binaryninja as _bn
 

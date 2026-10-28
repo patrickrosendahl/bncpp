@@ -3,8 +3,8 @@ their features, dumped to disk so the matcher and the statement alignment run of
 
 Read-only, chunked: functions sorted by address, from address START (hex) on, COUNT of them, stopping early after BUDGET seconds (the
 last line says where to go on). Appends JSON lines to OUT (absolute: the script runs inside BN).
-  bnrun --lock --view kernelcache --timeout 120 --env OUT=$PWD/.scratch/linemap/kernel/feat.jsonl \
-        [--env START=0xADDR] [--env COUNT=2000] [--env BUDGET=90] [--env FORCE=1] tests/bn_line_features.py
+  BNDB=KERNELCACHE.bndb OUT=$PWD/.scratch/linemap/kernel/feat.jsonl $B/bn --timeout 120 \
+        [START=0xADDR] [COUNT=2000] [BUDGET=90] [FORCE=1] tests/bn_line_features.py
 FORCE=1 generates HLIL for functions that have none yet (slow on a big view); default: only what is available
 (those count as 'nohlil' and keep start/end/name). Never forced: functions BN skipped (analysis_skipped -- forcing
 them re-analyses a huge function in someone else's view, one native call the timeout cannot stop) and those over
@@ -17,6 +17,12 @@ One line per function:
   call (a named callee), bl (an unnamed callee; v = its address as hex)
 shared.linematch reads the flat features (every statement's feats, in order) like tests/ref_bin_features.py's.
 """
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import json, os, time
 from binaryninja import HighLevelILOperation as Op
 

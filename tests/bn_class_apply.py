@@ -1,7 +1,7 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 600 tests/bn_class_apply.py                       # dry run: counts + directive file
-#   bnrun --bndb DB --timeout 600 --env APPLY=1 tests/bn_class_apply.py         # apply (in RAM)
-#   bnrun --bndb-save DB                                                         # then persist, path-scoped
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB $B/bn --timeout 600 tests/bn_class_apply.py                       # dry run: counts + directive file
+#   BNDB=DB APPLY=1 $B/bn --timeout 600 tests/bn_class_apply.py         # apply (in RAM)
+#   (SAVE=1 with APPLY saves into DB; without it the changes die with the process)
 # The class scan (cpp/rtti.py) through BN, named by cpp/rtti_names.py, as annotate directives (R:/D:/C:) into
 # .scratch/classes/<binary>.directives. Applying never overwrites what someone named or wrote: a function is
 # renamed only while its name is BN's own (no symbol: sub_..., or BN's auto thunk name j_...) -- a symbol from the
@@ -13,6 +13,12 @@
 # functions such as a lone 'ret' or a tail jump; arm64 SynthV 210), then its name -- only in executable code. The
 # review says whether it lies inside another function's body; APPLY reports the neighbours (the function containing
 # it, the one before it) whose shape (size, blocks) the new function changed.
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, time
 import binaryninja as _bn
 
@@ -146,3 +152,4 @@ with open(_out[:-len(".directives")] + ".names.review", "w", encoding="utf-8") a
 print("%d typeinfos, %d directives -> %s (+ .names.review)" % (len(_types), len(_dirs), _out))
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(
     "%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists the view's changes (tests/bn_engine.py)

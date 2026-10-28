@@ -1,7 +1,13 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 300 tests/bn_callgraph.py            # the call graph, from the cache or built + cached
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB $B/bn --timeout 300 tests/bn_callgraph.py            # the call graph, from the cache or built + cached
 #   options: --env ASYNC=1 (build in the background task, wait for it), --env ADDR=0x... (callers / callees of one)
 # shared/callgraph.py, cached per binary by shared/bncache.py (next to the database: <x>.bndb.bncpp-cache.json).
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, time
 import binaryninja as _bn
 

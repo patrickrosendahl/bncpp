@@ -2,8 +2,14 @@
 
 Read-only. Counts BN's vtable symbols and VTable types, then prints the classes whose names contain
 any of the script arguments. Run on a cached view:
-  bnrun --bndb DB --timeout 60 tests/bn_rtti_probe.py -- lazyloader renderblock
+  BNDB=DB $B/bn --timeout 60 tests/bn_rtti_probe.py lazyloader renderblock
 """
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import collections, sys, time
 from binaryninja import Settings
 

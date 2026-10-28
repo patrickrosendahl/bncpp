@@ -1,9 +1,10 @@
 # The test scripts under bn-script-bridge's `bn` launcher (bnengine: Binary Ninja in this python process, no app,
-# bn-script-bridge 04cf44e+, 2026-10-28) or, as before, inside the app (bnrun --gui, a dev load) -- bncpp-177.
+# bn-script-bridge 16c1602+, 2026-10-28; the bnrun bridge is gone) or in the app's script console after a dev load
+# -- bncpp-177.
 #   import importlib.util as _u
 #   _s = _u.spec_from_file_location("bn_engine", "/Users/patrick/dev/binary-cpp/tests/bn_engine.py")
 #   _e = _u.module_from_spec(_s); _s.loader.exec_module(_e); _e.setup(globals())
-# setup(g) gives the script what bnrun and bn_dev_load.py gave it, where nothing did:
+# setup(g) gives the script what bnrun and bn_dev_load.py used to give it, where nothing did:
 #   the engine           bnengine.engine() under the launcher (BN_SA_APP set, no core yet); once per process.
 #                        Since bn-script-bridge d47734e the engine's init thread stays parked, so
 #                        update_analysis_and_wait() works on the main thread too (before, it returned at once there:
@@ -11,8 +12,11 @@
 #   binaryninja._cpp_dev  {pkgname, pkg, pseudo_cpp, LANGUAGE_NAME}: a dev load's, else the installed plugin -- the
 #                        plugins folder links this repo, so the engine loads the working tree at its start
 #   env                  os.environ
-#   bv                   with need_bv: the view of $BNDB (bnengine.open: one handle per file; write=True when
-#                        $APPLY is set, so the script can save with bv.file.save_auto_snapshot())
+#   bv                   with need_bv: the view of $BNDB, a .bndb or a raw binary (bnengine.open: one handle per
+#                        file, a .bndb opens lean with its saved analysis; write=True when $APPLY or $SAVE is set)
+# finish(g) at the end of a script that changes the view: edits live in RAM and die with the process, so it saves
+# only on request -- SAVE=1 into the .bndb itself, SAVE=/abs/new.bndb into a new database (a raw binary's only
+# way) -- and says so either way. A no-op where the caller supplied bv (bn_dump.py, bn_class_pipeline.py).
 import os, sys
 
 BRIDGE = "/Users/patrick/dev/bn-script-bridge"
@@ -41,5 +45,26 @@ def setup(g, need_bv=False):
         path = g["env"].get("BNDB")
         if not path:
             sys.exit("set BNDB=/abs/path.bndb (the view this script works on)")
-        g["bv"] = bnengine.open(path, write=bool(g["env"].get("APPLY")))
+        g["bv"] = bnengine.open(path, write=bool(g["env"].get("APPLY") or g["env"].get("SAVE")))
+        g["_bn_engine_bv"] = g["bv"]
     return binaryninja._cpp_dev
+
+
+def finish(g):
+    bv = g.get("_bn_engine_bv")
+    if bv is None or bv is not g.get("bv"):
+        return
+    target = (g.get("env") or {}).get("SAVE") or ""
+    if not target or target == "0":
+        if (g.get("env") or {}).get("APPLY"):
+            print("not saved (APPLY in RAM only; SAVE=1 or SAVE=/abs/new.bndb persists it)")
+        return
+    if target == "1":
+        if not bv.file.filename.lower().endswith(".bndb"):
+            sys.exit("SAVE=1 needs a .bndb view; a raw binary saves with SAVE=/abs/new.bndb")
+        ok = bv.file.save_auto_snapshot()
+    else:
+        ok = bv.create_database(target)
+    print("saved %s: %s" % (bv.file.filename if target == "1" else target, "ok" if ok else "FAILED"))
+    if not ok:
+        sys.exit(1)

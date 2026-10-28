@@ -1,13 +1,19 @@
 # Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py and the class types
 # (tests/bn_class_types.py: the class structs must exist):
-#   bnrun --bndb DB --timeout 900 tests/bn_catch_types.py                 # dry run: plan + review file
-#   bnrun --bndb DB --timeout 900 --env APPLY=1 tests/bn_catch_types.py   # apply (in RAM), then save PATH
+#   BNDB=DB $B/bn --timeout 900 tests/bn_catch_types.py                 # dry run: plan + review file
+#   BNDB=DB APPLY=1 $B/bn --timeout 900 tests/bn_catch_types.py   # apply (in RAM; + SAVE=1: into DB)
 # bncpp-28 source 4: the exception object in a catch handler gets the clause's class. Per catch clause of the
 # exception tables (cpp/lsda.py through cpp/eh_comments.py) whose type is a class of the scan (cpp/rtti.py), the
 # handler code (cpp/eh_render.specialize: the landing pad with the selector fixed to the clause) holds the object's
 # address in the variable `x = ___cxa_begin_catch(...)` -> 'X* x'. A variable the handlers of two classes share
 # (one pad, no dispatch between them) is a contradiction and stays. Never over a type that already points to a
 # struct. Review: .scratch/classes/<binary>.catch.review ('catch' lines: outcome, pad, variable, class).
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, time
 import binaryninja as _bn
 from binaryninja import HighLevelILOperation as Op, NamedTypeReferenceClass, QualifiedName, Type, TypeClass
@@ -126,3 +132,4 @@ with open(_rv, "w", encoding="utf-8") as _fh:
 print("review -> %s" % _rv)
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(
     "%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists the view's changes (tests/bn_engine.py)

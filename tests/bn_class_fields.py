@@ -1,7 +1,7 @@
 # Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py and the class names / types
 # (tests/bn_class_apply.py, tests/bn_class_types.py):
-#   bnrun --bndb DB --timeout 1800 tests/bn_class_fields.py                     # dry run: plan + review file
-#   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_fields.py       # apply (in RAM), then save PATH
+#   BNDB=DB $B/bn --timeout 1800 tests/bn_class_fields.py                     # dry run: plan + review file
+#   BNDB=DB APPLY=1 $B/bn --timeout 1800 tests/bn_class_fields.py       # apply (in RAM; + SAVE=1: into DB)
 #   (APPLY refuses while classes have no type from bn_class_types.py; tests/bn_class_pipeline.py runs all three)
 #   options: --env BASELINE=F (as bn_class_types.py), --env NAMES=F (field names: lines 'label offset name [type]'),
 #            (a type BN cannot parse keeps the name untyped, a bad offset skips the line: review 'note:' lines),
@@ -37,6 +37,12 @@
 # allocator over a sample (_find_allocator; cached as section "allocator", the review's first 'allocator:' line).
 # bncpp-112: ___cxa_allocate_exception(sizeof(T)) counts like operator new (exception classes only ever thrown).
 # Review: .scratch/classes/<binary>.fields.review ('pointer' lines: outcome, class, evidence per class stored)
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, json, os, re, time
 import binaryninja as _bn
 from binaryninja import (BaseStructure, FunctionParameter, MediumLevelILOperation as Op, NamedTypeReferenceClass,
@@ -1352,3 +1358,4 @@ if _unsettled:
     print(_unsettled)
 print("%s: %s (%.1f s)" % ("applied" if _apply else "dry run", ", ".join(
     "%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists the view's changes (tests/bn_engine.py)

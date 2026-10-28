@@ -1,7 +1,7 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --bndb DB --timeout 1800 tests/bn_class_types.py                     # dry run: counts
-#   bnrun --bndb DB --timeout 1800 --env APPLY=1 tests/bn_class_types.py       # apply (in RAM), wait for analysis
-#   bnrun --bndb-save DB                                                        # then persist, path-scoped
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   BNDB=DB $B/bn --timeout 1800 tests/bn_class_types.py                     # dry run: counts
+#   BNDB=DB APPLY=1 $B/bn --timeout 1800 tests/bn_class_types.py       # apply (in RAM), wait for analysis
+#   (SAVE=1 with APPLY saves into DB; without it the changes die with the process)
 # bncpp-27: the class scan (cpp/rtti.py) as types (cpp/rtti_types.py) -- struct X { X::VTable* vptr; }, X::VTable
 # with a function pointer per slot, 'X* this' as the first parameter of X's primary-vtable functions, and the
 # vtable struct on the vtable's address point. bncpp-31: a base anchored by the RTTI base list whose vtable is
@@ -10,8 +10,14 @@
 # existing type of the same name,
 # a function with a user type, a user data variable -- each skip is counted. Where a database marks every
 # function's type as user-set, give BN's own inference as the baseline (only types that differ are protected):
-#   bnrun --bndb RAW_BINARY --timeout 120 --env DUMP_TYPES=F tests/bn_class_types.py   (a fresh view)
-#   bnrun --bndb DB ... --env BASELINE=F tests/bn_class_types.py
+#   BNDB=RAW_BINARY DUMP_TYPES=F $B/bn --timeout 120 tests/bn_class_types.py (a fresh view)
+#   BNDB=DB BASELINE=F $B/bn ... tests/bn_class_types.py
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=True)
 import importlib, os, re, time
 import binaryninja as _bn
 from binaryninja import FunctionParameter, NamedTypeReferenceClass, QualifiedName, StructureBuilder, Type
@@ -174,3 +180,4 @@ print("review -> %s" % _rv)
 print("%s: %d classes, %d functions planned; %s (%.1f s)" % (
     "applied" if _apply else "dry run", len(_classes), len(_functions),
     ", ".join("%s %d" % kv for kv in sorted(_counts.items())), time.time() - _t0))
+_e.finish(globals())  # SAVE=1 / SAVE=/abs/new.bndb persists the view's changes (tests/bn_engine.py)

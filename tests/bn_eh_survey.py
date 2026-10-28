@@ -1,5 +1,5 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --parallel --timeout 600 tests/bn_eh_survey.py [--env DUMP_TESTS=TestCatchAll,...]
+# On the Binary Ninja engine (B=/Users/patrick/dev/bn-script-bridge; tests/bn_engine.py, bncpp-177):
+#   [DUMP_TESTS=TestCatchAll,...] $B/bn --timeout 600 tests/bn_eh_survey.py
 # bncpp-2 premise check: what BN makes of each function with an LSDA, per suite binary. For the owner's range
 # (compact unwind: from its entry to the next one) -- which BN functions cover it (the owner, landing pads split
 # off as sub_..., tail pieces), which instructions no function covers (lost code), and per landing pad: a function
@@ -7,6 +7,12 @@
 # Output: .scratch/eh/<variant>/TestX.survey, and a summary line per binary.
 # CREATE_PADS=1: first create a function at every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; the
 # view is a throwaway one, nothing is saved), then survey -> .scratch/eh-pads/.
+import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
+_es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
+                                                              "tests/bn_engine.py"))
+_e = _eu.module_from_spec(_es)
+_es.loader.exec_module(_e)
+_e.setup(globals(), need_bv=False)
 import gc, glob, importlib, os, traceback
 import binaryninja as _bn
 

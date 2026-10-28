@@ -1,12 +1,29 @@
 # bncpp-56: refresh the scratch snapshot sample/synthv/<name>.bndb from synVbasic's save, with a PROVENANCE line.
 #   python3 -I tests/refresh_synthv.py "for the bncpp-58 rounds repro"     [--src DIR] [--name synthv-studio.x86_64]
-# Refuses while the bridge has our view of the snapshot open (a same-name view could be saved over it) or while the
+# Refuses while a process has the snapshot open (a bnengine script holding its lock, or the app: lsof) or while the
 # source is still being written (size / mtime change within a few seconds). The bncpp cache is copied only when the
 # source's is newer than ours (our dry runs refresh ours).
-import argparse, datetime, hashlib, os, shutil, subprocess, sys, time
+import argparse, datetime, fcntl, hashlib, os, shutil, subprocess, sys, time
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-BNRUN = "/Users/patrick/dev/bn-script-bridge/bnrun"
+
+
+def _holder(path):
+    """Who has path open: a bnengine script (its flock, keyed as bnengine.lock_file does) or any process (lsof)"""
+    lock = os.path.join(os.path.expanduser("~/.cache/bnengine/locks"),
+                        hashlib.sha256(os.path.realpath(path).encode()).hexdigest()[:24] + ".lock")
+    if os.path.exists(lock):
+        with open(lock, "a+") as fh:
+            try:
+                fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                fh.seek(0)
+                return "a bnengine script (pid %s)" % (fh.read().strip() or "?")
+    if os.path.exists(path):
+        pids = subprocess.run(["lsof", "-t", path], capture_output=True, text=True, timeout=30).stdout.split()
+        if pids:
+            return "pid " + ", ".join(pids)
+    return None
 
 
 def _sha256(path):
@@ -25,9 +42,9 @@ def main():
     args = ap.parse_args()
     dst_dir = os.path.join(REPO, "sample/synthv")
     src, dst = (os.path.join(d, args.name + ".bndb") for d in (args.src, dst_dir))
-    views = subprocess.run([BNRUN, "--bndb-list"], capture_output=True, text=True, timeout=30).stdout.splitlines()
-    if any(v.split("  ")[0] == dst for v in views):
-        sys.exit("our view is open in BN: bnrun --bndb-close %s" % dst)
+    holder = _holder(dst)
+    if holder:
+        sys.exit("%s is open (%s): close it first" % (dst, holder))
     st = os.stat(src)
     time.sleep(5)
     st2 = os.stat(src)
