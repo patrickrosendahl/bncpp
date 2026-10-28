@@ -63,6 +63,13 @@ class BNImage:
         """an import slot's symbol name (BN names __got / IAT slots), else what the pointer points at"""
         s = self.bv.get_symbol_at(slot)
         if s is not None and s.type in _IMPORTS:
+            if not _typeinfo(s):  # a bind an obfuscator renamed (SynthV's hashed nlist names, bncpp-25): the local
+                try:  # typeinfo it points to names it, as typeinfo_arg does for a throw (bncpp-116, bncpp-170)
+                    t = self.bv.get_symbol_at(self.bv.read_pointer(slot))
+                except Exception:
+                    t = None
+                if _typeinfo(t):
+                    return t.full_name
             return s.full_name
         ptr = self.bv.read_pointer(slot)
         t = self.bv.get_symbol_at(ptr)
@@ -137,3 +144,8 @@ class BNImage:
         """(full name, user-defined?) of the symbol at addr, or None"""
         s = self.bv.get_symbol_at(addr)
         return (s.full_name, not s.auto) if s is not None else None
+
+
+def _typeinfo(sym):
+    """sym names a typeinfo (__ZTI..., BN's typeinfo_for_...)"""
+    return sym is not None and (sym.raw_name.startswith("__ZTI") or sym.full_name.startswith("typeinfo_for_"))
