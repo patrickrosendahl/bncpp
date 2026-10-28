@@ -864,6 +864,35 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         _CatchFolds, which does)."""
         return True
 
+    def fold_skip(self, body, j, var, value, value_pure):
+        """FoldMixin hook (bncpp-88): a value moves past `x = v;` to a register variable x -- a callee cannot see
+        it -- when the value does not read x, v does not read var, v has no side effect and, for a value that is
+        not pure, reads no memory. Not in a function with a role in exception handling (_has_eh): a handler would
+        see whether x was written before a call threw (bncpp-149's registers)."""
+        s = body[j]
+        x = _def_var(s)
+        if x is None or x == var or isinstance(value, tuple) or self._has_eh() or x in self._addr_taken() or \
+                x.source_type != VariableSourceType.RegisterVariableSourceType or self.refs(s, var):
+            return False
+        if any(i.operation == Op.HLIL_VAR and i.var == x for i in self.eval_nodes(value)[0]):
+            return False
+        nodes = self.eval_nodes(s.src)[0]
+        reg_part = lambda i: i.operation == Op.HLIL_STRUCT_FIELD and i.src.operation == Op.HLIL_VAR and \
+            i.src.var.source_type == VariableSourceType.RegisterVariableSourceType  # result.d of x0: no memory
+        return not any(self.side_effect(i) for i in nodes) and \
+            (value_pure or not any(self.reads_memory(i) and not reg_part(i) for i in nodes))
+
+    def _has_eh(self):
+        """the function has a role in exception handling: an LSDA owner, a landing pad (BN splits pads off, but at
+        run time they are the owner's frame, under its table) or a pad's tail"""
+        if getattr(self, "_eh_role", None) is None:
+            try:
+                self._eh_role = bool(eh_comments.lines(self.function.view, self.function.start)) or \
+                    bool(self.tail(self.function))
+            except Exception:
+                self._eh_role = True
+        return self._eh_role
+
     def fold_candidate(self, body, k, plan):
         """FoldMixin: a conditional expression whose use would print too wide stays `T x = c ? a : b;` (bncpp-89)"""
         if k in plan.get("ternary", {}) and body[k].instr_index in getattr(self, "_wide_ternary", ()):
@@ -2077,6 +2106,9 @@ class _CatchFolds(PseudoCppFunction):
 
     def foldable_var(self, var):
         return var not in self._protect
+
+    def fold_skip(self, body, j, var, value, value_pure):
+        return False  # a pad's code: an exception may leave it at any call
 
     def fold_transparent(self, body, j, plan):
         return body[j].instr_index in self._end_catch or super().fold_transparent(body, j, plan)

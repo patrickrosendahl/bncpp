@@ -1,13 +1,11 @@
 // count_until(int32_t) @ 0x400558
 {
     uint64_t result = 0xffffffff;
-    int32_t value;
 
     do
     {
-        value = next_value();
         result = (uint64_t)((uint32_t)result + 1);
-    } while (value < arg1);
+    } while (next_value() < arg1);
     return result;
 }
 
