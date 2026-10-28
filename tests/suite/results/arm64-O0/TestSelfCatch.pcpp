@@ -101,8 +101,6 @@
     }
     catch (...)
     {
-        int32_t x1;
-        int32_t var_24 = x1;
         log_line("caught");
         int32_t var_28 = var_14 > 0;
         /* tailcall */

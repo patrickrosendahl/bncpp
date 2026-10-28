@@ -19,7 +19,6 @@
     // unwind: Guard::~Guard(&var_20);
     catch (std::runtime_error& e)
     {
-        void* rbp;
         _printf("caught %s\n", (*(uint64_t*)(*(uint64_t*)&e + 0x10))(&e));
         /* tailcall */
         return sub_40062f(0xfffffffc, arg2);

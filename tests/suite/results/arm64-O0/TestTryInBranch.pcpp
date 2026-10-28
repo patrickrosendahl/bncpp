@@ -80,8 +80,6 @@
     }
     catch (...)
     {
-        int32_t x1;
-        int32_t var_24 = x1;
         value = 0xfffffffe;
         log_line("else done");
         /* tailcall */
@@ -205,8 +203,6 @@
     }
     catch (...)
     {
-        int32_t x1;
-        int32_t var_24 = x1;
         void* fp;
         /* tailcall */
         return sub_4008c0(fp);
@@ -254,8 +250,6 @@
         }
         catch (...)
         {
-            int32_t x1;
-            int32_t var_24 = x1;
             log_line("undo");
             throw;
         }

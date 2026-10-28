@@ -109,7 +109,6 @@
             }
             catch (std::exception& e)
             {
-                struct _Unwind_Exception* var_b8;
                 var_60 -= 1;
             }
         }

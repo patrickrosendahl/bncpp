@@ -324,8 +324,6 @@
         }
         catch (...)
         {
-            int32_t x1;
-            int32_t var_2c = x1;
             log_line("undo");
             throw;
         }

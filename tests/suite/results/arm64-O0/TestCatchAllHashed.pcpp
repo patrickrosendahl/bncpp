@@ -14,8 +14,6 @@
     }
     catch (...)
     {
-        int32_t x1;
-        int32_t var_24 = x1;
         log_line("something");
         may_throw_result = 0xfffffffd;
         /* tailcall */

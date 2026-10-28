@@ -229,7 +229,11 @@ def specialize(pad_func, n, clauses_on_pad, owner=None):
     BN split off) is followed (bncpp-64)."""
     reg = SELECTOR_REG.get(pad_func.arch.name)
     names = {}
-    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG), [reg] if reg else ()), 0, names)
+    # the selector's register: a parameter, or an uninitialised local where only a copy reads it (arm64 -O0's
+    # `int32_t var_2c = x1`, bncpp-207)
+    regs = [reg] if reg else []
+    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG) | _reg_vars(pad_func, regs), regs),
+                    0, names)
     if r is None:
         return None
     stmts, cont, tests, before = r
@@ -487,6 +491,10 @@ def plumbing(pad_func, stmts, type_name):
         unused = [s for s in out if s.operation == Op.HLIL_VAR_INIT and callee(_strip(s.src)) == _BEGIN and not any(
             i.operation == Op.HLIL_VAR and i.var == s.dest for o in out if o is not s for i in walk(o))]
         out = [s for s in out if all(s is not u for u in unused)]
+    # a declaration nothing left uses (the selector's register once its copy is gone: `int32_t x1;`, bncpp-207)
+    used = {i.var for o in out for i in walk(o) if i.operation == Op.HLIL_VAR} | {
+        o.dest for o in out if o.operation == Op.HLIL_VAR_INIT}
+    out = [s for s in out if s.operation != Op.HLIL_VAR_DECLARE or s.var in used]
     return Plumbing(out, rethrow, names)
 
 

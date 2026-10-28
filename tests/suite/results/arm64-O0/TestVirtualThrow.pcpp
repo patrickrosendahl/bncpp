@@ -113,8 +113,6 @@
     }
     catch (...)
     {
-        int32_t x1;
-        int32_t var_34 = x1;
         var_14 = 0xfffffffe;
         /* tailcall */
         return sub_400914(arg2);
