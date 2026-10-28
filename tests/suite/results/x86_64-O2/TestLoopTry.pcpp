@@ -292,9 +292,8 @@
 
     if (arg3 != 1)
     {
-        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
+        __Unwind_Resume(arg4);
+        /* no return */
     }
 
     int32_t rax_1 = *(uint32_t*)___cxa_begin_catch(arg4);

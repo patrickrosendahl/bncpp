@@ -93,9 +93,8 @@
 
     if (arg3 != 1)
     {
-        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
+        __Unwind_Resume(arg4);
+        /* no return */
     }
 
     int32_t r14 = *(uint32_t*)___cxa_begin_catch(arg4);
@@ -124,9 +123,8 @@
         ___cxa_free_exception();
 
     ___cxa_end_catch();
-    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-    /* tailcall */
-    return __Unwind_Resume(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_40072e @ 0x40072e
@@ -139,9 +137,8 @@
 
     ___cxa_free_exception();
     ___cxa_end_catch();
-    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-    /* tailcall */
-    return __Unwind_Resume(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // sub_400742 @ 0x400742
@@ -151,8 +148,7 @@
 
     ___cxa_free_exception();
     ___cxa_end_catch();
-    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-    /* tailcall */
-    return __Unwind_Resume(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 

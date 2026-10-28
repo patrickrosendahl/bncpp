@@ -112,9 +112,8 @@
     // landing pad of nested_try(int32_t) @ 0x4005f0
     //   from 0x4006cd..0x4006d2 (in sub_4006c1): catch (...) #3
 
-    void (* var_8)(void* arg1) __noreturn = ___clang_call_terminate;
-    /* tailcall */
-    return ___clang_call_terminate(arg1);
+    ___clang_call_terminate(arg1);
+    /* no return */
 }
 
 // ___clang_call_terminate @ 0x4006f0

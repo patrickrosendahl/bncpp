@@ -121,9 +121,8 @@
 
     if (arg3 != 1)
     {
-        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
+        __Unwind_Resume(arg4);
+        /* no return */
     }
 
     uint64_t rbx_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4);
@@ -141,9 +140,8 @@
 
     if (arg3 != 1)
     {
-        void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-        /* tailcall */
-        return __Unwind_Resume(arg4);
+        __Unwind_Resume(arg4);
+        /* no return */
     }
 
     uint64_t rbx_1 = (uint64_t)*(uint32_t*)___cxa_begin_catch(arg4);

@@ -1599,7 +1599,7 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                             step + [tok(TT.TextToken, ": ")] + b + [tok(TT.TextToken, ";")]]
 
     def emit_token_lines(self, lines, tokens, statement):
-        for i, line in enumerate(_brace_do(_whole_tokens(lines))):
+        for i, line in enumerate(_brace_do(_call_next(_whole_tokens(lines)))):
             if i:
                 tokens.new_line()
             if not line:
@@ -1803,6 +1803,37 @@ def _whole_tokens(lines):
             else:
                 merged.append(t)
         out[n] = merged
+    return out
+
+
+_CALL_NEXT = re.compile(r"\s*void \(\* (var_\w+)\)\(.*\) __noreturn = ([\w:]+);\s*$")
+
+
+def _call_next(lines):
+    """token lines with BN's call-next-instruction reading of a no-return call undone (bncpp-193): the last call
+    of __text whose stub is the first of __stubs returns to its own target, which BN takes for `call $+5`: the
+    return address pushed into a variable, the call a tail call -- `void (* var_8)(..) __noreturn = F;` /
+    `/* tailcall */` / `return F(args);` -> `F(args);` / `/* no return */`, as the same call prints elsewhere"""
+    text = lambda l: "".join(t.text for t in l)
+    out, i = [], 0
+    while i < len(lines):
+        m = _CALL_NEXT.match(text(lines[i])) if i + 2 < len(lines) else None
+        if m and text(lines[i + 1]).strip() == "/* tailcall */" and \
+                text(lines[i + 2]).lstrip().startswith("return %s(" % m.group(2)) and \
+                not any(re.search(r"\b%s\b" % m.group(1), text(l)) for k, l in enumerate(lines) if k != i):
+            call = list(lines[i + 2])
+            k = next(k for k, t in enumerate(call) if t.text.strip())
+            rest = call[k:]
+            rest[0] = tok(rest[0].type, rest[0].text.lstrip()[len("return"):].lstrip())
+            if not rest[0].text:
+                rest.pop(0)
+            while rest and not rest[0].text.strip():
+                rest.pop(0)
+            out += [call[:k] + rest, [tok(t.type, t.text.replace("tailcall", "no return")) for t in lines[i + 1]]]
+            i += 3
+            continue
+        out.append(lines[i])
+        i += 1
     return out
 
 

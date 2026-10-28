@@ -46,9 +46,8 @@
 
     Guard::~Guard((char*)arg2 - 0x10);
     Guard::~Guard((char*)arg2 - 0x18);
-    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-    /* tailcall */
-    return __Unwind_Resume(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 
 // j_sub_4006aa @ 0x4006a8
@@ -67,8 +66,7 @@
 
     void* rbp;
     Guard::~Guard((char*)rbp - 0x18);
-    void (* var_8)(struct _Unwind_Exception* arg1) __noreturn = __Unwind_Resume;
-    /* tailcall */
-    return __Unwind_Resume(arg1);
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 

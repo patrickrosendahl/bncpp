@@ -16,7 +16,7 @@ import re
 SKIPPED = re.compile(r"//\s*analysis skipped\b")
 
 KEYWORDS = {"if", "while", "for", "switch", "catch", "return", "sizeof", "do", "else", "case", "throw", "new",
-            "delete", "synchronized", "super", "this"}
+            "delete", "synchronized", "super", "this", "void"}  # void: `void (* var_8)(..)` declares (bncpp-193)
 
 
 def split_functions(text, header):
