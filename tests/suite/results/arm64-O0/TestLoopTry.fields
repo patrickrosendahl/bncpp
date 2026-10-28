@@ -1,1 +1,21 @@
-no typeinfo
+allocator by votes (no operator new name) 0
+classes sized 0
+ctors/dtors 0
+functions scanned 0
+helper accesses added 0
+helper entries 0
+helper floats over int 0
+helper walks 0
+params with direct callers 0
+ptr store functions scanned 0
+ptr stores 0
+returns used as objects 0
+rounds 2
+stable 1
+
+
+catch clauses 6
+catch clauses: a class of the scan 1
+handlers with the object in a variable 1
+variables: no struct 1
+keep  catch sub_400a3c x0_1 no struct: NextStep  (from 0x400a3c #1)   [now: void*]

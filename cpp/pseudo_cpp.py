@@ -126,6 +126,7 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         self._frame = eh_render.owner_frame(self.function, regions[0].start)  # bncpp-68: the owner's stack slots
         self._fvars = {}  # pad start -> eh_render.frame_vars
         self._regmaps = {}  # pad start -> reg_map (bncpp-149)
+        self._reentry = {}  # pad start -> its loop variable as the owner's (eh_render.reenter, bncpp-179)
         self._handlers = {id(r): self.plan_handlers(r) for r in regions}
         self._in_loop = set()  # regions placed inside a compound statement (handlers end at the continuation)
         self._zones = {}  # statement expr index -> the innermost try run it is printed in (folds stay in one)
@@ -221,17 +222,17 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             n = m
         return out
 
-    def plan_block(self, block, regions, loop=False):
+    def plan_block(self, block, regions, loop=False, tail=()):
         stmts, groups = self.stmt_lines(block)
-        return self.plan_list(stmts, groups, regions, loop)
+        return self.plan_list(stmts, groups, regions, loop, tail)
 
-    def plan_list(self, stmts, groups, regions, loop=False):
+    def plan_list(self, stmts, groups, regions, loop=False, tail=()):
         """[("stmt", lines) | ("compound", segments) | ("try", items, handlers, blank after, unwind)]; loop: stmts
-        are a loop's body"""
+        are a loop's body; tail: where falling off their end goes on (eh_render.compound_for)"""
         loops, rest = {}, []  # loops: statement index -> {body expr index: (body, [regions])}
         heads = {}  # statement index of a while whose test is in a region's range -> [regions] (bncpp-147)
         for r in regions:
-            found = eh_render.compound_for(stmts, r, self.cont(r))
+            found = eh_render.compound_for(stmts, r, self.cont(r), tail)
             head = self.test_in_try(stmts, r) if found is None else None
             if found is not None:
                 k, b = found
@@ -248,6 +249,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         for i, j, g in _regions.try_runs(pcs, [(r.start, r.end, ()) for r in rest]):
             r = by_range[(g[0], g[1])]
             runs[i] = (i, self.run_to_cont(stmts, pcs, j, r), r)
+        last = max((n for n, st in enumerate(stmts) if st.operation not in (Op.HLIL_NOP, Op.HLIL_VAR_DECLARE)),
+                   default=-1)
         items, k = [], 0
         while k < len(stmts):
             if k in heads:
@@ -256,7 +259,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                 k += 1
                 continue
             if k not in runs:
-                items.append(self.plan_stmt(stmts[k], groups[k], list(loops[k].values()) if k in loops else None))
+                items.append(self.plan_stmt(stmts[k], groups[k], list(loops[k].values()) if k in loops else None,
+                                            tail if k == last else ()))
                 k += 1
                 continue
             i, j, r = runs[k]
@@ -283,12 +287,25 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             k = j + 1
         return items
 
-    def plan_stmt(self, st, lines, bodies):
+    def plan_stmt(self, st, lines, bodies, tail=()):
         """a compound statement with try regions in some of its bodies [(body, [regions])]: ("compound", segments),
         Pseudo C's lines of it with each such body replaced by its plan -- ("lines", lines) and ("body", items,
-        indent levels, closes) in turn (bncpp-64: loops, bncpp-67: if / else, switch cases)"""
+        indent levels, closes) in turn (bncpp-64: loops, bncpp-67: if / else, switch cases); tail: where falling off
+        st's end goes on, for its branches (a loop's own body: its test)"""
         if not bodies:
             return ("stmt", lines)
+        if st.operation == Op.HLIL_DO_WHILE:  # a one-statement body: Pseudo C's bare `do` / ` while (c);` braced
+            toks, k, braced = [t for t, _ in lines], 0, []
+            for t in _brace_do(toks):
+                if k < len(toks) and t is toks[k]:
+                    braced.append((t, lines[k][1]))
+                    k += 1
+                elif _text((t, None)) == "{":
+                    braced.append((t, lines[k - 1][1]))
+                else:  # `} while (c);` for Pseudo C's ` while (c);`
+                    braced.append((t, lines[k][1]))
+                    k += 1
+            lines = braced
         spans = []
         for body, regs in bodies:
             inner = {i.instr_index for b in eh_render.body(body) for i in walk(b)}
@@ -311,7 +328,9 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                 pos += 1
             else:
                 closes = pos < len(lines) and _text(lines[pos]).startswith("}")  # do { } while (c);
-            segs.append(("body", self.plan_block(body, regs, st.operation in eh_render.LOOPS), levels, closes))
+            is_loop = st.operation in eh_render.LOOPS
+            segs.append(("body", self.plan_block(body, regs, is_loop, eh_render.loop_tail(st) if is_loop else tail),
+                         levels, closes))
         segs.append(("lines", lines[pos:]))
         self._compound.add(st.expr_index)
         return ("compound", segs)
@@ -446,7 +465,7 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         (LLIL's) says stack frame offset"""
         if pad.start in self._regmaps:
             return self._regmaps[pad.start]
-        out = self._regmaps[pad.start] = {}
+        out = self._regmaps[pad.start] = dict(self._reentry.get(pad.start, {}))
         owner = self.function
         cc = owner.calling_convention
         if cc is None or owner.mlil is None or owner.hlil is None:
@@ -494,6 +513,7 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             on_pad = max(sum(c.kind == c.CATCH for c in cs.clauses) for cs in region.sites if cs.landing_pad == pad)
             h = eh_render.specialize(pf, clause.type_index, on_pad, self.function)
             if h is not None:
+                self._reentry.setdefault(pf.start, {}).update(h.names)
                 # in a loop the handler ends where it goes on in the loop; elsewhere the pad's copy of the owner's
                 # code after it stays (the owner may print nothing after the try: a return folded into it)
                 cut = eh_render.plumbing(pf, h.stmts, eh_comments.type_name(clause.type))

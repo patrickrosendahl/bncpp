@@ -1,1 +1,4 @@
-no typeinfo
+typeinfo 0x404020  class mangled 8NextStep
+
+names (cpp/rtti_names.py; now: BN's name)
+D 0x404020 typeinfo_for_NextStep

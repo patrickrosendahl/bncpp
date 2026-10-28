@@ -197,10 +197,12 @@ class _Holder:
 class Handler:
     """a clause's handler code: stmts (the live statements), cont, the address where it goes on in the owner's
     own code (None: it returns, tail-calls or does not return), and before, how many of stmts run before the pad
-    tests the selector (destructors of the try block's locals: the unwind cleanup, the same for every clause)"""
+    tests the selector (destructors of the try block's locals: the unwind cleanup, the same for every clause), and
+    names, {pad variable name: owner variable name} where the handler goes on at a loop test of its own copy
+    (reenter, bncpp-179)"""
 
-    def __init__(self, stmts, cont, before=0):
-        self.stmts, self.cont, self.before = stmts, cont, before
+    def __init__(self, stmts, cont, before=0, names=None):
+        self.stmts, self.cont, self.before, self.names = stmts, cont, before, names or {}
 
 
 def specialize(pad_func, n, clauses_on_pad, owner=None):
@@ -211,18 +213,65 @@ def specialize(pad_func, n, clauses_on_pad, owner=None):
     call into code that still dispatches or catches (a cleanup pad jumping to the shared dispatch, a catch body
     BN split off) is followed (bncpp-64)."""
     reg = SELECTOR_REG.get(pad_func.arch.name)
-    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG), [reg] if reg else ()), 0)
+    names = {}
+    r = _specialize(pad_func, n, owner, _Holder(param_vars(pad_func, SELECTOR_REG), [reg] if reg else ()), 0, names)
     if r is None:
         return None
     stmts, cont, tests, before = r
     if not tests and clauses_on_pad > 1:
         return None
-    return Handler(stmts, cont, before or 0)
+    return Handler(stmts, cont, before or 0, names)
 
 
-def _specialize(func, n, owner, sel, depth):
+def _same_test(a, b, names):
+    """pad condition a is owner condition b with its variables renamed consistently (into names)"""
+    if not hasattr(a, "operation") or not hasattr(b, "operation"):
+        return a == b
+    if a.operation != b.operation or len(a.operands) != len(b.operands):
+        return False
+    for x, y in zip(a.operands, b.operands):
+        if hasattr(x, "operation"):
+            if not _same_test(x, y, names):
+                return False
+        elif type(x).__name__ == "Variable":
+            if type(y).__name__ != "Variable" or names.setdefault(x.name, y.name) != y.name:
+                return False
+        elif x != y:
+            return False
+    return True
+
+
+def reenter(owner, s):
+    """(continuation, {pad variable name: owner variable name}) where pad statement s is the pad's copy of an owner
+    loop's test that enters BN's copy of the loop (bncpp-179: `if (i >= 0) do { <the owner's body> } while (i >= 0)`
+    after the catch body): the handler goes on at the loop's test, the variable it tests is the owner's -- for a
+    `for` whose update is a copy `i = i_1`, the update's source (the catch's value goes through it). None for
+    anything else, and for a for whose update would run on the catch's value."""
+    if s.operation != Op.HLIL_IF or s.false is not None and s.false.operation != Op.HLIL_NOP:
+        return None
+    first = next((t for t in body(s.true) if t.operation not in (Op.HLIL_NOP, Op.HLIL_VAR_DECLARE)), None)
+    if first is None or owner.get_basic_block_at(first.address) is None or owner.hlil is None:
+        return None
+    for loop in walk(owner.hlil.root):
+        if loop.operation not in LOOPS:
+            continue
+        addrs = [i.address for i in walk(loop)]
+        names = {}
+        if not min(addrs) <= first.address <= max(addrs) or not _same_test(s.condition, loop.condition, names):
+            continue
+        if loop.operation == Op.HLIL_FOR and loop.update.operation != Op.HLIL_NOP:
+            u = loop.update
+            if u.operation != Op.HLIL_ASSIGN or u.dest.operation != Op.HLIL_VAR or u.src.operation != Op.HLIL_VAR \
+                    or list(names.values()) != [u.dest.var.name]:
+                return None
+            names = {k: u.src.var.name for k in names}
+        return loop.condition.address, names
+    return None
+
+
+def _specialize(func, n, owner, sel, depth, names=None):
     """(live statements, continuation | None, selector tests resolved, statements before the first test | None) of
-    func with the selector known to sel"""
+    func with the selector known to sel; names gets the variable mapping of a re-entered loop (reenter)"""
     hlil = func.hlil
     if hlil is None or hlil.root is None:
         return None
@@ -245,6 +294,12 @@ def _specialize(func, n, owner, sel, depth):
                     if visit(body(s.true if t(n) else s.false)):
                         return True
                     continue
+                again = reenter(owner, s) if owner is not None and depth == 0 else None
+                if again is not None:
+                    cont.append(again[0])
+                    if names is not None:
+                        names.update(again[1])
+                    return True
             if s.operation == Op.HLIL_TAILCALL and depth < 4:
                 f = _follow(func, s, n, owner, sel, depth)
                 if f is not None:
@@ -438,23 +493,33 @@ def sub_bodies(s):
     return []
 
 
-def compound_for(stmts, region, cont):
+def compound_for(stmts, region, cont, tail=()):
     """(index of the statement in stmts, the body of it) the region's try sits inside, or None: every call of the
     block in the region's range is in that body, and so is the handler's continuation -- after the catch, the body
     goes on (bncpp-64: loops; bncpp-67: if / else branches, switch cases). A handler that does not go on in this
-    function (cont None) places the try in an if branch or a case as well, never in a loop"""
+    function (cont None) places the try in an if branch or a case as well, never in a loop. tail: the addresses
+    where falling off the end of stmts goes on (an enclosing loop's test, bncpp-179) -- a continuation there also
+    places the try in a branch of the last statement"""
     inside = [a for s in stmts for a in call_addrs(s) if region.start <= a < region.end]
     if not inside:
         return None
+    last = max((k for k, s in enumerate(stmts) if s.operation not in (Op.HLIL_NOP, Op.HLIL_VAR_DECLARE)), default=-1)
     for k, s in enumerate(stmts):
         for b in sub_bodies(s):
             if b is None or (cont is None and s.operation in LOOPS):
                 continue
             # a loop goes on in its update / condition too (`i += 1` is the for's, not its body's)
             addrs = [i.address for i in walk(s if s.operation in LOOPS else b)]
-            if (cont is None or min(addrs) <= cont <= max(addrs)) and set(inside) <= set(call_addrs(b)):
+            falls = k == last and s.operation not in LOOPS and cont in tail
+            if (cont is None or falls or min(addrs) <= cont <= max(addrs)) and set(inside) <= set(call_addrs(b)):
                 return k, b
     return None
+
+
+def loop_tail(s):
+    """the addresses where falling off the end of loop s's body goes on: its test (and a for's update)"""
+    parts = [s.condition] + ([s.update] if s.operation == Op.HLIL_FOR else [])
+    return frozenset(i.address for p in parts for i in walk(p))
 
 
 # --- the owner's stack slots in a catch body (bncpp-68) ---------------------------------------------------------

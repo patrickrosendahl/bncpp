@@ -71,3 +71,28 @@ TEST int do_cond_throws(int n) {  // do-while whose condition throws, the try in
     } while (may_throw(s) < n);
     return s;
 }
+
+// A step scheduler (SynthV's dnni_sched16_*, bncpp-179): the catch sets the loop variable from the exception and goes
+// on at the loop test -- at -O2 its landing pad has its own copy of the test and of the loop body.
+struct NextStep {
+    int code;
+};
+
+struct Step {
+    virtual int run() = 0;
+};
+
+TEST int step_chain(Step **steps) {
+    int i = 0;
+    while (i >= 0) {
+        try {
+            i = steps[i]->run();
+        } catch (const NextStep &e) {
+            if (e.code == 0)
+                i = 10;
+            else if (e.code == 1)
+                i = 11;
+        }
+    }
+    return i;
+}
