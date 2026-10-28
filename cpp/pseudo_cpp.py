@@ -464,7 +464,9 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
 
     def reg_map(self, pad, region, loop=False):
         """{name of a pad variable in a callee-saved register: the owner's variable in that register at the
-        region's calls into the pad} (bncpp-149) -- the same at every such call and one the owner's HLIL shows.
+        region's calls into the pad} (bncpp-149) -- the same at every such call and one the owner's HLIL shows; or
+        the constant the register holds at every such call, as text, where the pad only reads the variable
+        (bncpp-202: the owner's HLIL folded it into its uses).
         Outside a loop body (loop: the region is in one) only a variable that carries the register's value into the pad (its SSA version 0 is read
         there), not one the pad computes in that register (the exception value, bncpp-150) -- in a loop the pad
         also hands values on to the owner in these registers (bncpp-149); only where the owner's variable holds the
@@ -496,6 +498,11 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                 continue
             try:
                 if ssa is None or not loop and not ssa.get_ssa_var_uses(SSAVariable(v, 0)):
+                    continue
+                const = None if loop else _const_at(owner, [m.address for m in calls], reg)
+                if const is not None and not pad.mlil.get_var_definitions(v) and pad.hlil is not None and \
+                        not pad.hlil.get_var_definitions(v):
+                    out[v.name] = const  # the owner set it before the try (try_then_join: r = 1, bncpp-202)
                     continue
                 got = {m.get_var_for_reg(reg) for m in calls}
                 if len(got) != 1 or not all(_holds(owner, m, reg, next(iter(got))) for m in calls):
@@ -1960,6 +1967,22 @@ def _tail_shape(func):
         return False
     return not any(i.operation == Op.HLIL_RET and i.expr_index != stmts[-1].expr_index or
                    eh_render.callee(i) in _NOT_TAIL for i in walk(hlil.root))
+
+
+def _const_at(func, addrs, reg):
+    """the constant func's register reg holds at every one of addrs (the function's -- LLIL's -- value), as Pseudo C
+    prints a number; None if it is not one constant"""
+    vals = set()
+    for a in addrs:
+        v = func.get_reg_value_at(a, reg)
+        if v.type not in (RegisterValueType.ConstantValue, RegisterValueType.ConstantPointerValue):
+            return None
+        vals.add(v.value)
+    if len(vals) != 1:
+        return None
+    n = vals.pop()
+    n = n - (1 << 64) if n >= 1 << 63 else n
+    return ("-" if n < 0 else "") + (str(abs(n)) if abs(n) <= 9 else hex(abs(n)))
 
 
 def _holds(func, m, reg, w):

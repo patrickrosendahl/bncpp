@@ -190,9 +190,8 @@
     }
     catch (...)
     {
-        int64_t rbx;
         /* tailcall */
-        return sub_400738(rbx);
+        return sub_400738(1);
     }
 }
 
