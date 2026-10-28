@@ -4,6 +4,8 @@
 #   BNDB=DB APPLY=noreturn $B/bn --timeout 600 tests/bn_landing_pads.py   # only bncpp-52's marks, recount
 #   … APPLY=1 PADS=0:2000 …   # create only that slice of the pads still to create (bncpp-54: chunks)
 #   … APPLY=returning …        # after the last slice: only bncpp-175's returning marks (+ the pads they reach)
+#   … RANGE=0x100320000:0x100340000 …   # only the pads of the LSDA owners there, and of the __noreturn owners that
+#                                       # catch (the returning marks need those); review and counts likewise
 # bncpp-4: a user function at every LSDA landing pad that no function starts at (cpp/landing_pads.py), so the
 # handler code is in a view. Review: .scratch/eh/<binary>.pads.review, one line per pad:
 #   create|keep  pad  owner  clauses  [now: in no function | inside <function>]
@@ -66,6 +68,10 @@ _head += ["noreturn %#x %s   [now: %s]" % (f.start, f.name, f.type) for f in _ma
 if _mark:
     _lp.mark_noreturn(bv, _marks)
 _all = _lp.pads(bv)
+if _env.get("RANGE"):
+    _lo, _hi = (int(x, 0) for x in _env["RANGE"].split(":"))
+    _nr = {f.start for f in bv.functions if not f.can_return.value}
+    _all = [p for p in _all if _lo <= p.owner < _hi or p.owner in _nr]
 _todo = [p for p in _all if bv.get_function_at(p.addr) is None]
 _counts = {"terminate helpers": len(_helpers), "padded imports": len(_padded), "to mark noreturn": len(_marks),
            "pads": len(_all), "pads with a function": len(_all) - len(_todo), "to create": len(_todo),
@@ -114,7 +120,9 @@ if _returning:
             break
         _head += ["returning %#x %s -> %s  [round %d]" % (f.start, f.name, ret, _round + 1) for f, ret in _rt]
         _lp.mark_returning(bv, _rt)
-        _rounds.append((len(_rt), len(_lp.create(bv))))
+        _more = [p for p in _lp.missing(bv) if not _env.get("RANGE") or p.addr in {q.addr for q in _all}
+                 or _lo <= p.owner < _hi]
+        _rounds.append((len(_rt), len(_lp.create(bv, _more))))
     _counts["marked returning"] = sum(n for n, _ in _rounds)
     _counts["pads created after them"] = sum(m for _, m in _rounds)
     _counts["returning s"] = int(time.time() - _t1)
