@@ -14,6 +14,7 @@ change improves the output, review the diff and accept it as the new reference.
   python3 tests/suite/suite.py ref-lsda                  # offline: .scratch/suite/ref/<variant>/TestX.lsda
   python3 tests/suite/suite.py crosscheck [--diff] [TestX ...] # BN .lsda vs the offline one (exit 1: structure)
   python3 tests/suite/suite.py lint                      # pyflakes over the plugin and tests/ (exit 1: a finding)
+  python3 tests/suite/suite.py survey DIR [--worst N] [--show NAME]   # check's counters on bn_eh_cluster.py output
 
 check (bncpp-8, shared/compare.py): per function, every call and string literal of its Pseudo C (.pc: the HLIL as
 BN prints it) must still be in its Pseudo Cpp, plus flaw counters (temporaries, gotos, exception plumbing, render
@@ -67,6 +68,7 @@ TESTS = [
     "TestStringTemporary",    # library destructors on the unwind path
     "TestCatchClass",         # the program's own exception classes: throw statements, typed catch objects
     "TestLoopTry",            # loop tests that can throw, inside / outside the try (bncpp-147, jvm-101)
+    "TestSelfCatch",          # functions that return only from their own catch: BN infers __noreturn (bncpp-175)
     # readability passes (from binary-jvm)
     "TestFolding",            # fold single-use temporaries into their use, evaluation-order safe (bncpp-13)
     "TestTernary",
@@ -433,6 +435,40 @@ def _lsda_catches(path):
     return out
 
 
+def _file_rows(pcpp, pc, lsda, label, show=None, quiet=False, catches=None):
+    """check's rows of one .pcpp against its .pc, missing_try from its .lsda (or catches: {function name: n});
+    function names prefixed by label"""
+    from shared import compare as C
+    rows = []
+    pc_funcs = C.split_functions(open(pc).read(), _FUNC)
+    ref = dict((k, body) for k, _h, body in pc_funcs)
+    # a function only in .pc is a landing pad's tail the .pcpp prints in place in its pads (bncpp-139):
+    # calls to it may vanish
+    shown = {k for k, _h, _b in C.split_functions(open(pcpp).read(), _FUNC)}
+    tails = [h[3:].rsplit(" @ ", 1)[0] for k, h, _b in pc_funcs if k not in shown]
+    ignore = re.compile("%s|%s" % (MAY_VANISH.pattern, "|".join(map(re.escape, tails)))) if tails \
+        else MAY_VANISH
+    catches = _lsda_catches(lsda) if catches is None else catches
+    first = {}  # the .lsda names the function, not its address: C1/C2 ctors share a name, count it once
+    for addr, header, body in C.split_functions(open(pcpp).read(), _FUNC):
+        r = C.check_function(body, ref.get(addr), COUNTERS, DISTINCT, ignore, CATCH_VAR)
+        name = header[3:].rsplit(" @ ", 1)[0]
+        has_try = bool(re.search(r"\btry\b", C.strip_comments(C.strip_strings("\n".join(body)))))
+        r["missing_try"] = 0
+        if name in catches:
+            if name not in first:
+                first[name] = r
+                r["missing_try"] = 1
+            if has_try:
+                first[name]["missing_try"] = 0
+        r["function"] = "%s %s" % (label, name)
+        rows.append(r)
+        if show and show in r["function"] and not quiet:
+            print("=" * 30, r["function"], {k: x for k, x in r.items() if x and k != "function"})
+            print("\n".join(body))
+    return rows
+
+
 def _check_rows(names, root, show, quiet=False):
     """per-function rows and the totals of check: .pcpp and .fields from root (OUT, or RESULTS for the before
     numbers), .pc and .lsda always from OUT (the references hold no .pc)"""
@@ -448,32 +484,7 @@ def _check_rows(names, root, show, quiet=False):
                 say("%-10s %-26s no output" % (v, t))
                 missing += 1
                 continue
-            pc_funcs = C.split_functions(open(pc).read(), _FUNC)
-            ref = dict((k, body) for k, _h, body in pc_funcs)
-            # a function only in .pc is a landing pad's tail the .pcpp prints in place in its pads (bncpp-139):
-            # calls to it may vanish
-            shown = {k for k, _h, _b in C.split_functions(open(pcpp).read(), _FUNC)}
-            tails = [h[3:].rsplit(" @ ", 1)[0] for k, h, _b in pc_funcs if k not in shown]
-            ignore = re.compile("%s|%s" % (MAY_VANISH.pattern, "|".join(map(re.escape, tails)))) if tails \
-                else MAY_VANISH
-            catches = _lsda_catches(os.path.join(OUT, v, t + ".lsda"))
-            first = {}  # the .lsda names the function, not its address: C1/C2 ctors share a name, count it once
-            for addr, header, body in C.split_functions(open(pcpp).read(), _FUNC):
-                r = C.check_function(body, ref.get(addr), COUNTERS, DISTINCT, ignore, CATCH_VAR)
-                name = header[3:].rsplit(" @ ", 1)[0]
-                has_try = bool(re.search(r"\btry\b", C.strip_comments(C.strip_strings("\n".join(body)))))
-                r["missing_try"] = 0
-                if name in catches:
-                    if name not in first:
-                        first[name] = r
-                        r["missing_try"] = 1
-                    if has_try:
-                        first[name]["missing_try"] = 0
-                r["function"] = "%s %s %s" % (v, t, name)
-                rows.append(r)
-                if show and show in r["function"] and not quiet:
-                    print("=" * 30, r["function"], {k: x for k, x in r.items() if x and k != "function"})
-                    print("\n".join(body))
+            rows += _file_rows(pcpp, pc, os.path.join(OUT, v, t + ".lsda"), "%s %s" % (v, t), show, quiet)
     keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
                              "lost_calls", "lost_strings", "skipped", "stmts", "ref_stmts"]
     total = C.totals(rows, keys)
@@ -489,6 +500,35 @@ def _check_rows(names, root, show, quiet=False):
     return rows, total
 
 
+_FLAWS = ("lost_calls", "lost_strings", "render_errors", "unbalanced", "truncated", "leaked_catch_var",
+          "plumbing", "dead_code", "gotos", "missing_try", "temps")
+_score = lambda r: sum((len(r.get(k, ())) if isinstance(r.get(k), list) else r.get(k, 0)) *
+                       (1 if k == "temps" else 20) for k in _FLAWS)
+
+
+def survey(path, worst, show):
+    """check's counters over a range of a real binary (tests/bn_eh_cluster.py: DIR/cluster.{pcpp,pc,lsda}), with
+    the functions whose LSDA has catch clauses but no try is printed; no gates (bncpp-175)"""
+    sys.path.insert(0, REPO)
+    from shared import compare as C
+    files = [os.path.join(path, "cluster." + k) for k in ("pcpp", "pc", "lsda")]
+    real = os.path.join(path, "cluster.catches")  # the owners with a catch that is no terminate guard
+    catches = {n: 1 for n in open(real).read().splitlines() if n} if os.path.exists(real) else None
+    rows = _file_rows(*files, os.path.basename(path.rstrip("/")), show, catches=catches)
+    keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
+                             "lost_calls", "lost_strings", "skipped", "stmts", "ref_stmts"]
+    total = C.totals(rows, keys)
+    print("TOTAL", " ".join("%s=%d" % kv for kv in total.items()))
+    for r in sorted(rows, key=_score, reverse=True)[:worst]:
+        if _score(r) == 0:
+            break
+        print("  %-60s %s" % (r["function"], {k: r[k] for k in _FLAWS if r.get(k)}))
+    for r in rows:
+        if r.get("missing_try"):
+            print("missing try:", r["function"])
+    return 0
+
+
 def check(names, maxes, worst, show, against_ref=False):
     """the no-loss check and the flaw counters of every test's Pseudo Cpp against its Pseudo C (bn_dump.py output);
     against_ref (--compare, bncpp-131): also the totals of the reference outputs and the deltas (before / after)"""
@@ -501,14 +541,10 @@ def check(names, maxes, worst, show, against_ref=False):
         print("REF  ", " ".join("%s=%d" % kv for kv in before.items()))
         delta = [(k, total[k] - before.get(k, 0)) for k in total if total[k] != before.get(k, 0)]
         print("DELTA", " ".join("%s=%+d" % kv for kv in delta) or "none")
-    flaws = ("lost_calls", "lost_strings", "render_errors", "unbalanced", "truncated", "leaked_catch_var",
-             "plumbing", "dead_code", "gotos", "missing_try", "temps")
-    score = lambda r: sum((len(r.get(k, ())) if isinstance(r.get(k), list) else r.get(k, 0)) *
-                          (1 if k == "temps" else 20) for k in flaws)
-    for r in sorted(rows, key=score, reverse=True)[:worst]:
-        if score(r) == 0:
+    for r in sorted(rows, key=_score, reverse=True)[:worst]:
+        if _score(r) == 0:
             break
-        print("  %-60s %s" % (r["function"], {k: r[k] for k in flaws if r.get(k)}))
+        print("  %-60s %s" % (r["function"], {k: r[k] for k in _FLAWS if r.get(k)}))
     gates = dict(GATES)
     gates.update(dict((kv.split("=")[0], int(kv.split("=")[1])) for kv in maxes))
     failed = C.gate(total, gates)
@@ -595,6 +631,11 @@ def dump(names, settings, jobs):
 
 def main(argv):
     cmd, args = (argv[0] if argv else "compare"), argv[1:]
+    if cmd == "survey":
+        opt = lambda flag, default: args[args.index(flag) + 1] if flag in args else default
+        if not args or args[0].startswith("-"):
+            sys.exit("survey DIR [--worst N] [--show NAME]")
+        return survey(args[0], int(opt("--worst", 15)), opt("--show", None))
     names = [a for i, a in enumerate(args) if not a.startswith("-") and "=" not in a
              and not (i and args[i - 1] in ("--worst", "--show", "-j"))]
     unknown = [n for n in names if n not in TESTS]

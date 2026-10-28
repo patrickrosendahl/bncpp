@@ -2,13 +2,19 @@
 #   BNDB=DB $B/bn --timeout 600 tests/bn_landing_pads.py                 # dry run: review file only
 #   BNDB=DB APPLY=1 $B/bn --timeout 600 tests/bn_landing_pads.py   # create them (in RAM; + SAVE=1: into DB)
 #   BNDB=DB APPLY=noreturn $B/bn --timeout 600 tests/bn_landing_pads.py   # only bncpp-52's marks, recount
-#   … --env APPLY=1 --env PADS=0:2000 …   # create only that slice of the pads still to create (bncpp-54: chunks)
+#   … APPLY=1 PADS=0:2000 …   # create only that slice of the pads still to create (bncpp-54: chunks)
+#   … APPLY=returning …        # after the last slice: only bncpp-175's returning marks (+ the pads they reach)
 # bncpp-4: a user function at every LSDA landing pad that no function starts at (cpp/landing_pads.py), so the
 # handler code is in a view. Review: .scratch/eh/<binary>.pads.review, one line per pad:
 #   create|keep  pad  owner  clauses  [now: in no function | inside <function>]
 # bncpp-52, first: 'terminate helper' lines, 'padded calls' lines (bncpp-62: imports called last before padding)
 # and 'noreturn' lines for the helpers / terminate callees / padded imports APPLY marks
-# __noreturn (never over a user type; --env BASELINE=F as bn_class_types.py: only over a type BN inferred).
+# __noreturn (never over a user type; BASELINE=F as bn_class_types.py: only over a type BN inferred).
+# bncpp-175, last: 'returning' lines -- LSDA owners BN types __noreturn although a catch pad of theirs returns (they
+# return only from their own catch; BN cuts their callers off after the call). Judged from the pad functions, so a
+# dry run lists the candidates ('returning?': __noreturn with a catch clause that is no terminate guard) and APPLY=1 (without PADS) or
+# APPLY=returning marks them (a returning user type, never over can_return at full confidence) and creates the
+# pads of the code that became reachable, in rounds.
 import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
 _es = _eu.spec_from_file_location("bn_engine", _eos.path.join(globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp"),
                                                               "tests/bn_engine.py"))
@@ -27,6 +33,7 @@ _env = globals().get("env") or {}
 _mode = _env.get("APPLY") or os.environ.get("APPLY") or ""
 _apply = _mode == "1"
 _mark = _mode in ("1", "noreturn")  # APPLY=noreturn: only the terminate helpers, then the counts again
+_returning = _mode == "returning" or (_apply and not _env.get("PADS"))
 _t0 = time.time()
 _name = os.path.basename(bv.file.original_filename)
 _name = _name[:-5] if _name.endswith(".bndb") else _name
@@ -81,6 +88,36 @@ if _apply:
     _made = _lp.create(bv, _chunk)
     _counts["created"] = sum(1 for p in _made if bv.get_function_at(p.addr) is not None)
     _counts["create + analysis s"] = int(time.time() - _t1)
+    _counts["functions now"] = len(bv.functions)
+_er = importlib.import_module(_dev["pkgname"] + ".cpp.eh_render")
+_guards = importlib.import_module(_dev["pkgname"] + ".cpp.eh_comments").index(bv).guards
+_cands = []
+for _o, _t in sorted(_lp._lsda.parse_all(_lp.BNImage(bv)).items()):
+    _f = bv.get_function_at(_o)
+    if _f is None or _f.can_return.value:
+        continue
+    for _cs in _t.call_sites:
+        _c = [c for c in _cs.clauses if c.kind == "catch"]
+        if _cs.landing_pad is not None and _c and not (
+                all(c.type is None for c in _c) and _er.is_terminate_guard(bv, _cs.landing_pad, _guards)):
+            _cands.append(_f)
+            break
+_counts["returning candidates"] = len(_cands)
+_head += ["returning? %#x %s  [now: %s, can_return confidence %d]" % (f.start, f.name, f.type, f.can_return.confidence)
+          for f in _cands]
+if _returning:
+    _t1 = time.time()
+    _rounds = []
+    for _round in range(4):
+        _rt = _lp.returning_todo(bv)
+        if not _rt:
+            break
+        _head += ["returning %#x %s -> %s  [round %d]" % (f.start, f.name, ret, _round + 1) for f, ret in _rt]
+        _lp.mark_returning(bv, _rt)
+        _rounds.append((len(_rt), len(_lp.create(bv))))
+    _counts["marked returning"] = sum(n for n, _ in _rounds)
+    _counts["pads created after them"] = sum(m for _, m in _rounds)
+    _counts["returning s"] = int(time.time() - _t1)
     _counts["functions now"] = len(bv.functions)
 _rv = os.path.join(REPO, ".scratch/eh/%s.pads.review" % _name)
 os.makedirs(os.path.dirname(_rv), exist_ok=True)

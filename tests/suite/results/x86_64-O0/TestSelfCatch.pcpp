@@ -1,0 +1,153 @@
+// verdict_of(int32_t) @ 0x400690
+{
+    // exception table (LSDA 0x400978): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x4006b5..0x4006e4 -> 0x4006ca sub_4006ca: catch (Verdict) #1
+    //   0x4006fe..0x400703 -> 0x400727 sub_400727: catch (Verdict) #1, cleanup, cleanup
+    //   0x400715..0x400725 -> 0x4006ca sub_4006ca: catch (Verdict) #1
+
+    if (arg1 > 5)
+    {
+        throw Verdict{arg1 * 2};
+    }
+
+    try
+    {
+        log_line("small");
+    }
+    catch (Verdict& e)
+    {
+        var_28 = &e;
+        var_44 = *var_28 + 1;
+        return (uint64_t)var_44;
+    }
+    try
+    {
+        throw Verdict{may_throw(arg1)};
+    }
+    // unwind: int64_t rdi_2 = var_40;
+    // unwind: ___cxa_free_exception(rdi_2);
+    catch (Verdict& e)
+    {
+        var_28 = &e;
+        var_44 = *var_28 + 1;
+        return (uint64_t)var_44;
+    }
+}
+
+// sub_4006ca @ 0x4006ca
+{
+    // landing pad of verdict_of(int32_t) @ 0x400690
+    //   from 0x4006b5..0x4006e4: catch (Verdict) #1
+    //   from 0x400715..0x400725: catch (Verdict) #1
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+        /* no return */
+    }
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    *(uint32_t*)((char*)arg5 - 0x3c) = **(uint32_t**)((char*)arg5 - 0x20) + 1;
+    ___cxa_end_catch();
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 0x3c);
+}
+
+// sub_400727 @ 0x400727
+{
+    // landing pad of verdict_of(int32_t) @ 0x400690
+    //   from 0x4006fe..0x400703: catch (Verdict) #1, cleanup, cleanup
+
+    int64_t rdi_2 = *(uint64_t*)((char*)arg5 - 0x38);
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_free_exception(rdi_2);
+
+    if (*(uint32_t*)((char*)arg5 - 0x14) != 1)
+    {
+        __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+        /* no return */
+    }
+
+    *(uint64_t*)((char*)arg5 - 0x20) = ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    *(uint32_t*)((char*)arg5 - 0x3c) = **(uint32_t**)((char*)arg5 - 0x20) + 1;
+    ___cxa_end_catch();
+    return (uint64_t)*(uint32_t*)((char*)arg5 - 0x3c);
+}
+
+// use_verdict(int32_t) @ 0x400780
+{
+    int32_t verdict_of_result = verdict_of(arg1);
+    log_line("after the verdict");
+
+    return (uint64_t)(verdict_of_result <= 3 ? 0 - verdict_of_result : verdict_of_result);
+}
+
+// check_all(int32_t) @ 0x4007d0
+{
+    // exception table (LSDA 0x4009a4): 3 of 7 call sites have a landing pad; #n = the selector value
+    //   0x4007ed..0x4007fd -> 0x4007ff sub_4007ff: catch (...) #1
+    //   0x400814..0x400820 (in sub_4007ff) -> 0x400833 sub_400833: cleanup
+    //   0x40083f..0x400844 (in sub_400833) -> 0x40085c sub_40085c: catch (...) #1
+
+    try
+    {
+        throw Verdict{arg1};
+    }
+    catch (...)
+    {
+        log_line("caught");
+        var_1d = var_c > 0;
+        return var_1d & 1;
+    }
+}
+
+// sub_4007ff @ 0x4007ff
+{
+    // landing pad of check_all(int32_t) @ 0x4007d0
+    //   from 0x4007ed..0x4007fd: catch (...) #1
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    log_line("caught");
+    *(uint8_t*)((char*)arg5 - 0x15) = *(uint32_t*)((char*)arg5 - 4) > 0;
+    ___cxa_end_catch();
+    return *(uint8_t*)((char*)arg5 - 0x15) & 1;
+}
+
+// sub_400833 @ 0x400833
+{
+    // landing pad of check_all(int32_t) @ 0x4007d0
+    //   from 0x400814..0x400820 (in sub_4007ff): cleanup
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// sub_40085c @ 0x40085c
+{
+    // landing pad of check_all(int32_t) @ 0x4007d0
+    //   from 0x40083f..0x400844 (in sub_400833): catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
+}
+
+// ___clang_call_terminate @ 0x400870
+{
+    ___cxa_begin_catch(arg1);
+    std::terminate();
+    /* no return */
+}
+
+// use_check(int32_t) @ 0x400880
+{
+    return (uint64_t)(check_all(arg1) & 1 ? next_value() : 0);
+}
+

@@ -17,6 +17,14 @@ the pads are created, so the guards become pads of their own.
 Padded calls (bncpp-62): an imported function whose call sites are mostly the last instruction before alignment
 padding and the next function -- nothing after the call, so it cannot return (SynthV: two hashed imports,
 libc++'s throw helpers; BN ran their callers on into the pad behind them). Marked __noreturn the same way.
+
+Returning only from a catch (bncpp-175): a function whose every normal path throws and which returns from its own
+catch handler (SynthV's license cluster: throw shared_ptr<nJ7cC>, catch it, return the verdict). BN sees no
+exception edge, infers __noreturn and an empty clobber set, and cuts every caller off after the call -- that code
+is in no function. Once the pads exist, a catch pad function that returns says otherwise: the owner gets a
+returning user type (the pad's return type: the pad runs the owner's `ret`) and the calling convention's
+caller-saved registers as clobbered (or its callers read no return value), then the pads of the code that became
+reachable are created in turn.
 """
 from . import lsda as _lsda
 from .bnimage import BNImage
@@ -150,6 +158,60 @@ def mark_noreturn(bv, todo):
     return todo
 
 
+def _max_confidence():
+    from binaryninja import core
+    return core.max_confidence
+
+
+def returning_todo(bv, protected=None):
+    """[(owner, return type)]: the LSDA owners BN thinks never return although a catch clause's landing pad (not a
+    terminate guard) is a function that returns; the return type is that pad's (the first by address). Unless
+    protected(f) -- default: can_return at full confidence, a user's decision (has_user_type says True for every
+    function of a database that went through a round trip, bncpp-29)"""
+    from .eh_render import is_terminate_guard
+    from . import eh_comments
+    protected = protected or (lambda f: f.can_return.confidence >= _max_confidence())
+    ix = eh_comments.index(bv)
+    out = []
+    for start, table in sorted(_lsda.parse_all(BNImage(bv)).items()):
+        f = bv.get_function_at(start)
+        if f is None or f.can_return.value or protected(f):
+            continue
+        for cs in sorted(table.call_sites, key=lambda cs: cs.landing_pad or 0):
+            catches = [c for c in cs.clauses if c.kind == "catch"]
+            if cs.landing_pad is None or not catches:
+                continue
+            if all(c.type is None for c in catches) and is_terminate_guard(bv, cs.landing_pad, ix.guards):
+                continue
+            pf = bv.get_function_at(cs.landing_pad)
+            if pf is not None and pf.can_return.value:
+                out.append((f, pf.type.return_value))
+                break
+    return out
+
+
+def mark_returning(bv, todo):
+    """a returning user type with the given return type on every (function, type) of todo, the calling
+    convention's caller-saved registers as its clobbered ones where BN has none, then analysis of them and their
+    callers"""
+    callers = set()
+    for f, ret in todo:
+        b = f.type.mutable_copy()
+        b.can_return = True
+        b.return_value = ret
+        f.set_user_type(b.immutable_copy())
+        cc = f.calling_convention
+        if not list(f.clobbered_regs) and cc is not None:
+            f.clobbered_regs = list(cc.caller_saved_regs)
+        callers.update(r.function for r in f.caller_sites if r.function is not None)
+    if todo:
+        bv.update_analysis_and_wait()
+        for c in callers:
+            c.reanalyze()
+        bv.update_analysis_and_wait()
+    return [f for f, _ in todo]
+
+
 def create(bv, todo=None, serial=False):
     """a user function at every pad in todo (default: missing(bv)), then analysis; returns the pads created.
     serial: one pad at a time in address order, analysis after each (bncpp-124). Pads created together are analysed
@@ -167,8 +229,17 @@ def create(bv, todo=None, serial=False):
 
 
 def recover(bv, protected=None, serial=False):
-    """mark_noreturn, then create: ([functions marked], [pads created])"""
-    return mark_noreturn(bv, noreturn_todo(bv, protected)), create(bv, serial=serial)
+    """mark_noreturn, create, then mark_returning and create again until nothing changes (each round can reach
+    code with more pads): ([functions marked __noreturn], [pads created], [functions marked returning])"""
+    marked, made = mark_noreturn(bv, noreturn_todo(bv, protected)), create(bv, serial=serial)
+    returning = []
+    for _round in range(4):
+        todo = returning_todo(bv)
+        if not todo:
+            break
+        returning += mark_returning(bv, todo)
+        made += create(bv, serial=serial)
+    return marked, made, returning
 
 
 def register_command(prefix):
@@ -181,9 +252,12 @@ def register_command(prefix):
             self.bv = bv
 
         def run(self):
-            marked, made = recover(self.bv)
+            marked, made, returning = recover(self.bv)
             if marked:
                 log_info("%s: marked __noreturn: %s" % (prefix, ", ".join(f.name for f in marked)))
+            if returning:
+                log_info("%s: marked returning (they return from a catch): %s"
+                         % (prefix, ", ".join(f.name for f in returning)))
             log_info("%s: created %d landing-pad functions%s" % (prefix, len(made), "".join(
                 "\n  %#x (%s) for %s" % (p.addr, p.kinds, self.bv.get_symbol_at(p.owner).full_name
                                          if self.bv.get_symbol_at(p.owner) else "%#x" % p.owner) for p in made)))

@@ -1,0 +1,4 @@
+typeinfo 0x401018  class mangled 7Verdict  bind __ZTI7Verdict
+
+names (cpp/rtti_names.py; now: BN's name)
+D 0x401018 typeinfo_for_Verdict   [now: _typeinfo_for_Verdict]

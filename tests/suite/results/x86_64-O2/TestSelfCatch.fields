@@ -1,0 +1,19 @@
+allocator by votes (no operator new name) 0
+classes sized 0
+ctors/dtors 0
+functions scanned 3
+helper accesses added 0
+helper entries 0
+helper floats over int 0
+helper walks 0
+params with direct callers 0
+ptr store functions scanned 3
+ptr stores 0
+returns used as objects 0
+rounds 2
+stable 1
+
+
+catch clauses 2
+catch clauses: a class of the scan 2
+handlers: no begin_catch variable 2
