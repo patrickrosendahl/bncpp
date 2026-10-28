@@ -1,10 +1,12 @@
-# Run inside Binary Ninja via the script bridge, after tests/bn_dev_load.py:
-#   bnrun --parallel --timeout 600 tests/bn_dump.py
-#   bnrun --parallel --timeout 300 --env DUMP_KINDS=lsda tests/bn_dump.py   # only some kinds (comma list)
-#   bnrun --parallel --timeout 300 --env DUMP_TESTS=TestVirtual tests/bn_dump.py   # only test names starting so
-#   bnrun --parallel --timeout 300 --env DUMP_VARIANTS=x86_64-O2,arm64-O2 tests/bn_dump.py   # only these variants
-#   bnrun --parallel --timeout 600 --env RESUME=1 tests/bn_dump.py   # skip binaries already dumped by this dev
-#          load: all requested outputs carry the current stamp -- continues a dump the bridge timeout cut off
+# On the Binary Ninja engine in this process (bn-script-bridge's bn launcher; the installed plugin = this repo's
+# working tree, loaded when the engine starts -- bncpp-177), or inside the app after tests/bn_dev_load.py:
+#   $B/bn tests/bn_dump.py                                  # B=/Users/patrick/dev/bn-script-bridge
+#   DUMP_KINDS=lsda $B/bn tests/bn_dump.py                  # only some kinds (comma list)
+#   DUMP_TESTS=TestVirtual $B/bn tests/bn_dump.py           # only test names starting so
+#   DUMP_VARIANTS=x86_64-O2,arm64-O2 $B/bn tests/bn_dump.py # only these variants
+#   RESUME=1 $B/bn tests/bn_dump.py   # skip binaries whose requested outputs all carry the current stamp
+#   python3 tests/suite/suite.py dump [-j N] [K=V ...]      # one bn process per variant, in parallel
+#   bnrun --gui --parallel --timeout 600 tests/bn_dump.py   # the old way: in the app, after bn_dev_load.py
 # Opens every suite binary (tests/suite/bin/<variant>/TestX.dylib) in its own (non-UI) view, creates a function at
 # every landing pad BN has none at (cpp/landing_pads.py, bncpp-4; serially, bncpp-124) and writes into
 # .scratch/suite/out/<variant>/TestX.*:
@@ -30,12 +32,13 @@
 # delete it before a run you want to sum up.
 # Prepend DUMP_BINARIES = [...] to dump other files (output: .scratch/suite/out/other/).
 import gc, glob, importlib, importlib.util, os, time, traceback
-import binaryninja as _bn
 
 REPO = globals().get("CPP_REPO", "/Users/patrick/dev/binary-cpp")
-_dev = getattr(_bn, "_cpp_dev", None)
-if _dev is None or "pkgname" not in _dev:
-    raise RuntimeError("run tests/bn_dev_load.py first")
+_s = importlib.util.spec_from_file_location("bn_engine", os.path.join(REPO, "tests/bn_engine.py"))
+_e = importlib.util.module_from_spec(_s)
+_s.loader.exec_module(_e)
+_dev = _e.setup(globals())  # the engine under the bn launcher; a dev load's plugin, else the installed one
+import binaryninja as _bn  # (after setup: the engine puts it on sys.path)
 _pc = _dev["pseudo_cpp"]
 _lang = _dev["LANGUAGE_NAME"]
 _lsda = importlib.import_module(_dev["pkgname"] + ".cpp.lsda")

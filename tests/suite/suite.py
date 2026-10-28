@@ -6,8 +6,8 @@ reference (results/<variant>/TestX.pcpp, the counterpart of Fernflower's testDat
 change improves the output, review the diff and accept it as the new reference.
 
   python3 tests/suite/suite.py build [TestX ...]         # clang++ every (or the named) test for every variant
-  bnrun --timeout 60 tests/bn_dev_load.py                # in BN: register Pseudo Cpp devN
-  bnrun --parallel --timeout 600 tests/bn_dump.py        # in BN: .scratch/suite/out/<variant>/TestX.{pc,pcpp,lsda}
+  python3 tests/suite/suite.py dump [-j N] [K=V ...] [TestX ...]  # bn_dump.py on the BN engine, one bn process per
+                                                         # variant (N at a time, default 4) -> .scratch/suite/out/
   python3 tests/suite/suite.py compare [--diff] [--strict] [TestX ...]   # exit 1 if any output differs from its reference
   python3 tests/suite/suite.py accept [--force] TestX ...|--differing|--all  # differing outputs -> references
   python3 tests/suite/suite.py check [--max K=V ...] [--worst N] [--show NAME] [--compare] [--strict] [TestX ...]  # no-loss + flaws
@@ -41,7 +41,7 @@ comparison; not checked). ref-lsda decodes the same tables from the files themse
 only -- Binary Ninja is the source of truth); crosscheck compares the two with the names masked (BN demangles
 and names import slots its own way), so it catches a wrong section, segment, import slot or unwind entry.
 """
-import difflib, filecmp, hashlib, json, os, re, shutil, struct, subprocess, sys
+import difflib, filecmp, hashlib, json, os, re, shutil, struct, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO = os.path.dirname(os.path.dirname(HERE))
@@ -556,15 +556,54 @@ def accept(names, only):
             print("accepted", v, f)
 
 
+BN = "/Users/patrick/dev/bn-script-bridge/bn"  # the Binary Ninja engine launcher (bncpp-177)
+
+
+def dump(names, settings, jobs):
+    """tests/bn_dump.py on the Binary Ninja engine (bn-script-bridge's bn launcher, the installed plugin = this
+    working tree): one process per variant, `jobs` at a time; settings K=V (DUMP_KINDS, RESUME, ...) go into
+    each one's environment. Each variant writes its own outputs and stamps. Returns the number that failed."""
+    env = dict(os.environ, **dict(kv.split("=", 1) for kv in settings))
+    if names:
+        env["DUMP_TESTS"] = ",".join(names)
+    variants = [variant_name(a, o) for a, o in VARIANTS]
+    if env.get("DUMP_VARIANTS"):
+        variants = [v for v in variants if v in env["DUMP_VARIANTS"].split(",")]
+    logs = os.path.join(OUT, "logs")
+    os.makedirs(logs, exist_ok=True)
+    running, failed, queue = [], 0, list(variants)
+    while queue or running:
+        while queue and len(running) < jobs:
+            v = queue.pop(0)
+            log = open(os.path.join(logs, v + ".log"), "w")
+            p = subprocess.Popen([BN, os.path.join(REPO, "tests", "bn_dump.py")], cwd=REPO, stdout=log,
+                                 stderr=subprocess.STDOUT, env=dict(env, DUMP_VARIANTS=v))
+            running.append((v, p, log))
+        for v, p, log in list(running):
+            if p.poll() is not None:
+                running.remove((v, p, log))
+                log.close()
+                last = open(log.name, errors="replace").read().strip().splitlines()[-1:] or ["(no output)"]
+                print("%-10s %s%s" % (v, last[0], "" if p.returncode == 0 else "  [exit %d, %s]" % (p.returncode,
+                                                                                                   log.name)))
+                failed += p.returncode != 0
+        if running:
+            time.sleep(1)
+    return failed
+
+
 def main(argv):
     cmd, args = (argv[0] if argv else "compare"), argv[1:]
     names = [a for i, a in enumerate(args) if not a.startswith("-") and "=" not in a
-             and not (i and args[i - 1] in ("--worst", "--show"))]
+             and not (i and args[i - 1] in ("--worst", "--show", "-j"))]
     unknown = [n for n in names if n not in TESTS]
     if unknown:
         sys.exit("not registered: %s" % ", ".join(unknown))
     if cmd == "build":
         build(names or TESTS)
+    elif cmd == "dump":
+        jobs = int(args[args.index("-j") + 1]) if "-j" in args else 4
+        return int(dump(names, [a for a in args if re.match(r"^[A-Z_]+=", a)], jobs) != 0)
     elif cmd == "ref-lsda":
         ref_lsda()
     elif cmd == "crosscheck":
