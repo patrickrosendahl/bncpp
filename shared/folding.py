@@ -1,5 +1,5 @@
 # shared with binary-jvm/shared/folding.py (the folding core of jvm-46/60 and bncpp-11/13/106; synced at
-# binary-jvm d67a36e); keep language-neutral
+# binary-jvm a6cf9fb = binary-cpp 906947c); keep language-neutral
 """Evaluation-order-safe folding of single-use temporaries (bncpp-13, jvm-46).
 
 A temporary that a function assigns once and reads once can be printed at its single use instead of on its own
