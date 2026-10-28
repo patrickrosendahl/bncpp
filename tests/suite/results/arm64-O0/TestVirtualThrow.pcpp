@@ -30,9 +30,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t var_14;
     try
     {
-        int32_t var_14 = (*(uint64_t*)(*(uint64_t*)this + 0x10))(this, (uint64_t)arg2) + 1;
+        var_14 = (*(uint64_t*)(*(uint64_t*)this + 0x10))(this, (uint64_t)arg2) + 1;
     }
     catch (std::runtime_error& e)
     {
@@ -105,9 +106,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t var_14;
     try
     {
-        int32_t var_14 = (*(uint64_t*)(*(uint64_t*)arg1 + 0x20))(arg1, (uint64_t)arg2);
+        var_14 = (*(uint64_t*)(*(uint64_t*)arg1 + 0x20))(arg1, (uint64_t)arg2);
     }
     catch (...)
     {

@@ -73,9 +73,10 @@
         return sub_40086c(rbp_1, var_8);
     }
 
+    int32_t var_c;
     try
     {
-        int32_t var_c = (*(uint64_t*)(*(uint64_t*)var_50 + 0x18))(var_50, (uint64_t)arg2);
+        var_c = (*(uint64_t*)(*(uint64_t*)var_50 + 0x18))(var_50, (uint64_t)arg2);
     }
     catch (std::logic_error& e)
     {

@@ -131,6 +131,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
         self._in_loop = set()  # regions placed inside a compound statement (handlers end at the continuation)
         self._zones = {}  # statement expr index -> the innermost try run it is printed in (folds stay in one)
         self._compound = set()  # statements printed around a planned body (their lines are cut up)
+        self._inits = set()  # instr index of a try's own `T x = e;` (hoist_decls, bncpp-199)
+        self._hoist = set()  # ... of those whose x is read after the try
         self._runs = 0
         items = self.plan_block(instr, regions)  # a one-statement function's root is that statement
         if not _has_try(items):
@@ -269,6 +271,12 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             for st in stmts[i:j + 1]:  # an inner run (planned below) overwrites it
                 self._zones[st.expr_index] = zone
             inner = [x for x in regions if x is not r and r.start <= x.start and x.end <= r.end]
+            run_x = {x.expr_index for st in stmts[i:j + 1] for x in walk(st)}
+            hlil = self.function.hlil
+            inits = [st for st in stmts[i:j + 1] if st.operation == Op.HLIL_VAR_INIT]
+            self._inits.update(st.instr_index for st in inits)
+            self._hoist.update(st.instr_index for st in inits if any(
+                u.expr_index not in run_x for u in hlil.get_var_uses(st.dest)))
             sub = groups[i:j + 1]
             last = list(sub[-1])
             blank = False
@@ -644,6 +652,13 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
 
     def emit_try(self, item, tokens):
         _, items, handlers, blank, unwind = item
+        bodies = []
+        for clause, pf, plumb, note, _cont in handlers:
+            var = eh_render.catch_var(eh_comments.type_name(clause.type)) if plumb is not None and not note else None
+            bodies.append((var, self.catch_lines(plumb, var, pf) if plumb is not None and plumb.stmts else None))
+        items, decls = self.hoist_decls(items, {x.text for _v, b in bodies for t in b or () for x in t or ()})
+        for d in decls:
+            self.emit_token_lines([d], tokens, True)
         self.kw(tokens, "try")
         self.open_block(tokens)
         self.emit_items(items, tokens)
@@ -662,9 +677,8 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                     if text.strip():
                         self.note(tokens, "// unwind: " + text)
                         tokens.new_line()
-        for clause, pf, plumb, note, _cont in handlers:
+        for (clause, pf, plumb, note, _cont), (var, body) in zip(handlers, bodies):
             type_name = eh_comments.type_name(clause.type)
-            var = eh_render.catch_var(type_name) if plumb is not None and not note else None
             self.kw(tokens, "catch")
             self.txt(tokens, " ")
             tokens.append_open_paren()
@@ -676,17 +690,41 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
             if note:
                 self.note(tokens, "// " + note)
                 tokens.new_line()
-            if plumb is not None and plumb.stmts:
-                self.emit_catch_body(plumb, var, tokens, pf)
+            if body is not None:
+                self.emit_catch_body(body, plumb, tokens)
             self.close_block(tokens)
         if blank:
             tokens.scope_separator()
 
-    def emit_catch_body(self, plumb, var, tokens, pad):
-        """the statements of a catch body from the pad's (or the functions it tail-calls') Pseudo C lines; all lines
-        first, so a throw's allocation and construction are seen with it (cpp/eh_throw.py). The readability passes
-        run on each function's run of lines (bncpp-84) before the exception object and the owner's slots are named,
-        so a folded value gets them too."""
+    def hoist_decls(self, items, caught):
+        """(items, declaration lines): the try's own `T x = e;` lines whose x is read after the try (self._hoist) or
+        in a catch body (caught: the names its lines show -- the pad writes the owner's slot) as `x = e;`, and `T x;`
+        for each, printed before the try -- the source declares x there; declared in the try, x is out of scope in
+        the catch and after it (bncpp-199)"""
+        out, decls = [], []
+        for it in items:
+            if it[0] != "stmt":
+                out.append(it)
+                continue
+            lines, seen = [], set()
+            for t, idx in it[1]:
+                k = next((n for n, x in enumerate(t) if x.type == TT.LocalVariableToken), None) \
+                    if idx in self._inits and idx not in seen else None
+                if k is not None and k + 1 < len(t) and t[k + 1].text.lstrip().startswith("=") and \
+                        _text((t[:k], None)) and (idx in self._hoist or t[k].text in caught):
+                    seen.add(idx)
+                    lead = _lead(t)
+                    decls.append(lead + t[len(lead):k + 1] + [tok(TT.TextToken, ";")])
+                    t = lead + t[k:]
+                lines.append((t, idx))
+            out.append(("stmt", lines))
+        return out, decls
+
+    def catch_lines(self, plumb, var, pad):
+        """the token lines of a catch body (None: `throw;`) from the pad's (or the functions it tail-calls') Pseudo C
+        lines; all lines first, so a throw's allocation and construction are seen with it (cpp/eh_throw.py). The
+        readability passes run on each function's run of lines (bncpp-84) before the exception object and the
+        owner's slots are named, so a folded value gets them too."""
         lrs, runs, plans = {}, [], {}  # runs: [(function, [statement], [(tokens, key)])], None for `throw;`
         for s in plumb.stmts:
             if _key(s) in plumb.rethrow:
@@ -713,8 +751,12 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                     continue
                 t = _compound(t)
                 keyed.append((self.catch_tokens(t, plumb.names, var) if var is not None else t, k))
+        return [t for t, _k in eh_throw.rewrite(keyed, plans)]
+
+    def emit_catch_body(self, body, plumb, tokens):
+        """a catch body's lines (catch_lines)"""
         lines = []
-        for t, _k in eh_throw.rewrite(keyed, plans):
+        for t in body:
             if t is None:
                 if lines:
                     self.emit_token_lines(lines, tokens, True)

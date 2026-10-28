@@ -20,10 +20,11 @@
     int64_t rax = *(uint64_t*)___stack_chk_guard;
     int32_t var_54 = arg1;
     struct std::function<int32_t (int32_t)> var_48;
+    int32_t apply_result;
     try
     {
         std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(&var_48);
-        int32_t apply_result = apply(&var_48, arg1);
+        apply_result = apply(&var_48, arg1);
     }
     // unwind: std::function<int32_t (int32_t)>::~function(&var_48);
     catch (std::runtime_error& e)

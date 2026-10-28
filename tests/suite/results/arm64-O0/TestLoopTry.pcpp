@@ -317,9 +317,10 @@
     for (int32_t i = 0; i < arg1; i += 1)
     {
         log_line("step");
+        int32_t may_throw_result;
         try
         {
-            int32_t may_throw_result = may_throw(i);
+            may_throw_result = may_throw(i);
         }
         catch (...)
         {

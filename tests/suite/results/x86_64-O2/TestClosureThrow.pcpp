@@ -25,9 +25,10 @@
     int32_t var_50 = arg1;
     struct std::__function::__base<int32_t (int32_t)>::std::__function::__func<guarded_apply(int32_t)::$_0, int32_t (int32_t)>::VTable
         * const* var_38 = &var_58;
+    int32_t apply_result;
     try
     {
-        int32_t apply_result = apply(&var_58, arg1);
+        apply_result = apply(&var_58, arg1);
     }
     // unwind: int64_t* rdi = var_38;
     // unwind: int64_t rcx_1;

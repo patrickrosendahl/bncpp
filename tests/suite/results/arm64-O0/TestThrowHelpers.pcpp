@@ -21,9 +21,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t at_index_result;
     try
     {
-        int32_t at_index_result = at_index(arg1, arg2);
+        at_index_result = at_index(arg1, arg2);
     }
     catch (std::out_of_range& e)
     {
@@ -92,9 +93,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    uint64_t tail_of_result;
     try
     {
-        uint64_t tail_of_result = tail_of(arg1, arg2);
+        tail_of_result = tail_of(arg1, arg2);
     }
     catch (std::logic_error& e)
     {
@@ -165,9 +167,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t checked_result;
     try
     {
-        int32_t checked_result = checked(arg1);
+        checked_result = checked(arg1);
     }
     catch (std::runtime_error& e)
     {
@@ -212,9 +215,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t checked_result;
     try
     {
-        int32_t checked_result = checked(arg1);
+        checked_result = checked(arg1);
     }
     catch (std::range_error& e)
     {

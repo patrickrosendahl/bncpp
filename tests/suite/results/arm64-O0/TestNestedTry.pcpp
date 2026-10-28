@@ -8,9 +8,10 @@
 
     int64_t fp;
     int64_t var_10 = fp;
+    int32_t may_throw_result;
     try
     {
-        int32_t may_throw_result = may_throw(arg1);
+        may_throw_result = may_throw(arg1);
     }
     catch (int32_t e)
     {

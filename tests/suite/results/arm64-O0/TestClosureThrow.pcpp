@@ -19,11 +19,12 @@
 
     int64_t x8 = *(uint64_t*)___stack_chk_guard;
     struct std::function<int32_t (int32_t)> var_38;
+    int32_t apply_result;
     try
     {
         std::function<int32_t (int32_t)>::function<guarded_apply(int32_t)::$_0, void>(&var_38,
             (uint64_t)arg1);
-        int32_t apply_result = apply(&var_38, arg1);
+        apply_result = apply(&var_38, arg1);
     }
     // unwind: std::function<int32_t (int32_t)>::~function(&var_38);
     catch (std::runtime_error& e)

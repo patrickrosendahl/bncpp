@@ -23,9 +23,10 @@
     void** const var_48 = &data_4040a0;
     int32_t var_40 = arg1;
     void** const* var_30 = &var_48;
+    uint64_t apply_result;
     try
     {
-        uint64_t apply_result = apply(&var_48, arg1);
+        apply_result = apply(&var_48, arg1);
     }
     // unwind: if (var_30 == &var_48)
     // unwind:     (*(uint64_t*)var_30)[4]();

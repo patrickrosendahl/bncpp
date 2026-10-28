@@ -12,10 +12,11 @@
     struct Guard var_20;
     Guard::Guard(&var_20, "outer");
     struct Guard var_28;
+    int32_t may_throw_result;
     try
     {
         Guard::Guard(&var_28, "inner");
-        int32_t may_throw_result = may_throw(arg1);
+        may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_28);
     catch (std::runtime_error& e)
@@ -145,11 +146,12 @@
     int64_t fp;
     int64_t var_10 = fp;
     struct Guard var_20;
+    int32_t may_throw_result;
     try
     {
         Guard::Guard(&var_20, "inner");
         log_line("in");
-        int32_t may_throw_result = may_throw(arg1);
+        may_throw_result = may_throw(arg1);
     }
     // unwind: Guard::~Guard(&var_20);
     catch (int32_t e)

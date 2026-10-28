@@ -317,9 +317,10 @@
     do
     {
         log_line("step");
+        int32_t x23;
         try
         {
-            int32_t x23 = may_throw(i) + (uint32_t)result;
+            x23 = may_throw(i) + (uint32_t)result;
         }
         catch (...)
         {
