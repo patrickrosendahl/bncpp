@@ -4,44 +4,19 @@
 #   _s = _u.spec_from_file_location("bn_engine", "/Users/patrick/dev/binary-cpp/tests/bn_engine.py")
 #   _e = _u.module_from_spec(_s); _s.loader.exec_module(_e); _e.setup(globals())
 # setup(g) gives the script what bnrun and bn_dev_load.py gave it, where nothing did:
-#   the engine           bnengine.engine() under the launcher (BN_SA_APP set, no core yet); once per process; then
-#                        the script runs again in a worker thread (_rerun_in_thread: no analysis wait on the main one)
+#   the engine           bnengine.engine() under the launcher (BN_SA_APP set, no core yet); once per process.
+#                        Since bn-script-bridge d47734e the engine's init thread stays parked, so
+#                        update_analysis_and_wait() works on the main thread too (before, it returned at once there:
+#                        half-analysed views, bn-2; f43ee71 ran scripts in a worker thread for that)
 #   binaryninja._cpp_dev  {pkgname, pkg, pseudo_cpp, LANGUAGE_NAME}: a dev load's, else the installed plugin -- the
 #                        plugins folder links this repo, so the engine loads the working tree at its start
 #   env                  os.environ
 #   bv                   with need_bv: the view of $BNDB (bnengine.open: one handle per file; write=True when
 #                        $APPLY is set, so the script can save with bv.file.save_auto_snapshot())
-import os, runpy, sys, threading, traceback
+import os, sys
 
 BRIDGE = "/Users/patrick/dev/bn-script-bridge"
 PLUGIN = "binary-cpp"  # the installed plugin's package (the plugins folder entry's name)
-
-
-def _rerun_in_thread(path):
-    """the script once more, in a worker thread, then exit: under the engine the main thread counts as a UI thread,
-    and update_analysis_and_wait() there only logs "UI threads are not permitted to wait for analysis completion"
-    and returns -- the view is still being analysed (no functions at Mach-O __stubs yet, missing types; found by
-    binary-jvm, jvm-113 / bn-2). os._exit: nothing of the script runs on the main thread afterwards."""
-    code = [0]
-
-    def body():
-        try:
-            runpy.run_path(path, run_name="__main__")
-        except SystemExit as e:
-            if isinstance(e.code, int) or e.code is None:
-                code[0] = e.code or 0
-            else:
-                print(e.code, file=sys.stderr)
-                code[0] = 1
-        except BaseException:
-            traceback.print_exc()
-            code[0] = 1
-    t = threading.Thread(target=body, name="bncpp-script")
-    t.start()
-    t.join()
-    sys.stdout.flush()
-    sys.stderr.flush()
-    os._exit(code[0])
 
 
 def setup(g, need_bv=False):
@@ -52,8 +27,6 @@ def setup(g, need_bv=False):
         if not getattr(bnengine, "_bncpp_started", False):
             bnengine.engine()
             bnengine._bncpp_started = True
-        if threading.current_thread() is threading.main_thread() and g.get("__file__"):
-            _rerun_in_thread(g["__file__"])  # never returns
     import binaryninja
     if getattr(binaryninja, "_cpp_dev", None) is None:
         pkg = sys.modules.get(PLUGIN)

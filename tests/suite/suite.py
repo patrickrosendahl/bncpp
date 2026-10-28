@@ -561,7 +561,8 @@ BN = "/Users/patrick/dev/bn-script-bridge/bn"  # the Binary Ninja engine launche
 
 def dump(names, settings, jobs):
     """tests/bn_dump.py on the Binary Ninja engine (bn-script-bridge's bn launcher, the installed plugin = this
-    working tree): one process per variant, `jobs` at a time; settings K=V (DUMP_KINDS, RESUME, ...) go into
+    working tree): one process per variant, `jobs` at a time (TestClosureThrow O2's class pipeline varies from run
+    to run on the engine, serial or not: bncpp-178); settings K=V (DUMP_KINDS, RESUME, ...) go into
     each one's environment. Each variant writes its own outputs and stamps. Returns the number that failed."""
     env = dict(os.environ, **dict(kv.split("=", 1) for kv in settings))
     if names:
