@@ -56,6 +56,32 @@ def missing(bv):
     return [p for p in pads(bv) if bv.get_function_at(p.addr) is None]
 
 
+# instructions in no function that are no lost code: the trap clang puts after a noreturn call (ud2 / brk) and the
+# dead jump -O0 leaves there, which the call-site ranges cover too
+_FILLER = {"ud2", "brk", "int3", "hlt", "nop", "jmp", "b"}
+
+
+def lost_sites(bv, table):
+    """per call site of the table, the first instruction of its range that is in no function and no filler
+    (bncpp-182): every call site lies in its owner's code, so after the pads exist that is code no view shows
+    (Pseudo C neither) -- BN cut the owner off before it (a call it thinks noreturn). Walks by basic block."""
+    out = []
+    for cs in table.call_sites:
+        a = cs.start
+        while a < cs.end:
+            blocks = bv.get_basic_blocks_at(a)
+            if blocks:
+                a = max(b.end for b in blocks)
+                continue
+            n = bv.get_instruction_length(a)
+            text = bv.arch.get_instruction_text(bv.read(a, 16), a) if n else None
+            if not n or text is None or not text[0] or text[0][0].text.strip() not in _FILLER:
+                out.append(a)
+                break
+            a += n
+    return out
+
+
 def _is_call(ref):
     """a call instruction at ref, from the instruction (not the IL: a guard's `call` that lands on the next
     address, the helper right behind the pad, lifts as the get-PC idiom -- x86_64 -O0, bncpp-71)"""

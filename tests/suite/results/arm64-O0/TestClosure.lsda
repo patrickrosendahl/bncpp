@@ -20,6 +20,7 @@ try_fail(int32_t)  lsda base+0x2dc4  lpstart +0x0  6 call sites
   +0x60  .. +0x80  unwind
   +0x80  .. +0x84  lp +0xb4  catch(...)
   +0x84  .. +0xb8  unwind
+  in no function: +0x8c
 
 std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>::__clone(struct std::__function::__func<add_fn(int32_t)::$_0, int32_t (int32_t)>* this) const  lsda base+0x2df0  lpstart +0x0  3 call sites
   +0x0   .. +0x28  unwind

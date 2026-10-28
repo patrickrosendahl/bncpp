@@ -258,3 +258,11 @@ def format_lsda(l, name=None, base=0):
                                    ", ".join(map(str, cs.clauses)) if cs.clauses else "cleanup")
         out.append("  %-6s .. %-6s %s" % (rel(cs.start), rel(cs.end), what))
     return out
+
+
+LOST = "  in no function: "  # a .lsda line after a table: code of its call sites BN shows in no function (bncpp-182)
+
+
+def format_lost(l, starts):
+    """the LOST line for format_lsda's table l (none when nothing is lost; the offline reference has none)"""
+    return [LOST + " ".join("+%#x" % (a - l.func_start) for a in starts)] if starts else []

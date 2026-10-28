@@ -348,7 +348,8 @@ def crosscheck(names, show_diff):
             if not (os.path.exists(bn) and os.path.exists(ref)):
                 state = "missing"
             else:
-                a, b = open(ref).read().splitlines(), open(bn).read().splitlines()
+                a = open(ref).read().splitlines()
+                b = [l for l in open(bn).read().splitlines() if not l.startswith(LOST)]  # BN-only (bncpp-182)
                 if a == b:
                     state = "same"
                 elif list(map(mask_names, a)) == list(map(mask_names, b)):
@@ -420,7 +421,10 @@ CATCH_VAR = r"catch \((?:const )?[\w:<>, ]+?(?: const)?(?:\s*[&*]\s*|\s+)(\w+)\)
 # gates (bncpp-8): nothing lost, no render error, nothing structurally broken; readability counters only report.
 # skipped (bncpp-148): a function BN skipped is unchecked -- the suite never hits it, so one is a dump to redo
 GATES = {"lost_calls": 0, "lost_strings": 0, "render_errors": 0, "unbalanced": 0, "truncated": 0,
-         "leaked_catch_var": 0, "missing": 0, "unsettled": 0, "skipped": 0}
+         "leaked_catch_var": 0, "missing": 0, "unsettled": 0, "skipped": 0,
+         # lost_sites (bncpp-182): code of a call-site range in no function (.lsda 'in no function'); the 2 are
+         # TestClosure try_fail's dead 'return "none"' after fail(), which always throws (x86_64-O0, arm64-O0)
+         "lost_sites": 2}
 _FUNC = re.compile(r"^// .* @ (0x[0-9a-f]+)$")  # keyed by the address (overloads share a name)
 
 
@@ -432,6 +436,21 @@ def _lsda_catches(path):
             cur = line.split("  lsda base+")[0]
         elif cur and "catch" in line:
             out[cur] = out.get(cur, 0) + line.count("catch")
+    return out
+
+
+LOST = "  in no function: "  # cpp/lsda.LOST: call sites BN shows in no function (bncpp-182)
+
+
+def _lsda_lost(path):
+    """[(function name, '+off')] of an .lsda dump's call sites in no function: code lost from every view, which
+    the .pcpp / .pc comparison cannot see (both miss it)"""
+    out, cur = [], None
+    for line in open(path).read().splitlines() if os.path.exists(path) else ():
+        if line and not line[0].isspace():
+            cur = line.split("  lsda base+")[0]
+        elif line.startswith(LOST):
+            out += [(cur, off) for off in line[len(LOST):].split()]
     return out
 
 
@@ -489,6 +508,12 @@ def _check_rows(names, root, show, quiet=False):
                              "lost_calls", "lost_strings", "skipped", "stmts", "ref_stmts"]
     total = C.totals(rows, keys)
     total["missing"] = missing
+    total["lost_sites"] = 0
+    for arch, opt in VARIANTS:
+        for t in names:
+            for name, off in _lsda_lost(os.path.join(OUT, variant_name(arch, opt), t + ".lsda")):
+                say("%-10s %-26s call site %s %s in no function" % (variant_name(arch, opt), t, name, off))
+                total["lost_sites"] += 1
     total["unsettled"] = 0  # bncpp-60: a class APPLY in the .fields dump that stopped at the round limit
     for arch, opt in VARIANTS:
         for t in names:
@@ -518,6 +543,8 @@ def survey(path, worst, show):
     keys = list(COUNTERS) + ["unbalanced", "truncated", "dead_code", "leaked_catch_var", "missing_try",
                              "lost_calls", "lost_strings", "skipped", "stmts", "ref_stmts"]
     total = C.totals(rows, keys)
+    lost = _lsda_lost(files[2])
+    total["lost_sites"] = len(lost)
     print("TOTAL", " ".join("%s=%d" % kv for kv in total.items()))
     for r in sorted(rows, key=_score, reverse=True)[:worst]:
         if _score(r) == 0:
@@ -526,6 +553,8 @@ def survey(path, worst, show):
     for r in rows:
         if r.get("missing_try"):
             print("missing try:", r["function"])
+    for name, off in lost:
+        print("in no function: %s %s" % (name, off))
     return 0
 
 

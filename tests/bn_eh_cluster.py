@@ -5,8 +5,9 @@
 # bncpp-175: SynthV's license cluster): the landing pads of the range's LSDA owners and of the functions BN types
 # __noreturn although they catch (cpp/landing_pads.returning_todo) get functions, those are marked returning (in
 # rounds, with the pads of the code that became reachable), then every owner in the range is written in Pseudo C
-# and Pseudo Cpp to DIR/cluster.{pc,pcpp}, its table to DIR/cluster.lsda, and DIR/cluster.catches lists the owners
-# with a catch clause that is no terminate guard (survey's missing_try counts only those).
+# and Pseudo Cpp to DIR/cluster.{pc,pcpp}, its table to DIR/cluster.lsda (with its call sites in no function: code
+# no view shows, bncpp-182), and DIR/cluster.catches lists the owners with a catch clause that is no terminate guard
+# (survey's missing_try counts only those).
 # In RAM only (never saved). DIR default: .scratch/eh/<binary>.cluster-<lo>. BUDGET (default 600 s): pad creation
 # stops there; the rendering always runs.
 import importlib.util as _eu, os as _eos  # the engine first, binaryninja after it (tests/bn_engine.py, bncpp-177)
@@ -37,7 +38,7 @@ _t0 = time.time()
 _img = _bnimage.BNImage(bv)
 _tables = _lsda.parse_all(_img)
 _owners = sorted(a for a in _tables if _lo <= a < _hi)
-_counts = {"owners": len(_owners)}
+_counts = {"owners": len(_owners), "call sites in no function": 0}
 
 
 def _pads_todo():
@@ -69,7 +70,10 @@ _ix = _ec.index(bv)
 for _o in _owners:
     _f = bv.get_function_at(_o)
     _t = _tables[_o]
-    _texts["lsda"] += _lsda.format_lsda(_t, _img.symbol_name(_o), _img.segment_start(_o)) + [""]
+    _texts["lsda"] += _lsda.format_lsda(_t, _img.symbol_name(_o), _img.segment_start(_o))
+    _lost = _lp.lost_sites(bv, _t)  # bncpp-182: code in no view
+    _counts["call sites in no function"] += len(_lost)
+    _texts["lsda"] += _lsda.format_lost(_t, _lost) + [""]
     if _f is None:
         continue
     for _cs in _t.call_sites:

@@ -14,7 +14,8 @@
 #          the split; bncpp-139)
 #   .pc    the same functions in Pseudo C (for comparison)
 #   .lsda  the decoded exception tables, read through BN (cpp/bnimage.py; checked, and cross-checked against
-#          the offline reference of `suite.py ref-lsda`)
+#          the offline reference of `suite.py ref-lsda`), each with its call sites BN shows in no function
+#          after the pads (code lost from every view; check gates on them, bncpp-182)
 #   .classes  the class scan (cpp/rtti.py through cpp/bnimage.py) with BN's names of the slot functions, then
 #          the names cpp/rtti_names.py gives (checked)
 #   .fields   the class structs after the whole class pipeline with APPLY in this throwaway view
@@ -76,7 +77,8 @@ def _dump_lsda(bv):
     img = _bnimage.BNImage(bv)
     lines = []
     for start, table in sorted(_lsda.parse_all(img).items()):
-        lines += _lsda.format_lsda(table, img.symbol_name(start), img.segment_start(start)) + [""]
+        lines += _lsda.format_lsda(table, img.symbol_name(start), img.segment_start(start))
+        lines += _lsda.format_lost(table, _lp.lost_sites(bv, table)) + [""]  # after the pads (bncpp-182)
     return lines[:-1] if lines else ["no LSDA"]  # tables separated by an empty line
 
 
