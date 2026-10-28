@@ -1072,6 +1072,21 @@ for _n in _names_notes:
 _override_names = set(n for n, _t in _overrides.values())
 
 
+def _settled(label, off, bn_type):
+    """the access type of label's field at off: BN's, unless the accesses' incoming types disagree -- then
+    create_structure_from_offset_access picks one of them by timing (bncpp-178: Worker+0x20 int64_t* / void*
+    __offset / struct std* over the same references), so the most frequent one of BN's width, a tie to a pointer,
+    then by name"""
+    seen = {}
+    for r in bv.get_code_refs_for_type_field(label, off):
+        t = r.incomingType
+        if t is not None and t.width == bn_type.width:
+            seen.setdefault(str(t), [t, 0])[1] += 1
+    if len(seen) < 2:
+        return bn_type
+    return min(seen.values(), key=lambda tn: (-tn[1], tn[0].type_class != TypeClass.PointerTypeClass, str(tn[0])))[0]
+
+
 def _plan():
     """steps 3 and 4 once: the layouts from the accesses BN sees now, the review lines and the struct definitions"""
     # 3. accesses and the current members, per class struct that exists
@@ -1090,7 +1105,8 @@ def _plan():
             s = bv.create_structure_from_offset_access(qn)
         except Exception:
             continue
-        accesses[a] = {m.offset: (m.type.width, m.type) for m in s.members if m.offset != 0 or a in _no_vptr}
+        accesses[a] = {m.offset: (m.type.width, _settled(_labels[a], m.offset, m.type))
+                       for m in s.members if m.offset != 0 or a in _no_vptr}
     _fclasses.clear()
     t_acc = int(time.time() - t_acc)
     # the helpers' accesses (bncpp-33): offsets BN did not report, and float evidence for an int BN typed
