@@ -38,3 +38,14 @@ TEST int use_check(int x) {
         return next_value();
     return 0;
 }
+
+// a terminate guard by hand whose cleanup call is check_all, which BN thinks never returns (bncpp-201): the guard
+// reads on past that call to std::terminate -- a noexcept boundary like the compiler's, no try
+TEST int guard_after_check(int x) {
+    try {
+        return may_throw(x);
+    } catch (...) {
+        check_all(x);
+        std::terminate();
+    }
+}

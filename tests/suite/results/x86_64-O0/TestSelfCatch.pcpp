@@ -1,6 +1,6 @@
 // verdict_of(int32_t) @ 0x400690
 {
-    // exception table (LSDA 0x400978): 3 of 6 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x4009f4): 3 of 6 call sites have a landing pad; #n = the selector value
     //   0x4006b5..0x4006e4 -> 0x4006ca sub_4006ca: catch (Verdict) #1
     //   0x4006fe..0x400703 -> 0x400727 sub_400727: catch (Verdict) #1, cleanup, cleanup
     //   0x400715..0x400725 -> 0x4006ca sub_4006ca: catch (Verdict) #1
@@ -87,7 +87,7 @@
 
 // check_all(int32_t) @ 0x4007d0
 {
-    // exception table (LSDA 0x4009a4): 3 of 7 call sites have a landing pad; #n = the selector value
+    // exception table (LSDA 0x400a20): 3 of 7 call sites have a landing pad; #n = the selector value
     //   0x4007ed..0x4007fd -> 0x4007ff sub_4007ff: catch (...) #1
     //   0x400814..0x400820 (in sub_4007ff) -> 0x400833 sub_400833: cleanup
     //   0x40083f..0x400844 (in sub_400833) -> 0x40085c sub_40085c: catch (...) #1
@@ -149,5 +149,49 @@
 // use_check(int32_t) @ 0x400880
 {
     return (uint64_t)(check_all(arg1) & 1 ? next_value() : 0);
+}
+
+// guard_after_check(int32_t) @ 0x4008c0
+{
+    // exception table (LSDA 0x400a48): 3 of 6 call sites have a landing pad; #n = the selector value
+    //   0x4008ce..0x4008d3 -> 0x4008da sub_4008da: catch (...) #1
+    //   0x4008f2..0x4008f7 (in sub_4008da) -> 0x4008fe sub_4008fe: cleanup
+    //   0x40090a..0x40090f (in sub_4008fe) -> 0x400925 sub_400925: catch (...) #1
+
+    return (uint64_t)may_throw(arg1);
+}
+
+// sub_4008da @ 0x4008da
+{
+    // landing pad of guard_after_check(int32_t) @ 0x4008c0
+    //   from 0x4008ce..0x4008d3: catch (...) #1
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_begin_catch(*(uint64_t*)((char*)arg5 - 0x10));
+    check_all(*(uint32_t*)((char*)arg5 - 4));
+    std::terminate();
+    /* no return */
+}
+
+// sub_4008fe @ 0x4008fe
+{
+    // landing pad of guard_after_check(int32_t) @ 0x4008c0
+    //   from 0x4008f2..0x4008f7 (in sub_4008da): cleanup
+
+    *(uint64_t*)((char*)arg5 - 0x10) = arg4;
+    *(uint32_t*)((char*)arg5 - 0x14) = arg3;
+    ___cxa_end_catch();
+    __Unwind_Resume(*(uint64_t*)((char*)arg5 - 0x10));
+    /* no return */
+}
+
+// sub_400925 @ 0x400925
+{
+    // landing pad of guard_after_check(int32_t) @ 0x4008c0
+    //   from 0x40090a..0x40090f (in sub_4008fe): catch (...) #1
+
+    ___clang_call_terminate(arg1);
+    /* no return */
 }
 

@@ -1,4 +1,4 @@
-verdict_of(int32_t)  lsda base+0x978  lpstart +0x0  6 call sites
+verdict_of(int32_t)  lsda base+0x9f4  lpstart +0x0  6 call sites
   +0x0   .. +0x25  unwind
   +0x25  .. +0x54  lp +0x3a  catch(typeinfo_for_Verdict)
   +0x54  .. +0x6e  unwind
@@ -6,7 +6,7 @@ verdict_of(int32_t)  lsda base+0x978  lpstart +0x0  6 call sites
   +0x85  .. +0x95  lp +0x3a  catch(typeinfo_for_Verdict)
   +0x95  .. +0xea  unwind
 
-check_all(int32_t)  lsda base+0x9a4  lpstart +0x0  7 call sites
+check_all(int32_t)  lsda base+0xa20  lpstart +0x0  7 call sites
   +0x0   .. +0x1d  unwind
   +0x1d  .. +0x2d  lp +0x2f  catch(...)
   +0x2d  .. +0x44  unwind
@@ -14,3 +14,11 @@ check_all(int32_t)  lsda base+0x9a4  lpstart +0x0  7 call sites
   +0x50  .. +0x6f  unwind
   +0x6f  .. +0x74  lp +0x8c  catch(...)
   +0x74  .. +0x96  unwind
+
+guard_after_check(int32_t)  lsda base+0xa48  lpstart +0x0  6 call sites
+  +0xe   .. +0x13  lp +0x1a  catch(...)
+  +0x13  .. +0x32  unwind
+  +0x32  .. +0x37  lp +0x3e  cleanup
+  +0x37  .. +0x4a  unwind
+  +0x4a  .. +0x4f  lp +0x65  catch(...)
+  +0x4f  .. +0x6d  unwind

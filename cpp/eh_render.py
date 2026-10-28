@@ -35,6 +35,7 @@ _TERMINATORS = (Op.HLIL_RET, Op.HLIL_TAILCALL, Op.HLIL_NORET, Op.HLIL_UNREACHABL
 _CALLS = (Op.HLIL_CALL, Op.HLIL_CALL_SSA)
 _WRAPS = (Op.HLIL_ZX, Op.HLIL_SX, Op.HLIL_LOW_PART)
 LOOPS = (Op.HLIL_WHILE, Op.HLIL_DO_WHILE, Op.HLIL_FOR)
+_THROWERS = ("cxa_throw", "cxa_rethrow", "Unwind_Resume")  # by name, stripped of leading underscores
 
 
 class Region:
@@ -56,27 +57,39 @@ def _in(func, addr):
 
 def is_terminate_guard(bv, pad, guards=()):
     """the pad's straight-line code calls a terminate helper (a function named *terminate*, or one of guards):
-    destructors may run first (clang's guard after a cleanup); followed through unconditional jumps, stopped by a
-    return, a conditional branch or a call that does not return. Reads instructions: needs no function at the pad"""
+    destructors may run first (clang's guard after a cleanup); followed through unconditional jumps (pads share
+    tails: a pad may be a jump into another one's code), stopped by a return, a conditional branch or the end of a
+    `catch (...) { ..; throw; }`, which would run on into the next pad's terminate guard (bncpp-197): a call to a
+    thrower by name, or to a function BN says does not return where another landing pad follows -- BN's can_return
+    alone is wrong for some callees (bncpp-175, -186, -201). The helper may follow the pad directly: BN reads that
+    `call $+5` as no call (bncpp-193). Reads instructions: needs no function at the pad"""
     from binaryninja import BranchType
+    pads = eh_comments.index(bv).pads
+
+    def is_guard(addr):
+        f = bv.get_function_at(addr)
+        return addr in guards or (f is not None and "terminate" in f.name)
+
     a = pad
     for _ in range(64):
         info = bv.arch.get_instruction_info(bv.read(a, bv.arch.max_instr_length), a)
         if info is None or not info.length:
             return False
-        nxt = a + info.length
+        nxt = fall = a + info.length
         for b in info.branches:
             if b.type == BranchType.CallDestination:
-                f = bv.get_function_at(b.target)
-                if b.target in guards or (f is not None and "terminate" in f.name):
+                if is_guard(b.target):
                     return True
-                if f is not None and not f.can_return:  # `catch (...) { ..; throw; }` runs on into the next pad's
-                    return False                         # terminate guard, which is not this one's (bncpp-197)
+                f = bv.get_function_at(b.target)
+                if f is not None and (f.name.lstrip("_") in _THROWERS or (not f.can_return and fall in pads)):
+                    return False
             elif b.type == BranchType.UnconditionalBranch:
                 nxt = b.target
             elif b.type in (BranchType.TrueBranch, BranchType.FalseBranch, BranchType.FunctionReturn,
                             BranchType.IndirectBranch):
                 return False
+        if nxt == fall and is_guard(nxt):
+            return True
         a = nxt
     return False
 
