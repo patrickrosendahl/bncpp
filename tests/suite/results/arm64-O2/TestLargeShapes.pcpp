@@ -1,4 +1,4 @@
-// push_back_check(Ring*) @ 0x4005a8
+// push_back_check(Ring*) @ 0x4005f8
 {
     int64_t x9 = *(uint64_t*)arg1;
     int64_t x8 = *(uint64_t*)((char*)arg1 + 8);
@@ -16,18 +16,18 @@
     *(uint64_t*)((char*)arg1 + 0x18) = x8_1 + 1;
 }
 
-// set_bit(Ring*, uint64_t) @ 0x400600
+// set_bit(Ring*, uint64_t) @ 0x400650
 {
     *(uint64_t*)((char*)*(uint64_t*)((char*)arg1 + 0x20) + (arg2 >> 3 & 0x1ffffffffffffff8)) |=
         1 << arg2;
 }
 
-// count(Ring*, uint32_t) @ 0x400624
+// count(Ring*, uint32_t) @ 0x400674
 {
     *(uint32_t*)(*(uint64_t*)((char*)arg1 + 0x28) + ((uint64_t)arg2 << 2)) += 1;
 }
 
-// spare(Ring*) @ 0x400638
+// spare(Ring*) @ 0x400688
 {
     int64_t x21 = *(uint64_t*)arg1;
     int64_t x20 = *(uint64_t*)((char*)arg1 + 8);
@@ -39,7 +39,7 @@
     return (x22 << 3) - (uint64_t)(x20 != x21) - *(uint64_t*)((char*)arg1 + 0x18);
 }
 
-// scan(int32_t const*, int32_t, int32_t) @ 0x400690
+// scan(int32_t const*, int32_t, int32_t) @ 0x4006e0
 {
     if (arg2 < 1)
         return 0;
@@ -56,7 +56,7 @@
 
             if (arg3 < 1)
             {
-            label_4006d0:
+            label_400720:
                 result = (uint64_t)((uint32_t)result + 1);
             }
             else
@@ -67,13 +67,13 @@
                     if (x10_3 >= 0x65)
                     {
                         result = (uint64_t)(next_value() + (uint32_t)result);
-                        goto label_4006d0;
+                        goto label_400720;
                     }
 
                     x8_2 += 1;
 
                     if (x9_1-- == 1)
-                        goto label_4006d0;
+                        goto label_400720;
                 }
             }
 
@@ -85,5 +85,157 @@
     } while (i != (uint64_t)arg2);
 
     return result;
+}
+
+// wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x4007a0
+{
+    // exception table (LSDA 0x4009c0): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x400850..0x400858 -> 0x400888 sub_400888: catch (std::exception) #1, cleanup, cleanup
+    //   0x400878..0x400880 -> 0x400884 j_sub_400888: catch (std::exception) #1, cleanup, cleanup
+    //   0x400894..0x400898 (in sub_400888) -> 0x4008e4 sub_4008e4: cleanup
+
+    int64_t x8 = *(uint64_t*)___stack_chk_guard;
+    uint64_t result;
+
+    if (arg3 < 1)
+        result = 0;
+    else
+    {
+        uint64_t x20_1 = arg2;
+        int64_t i = 0;
+        result = 0;
+        uint64_t x24_1 = (uint64_t)arg3;
+        int64_t x25_1 = arg2 + 0x1234;
+
+        do
+        {
+            if (i)
+            {
+                int64_t j = 0;
+                uint64_t x27_1 = x20_1;
+                int64_t x28_1 = x25_1;
+
+                do
+                {
+                    int128_t var_a0;
+                    __builtin_memcpy(&var_a0,
+                        "\x96\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60"
+                        "\x6d\x4a\x58\x01\x96\xf4"
+                    "\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60\x6d\x4a\x58"
+                    "\x02\x03\x04\x05\x00",
+                        0x30);
+                    try
+                    {
+                        log_line(&var_a0);
+
+                        if ((int32_t)(arg1[x27_1 >> 6] >> x27_1) & 1
+                                && (int32_t)(arg1[x28_1 >> 6] >> x28_1) & 1)
+                            result = (uint64_t)(may_throw((uint32_t)j) + (uint32_t)result);
+                    }
+                    catch (std::exception& e)
+                    {
+                        int128_t v0;
+                        int128_t v1;
+                        v0 = ___cxa_end_catch();
+                        result = (uint64_t)(result - 1);
+                    }
+
+                    j += 1;
+                    x28_1 += 1;
+                    x27_1 += 1;
+                } while (i != j);
+            }
+
+            i += 1;
+            x25_1 += x24_1;
+            x20_1 += x24_1;
+        } while (i != x24_1);
+    }
+
+    if (*(uint64_t*)___stack_chk_guard == x8)
+        return result;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// j_sub_400888 @ 0x400884
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x4007a0
+    //   from 0x400878..0x400880: catch (std::exception) #1, cleanup, cleanup
+
+    /* tailcall */
+    return sub_400888(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+            arg13,
+        arg14, arg15, arg16, arg17, arg18, arg19, arg20, arg21, arg22, arg23, arg24);
+}
+
+// sub_400888 @ 0x400888
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x4007a0
+    //   from 0x400850..0x400858: catch (std::exception) #1, cleanup, cleanup
+
+    if (arg2 != 1)
+        /* tailcall */
+        return sub_4008e4(arg1);
+
+    ___cxa_begin_catch(arg1);
+    int128_t v0;
+    int128_t v1;
+    v0 = ___cxa_end_catch();
+    uint64_t result = (uint64_t)(arg3 - 1);
+
+    while (true)
+    {
+        arg6 += 1;
+        arg12 += 1;
+        arg11 += 1;
+
+        if (arg7 == arg6)
+        {
+            do
+            {
+                arg7 += 1;
+                arg9 += arg8;
+                arg4 += arg8;
+
+                if (arg7 == arg8)
+                {
+                    if (*(uint64_t*)___stack_chk_guard == arg13)
+                        return result;
+
+                    ___stack_chk_fail();
+                    /* no return */
+                }
+            } while (!arg7);
+
+            arg6 = 0;
+            arg11 = arg4;
+            arg12 = arg9;
+        }
+
+        v1 = arg10[1];
+        int128_t arg_0 = *(uint128_t*)arg10;
+        int128_t arg_10 = v1;
+        int128_t arg_20 = arg10[2];
+        v0 = log_line(&arg_0);
+
+        if ((int32_t)(*(uint64_t*)(arg5 + (arg11 >> 6 << 3)) >> arg11) & 1
+            && (int32_t)(*(uint64_t*)(arg5 + (arg12 >> 6 << 3)) >> arg12) & 1)
+        {
+            int32_t x0_3;
+            x0_3 = may_throw((uint32_t)arg6);
+            result = (uint64_t)(x0_3 + (uint32_t)result);
+        }
+    }
+}
+
+// sub_4008e4 @ 0x4008e4
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x4007a0
+    //   from 0x400894..0x400898 (in sub_400888): cleanup
+
+    __Unwind_Resume(arg1);
+    /* no return */
 }
 

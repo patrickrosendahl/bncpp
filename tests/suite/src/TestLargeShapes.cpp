@@ -66,3 +66,26 @@ TEST int scan(const int *a, int n, int m) {
     }
     return found;
 }
+
+// bncpp-196: a long byte-string literal and a bit test, deep enough to wrap -- BN's line formatter wraps Pseudo C's
+// already wrapped text again and must not break a token: every literal piece in its quotes, `TEST_BITQ(` whole
+TEST int wrapped_tokens(const unsigned long *bits, unsigned long i, int n) {
+    int total = 0;
+    for (int k = 0; k < n; k++) {
+        for (int j = 0; j < k; j++) {
+            try {
+                char key[48];
+                __builtin_memcpy(key, "\x96\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60\x6d\x4a"
+                                      "\x58\x01\x96\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60"
+                                      "\x6d\x4a\x58\x02\x03\x04\x05", 48);
+                log_line(key);
+                unsigned long b = i + (unsigned long)(k * n + j);
+                if (bits[b >> 6] >> (b & 63) & 1 && bits[(b + 0x1234) >> 6] >> ((b + 0x1234) & 63) & 1)
+                    total += may_throw(j);
+            } catch (const std::exception &e) {
+                total -= 1;
+            }
+        }
+    }
+    return total;
+}

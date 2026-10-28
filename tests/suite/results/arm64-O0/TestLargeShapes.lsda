@@ -1,1 +1,6 @@
-no LSDA
+wrapped_tokens(uint64_t const*, uint64_t, int32_t)  lsda base+0xbd8  lpstart +0x0  5 call sites
+  +0x0   .. +0x80  unwind
+  +0x80  .. +0x108 lp +0x120 catch(typeinfo_for_std::exception), cleanup, cleanup
+  +0x108 .. +0x170 unwind
+  +0x170 .. +0x174 lp +0x1f8 cleanup
+  +0x174 .. +0x208 unwind

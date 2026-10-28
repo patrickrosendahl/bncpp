@@ -1599,7 +1599,7 @@ class PseudoCppFunction(NamesMixin, FoldMixin, TokenMixin, LanguageRepresentatio
                             step + [tok(TT.TextToken, ": ")] + b + [tok(TT.TextToken, ";")]]
 
     def emit_token_lines(self, lines, tokens, statement):
-        for i, line in enumerate(_brace_do(lines)):
+        for i, line in enumerate(_brace_do(_whole_tokens(lines))):
             if i:
                 tokens.new_line()
             if not line:
@@ -1775,6 +1775,35 @@ def _top_ternary(toks):
 
 def _text(line):
     return "".join(t.text for t in line[0]).strip()
+
+
+def _whole_tokens(lines):
+    """token lines where BN's line formatter cannot break a word (bncpp-196): Pseudo C's own text already wraps, and
+    the formatter wraps our lines again between any two tokens -- inside a string literal (one StringToken per
+    byte: the piece loses its quotes) or between an intrinsic and its size suffix, which Pseudo C itself puts on
+    the next line (`TEST_BIT` / `Q(`). A run of StringTokens becomes one token, a line ending in an intrinsic's
+    name takes the next line's suffix."""
+    out = []
+    for line in lines:
+        line = list(line)
+        prev = out[-1] if out else None
+        if prev and prev[-1].type == TT.OperationToken and prev[-1].text[-1:].isalnum():
+            k = 0
+            while k < len(line) and not line[k].text.strip():
+                k += 1
+            if k < len(line) and line[k].text[:1].isalnum():
+                out[-1] = prev + line[k:]
+                continue
+        out.append(line)
+    for n, line in enumerate(out):
+        merged = []
+        for t in line:
+            if merged and t.type == TT.StringToken and merged[-1].type == TT.StringToken:
+                merged[-1] = dataclasses.replace(merged[-1], text=merged[-1].text + t.text, width=0)
+            else:
+                merged.append(t)
+        out[n] = merged
+    return out
 
 
 def _brace_do(lines):

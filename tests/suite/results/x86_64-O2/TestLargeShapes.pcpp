@@ -1,4 +1,4 @@
-// push_back_check(Ring*) @ 0x4005a0
+// push_back_check(Ring*) @ 0x4005f0
 {
     int64_t rax;
     int64_t var_18 = rax;
@@ -20,21 +20,21 @@
     return rax_4 + 1;
 }
 
-// set_bit(Ring*, uint64_t) @ 0x4005f0
+// set_bit(Ring*, uint64_t) @ 0x400640
 {
     int64_t result = 1 << ((uint8_t)arg2 & 0x3f);
     *(uint64_t*)(*(uint64_t*)((char*)arg1 + 0x20) + ((arg2 >> 6) << 3)) |= result;
     return result;
 }
 
-// count(Ring*, uint32_t) @ 0x400610
+// count(Ring*, uint32_t) @ 0x400660
 {
     int64_t result = *(uint64_t*)((char*)arg1 + 0x28);
     *(uint32_t*)(result + ((uint64_t)arg2 << 2)) += 1;
     return result;
 }
 
-// spare(Ring*) @ 0x400620
+// spare(Ring*) @ 0x400670
 {
     int64_t r15 = *(uint64_t*)arg1;
     int64_t r12 = *(uint64_t*)((char*)arg1 + 8);
@@ -48,7 +48,7 @@
     return (r14_1 << 3) - rax - *(uint64_t*)((char*)arg1 + 0x18);
 }
 
-// scan(int32_t const*, int32_t, int32_t) @ 0x400670
+// scan(int32_t const*, int32_t, int32_t) @ 0x4006c0
 {
     int64_t rax;
     int64_t var_38 = rax;
@@ -70,7 +70,7 @@
 
             if (arg3 <= 0)
             {
-            label_4006a4:
+            label_4006f4:
                 r12 += 1;
             }
             else
@@ -82,13 +82,13 @@
                     {
                         rdi = var_38_1;
                         r12 += next_value();
-                        goto label_4006a4;
+                        goto label_4006f4;
                     }
 
                     rcx_1 += 1;
 
                     if (rsi-- == 1)
-                        goto label_4006a4;
+                        goto label_4006f4;
                 }
             }
 
@@ -103,5 +103,151 @@
     } while (i != rdi);
 
     return (uint64_t)r12;
+}
+
+// wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x400760
+{
+    // exception table (LSDA 0x40092c): 3 of 5 call sites have a landing pad; #n = the selector value
+    //   0x4007ff..0x400808 -> 0x40083e sub_40083e: catch (std::exception) #1, cleanup, cleanup
+    //   0x400832..0x40083a -> 0x40083c j_sub_40083e: catch (std::exception) #1, cleanup, cleanup
+    //   0x40084b..0x400850 (in sub_40083e) -> 0x400882 sub_400882: cleanup
+
+    int64_t rax = *(uint64_t*)___stack_chk_guard;
+    int32_t r15;
+
+    if (arg3 <= 0)
+        r15 = 0;
+    else
+    {
+        uint64_t r12_1 = arg2;
+        uint64_t rax_1 = (uint64_t)arg3;
+        int64_t i = 0;
+        r15 = 0;
+
+        do
+        {
+            uint64_t var_78_1 = r12_1;
+
+            if (i)
+            {
+                int64_t j = 0;
+
+                do
+                {
+                    int128_t var_68;
+                    __builtin_memcpy(&var_68,
+                        "\x96\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60"
+                        "\x6d\x4a\x58\x01\x96\xf4"
+                    "\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60\x6d\x4a\x58"
+                    "\x02\x03\x04\x05\x00",
+                        0x30);
+                    try
+                    {
+                        log_line(&var_68);
+
+                        if (TEST_BITQ(arg1[r12_1 >> 6], r12_1 % 0x40)
+                                && TEST_BITQ(arg1[(r12_1 + 0x1234) >> 6], (r12_1 + 0x1234) % 0x40))
+                            r15 += may_throw((uint32_t)j);
+                    }
+                    catch (std::exception& e)
+                    {
+                        r15 -= 1;
+                    }
+
+                    j += 1;
+                    r12_1 += 1;
+                } while (i != j);
+            }
+
+            i += 1;
+            r12_1 = var_78_1 + rax_1;
+        } while (i != rax_1);
+    }
+
+    if (*(uint64_t*)___stack_chk_guard == rax)
+        return (uint64_t)r15;
+
+    ___stack_chk_fail();
+    /* no return */
+}
+
+// j_sub_40083e @ 0x40083c
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x400760
+    //   from 0x400832..0x40083a: catch (std::exception) #1, cleanup, cleanup
+
+    /* tailcall */
+    return sub_40083e(arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+            arg13,
+        arg14, arg15, arg16);
+}
+
+// sub_40083e @ 0x40083e
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x400760
+    //   from 0x4007ff..0x400808: catch (std::exception) #1, cleanup, cleanup
+
+    if (arg3 != 1)
+    {
+        void* const var_8 = &data_40088a;
+        /* tailcall */
+        return __Unwind_Resume(arg4);
+    }
+
+    ___cxa_begin_catch(arg4);
+    ___cxa_end_catch();
+    int32_t r15 = arg10 - 1;
+
+    while (true)
+    {
+        arg8 += 1;
+        arg7 += 1;
+
+        if (arg5 == arg8)
+        {
+            do
+            {
+                arg5 += 1;
+                int64_t rax_3 = *(uint64_t*)((char*)arg6 - 0x68);
+                arg7 = *(uint64_t*)((char*)arg6 - 0x70) + rax_3;
+
+                if (arg5 == rax_3)
+                {
+                    if (*(uint64_t*)___stack_chk_guard == *(uint64_t*)((char*)arg6 - 0x30))
+                        return (uint64_t)r15;
+
+                    ___stack_chk_fail();
+                    /* no return */
+                }
+
+                *(uint64_t*)((char*)arg6 - 0x70) = arg7;
+            } while (!arg5);
+
+            arg8 = 0;
+        }
+
+        __builtin_memcpy((char*)arg6 - 0x60,
+            "\x96\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60\x6d\x4a\x58"
+            "\x01\x96"
+        "\xf4\x01\x4b\x69\x38\x1a\x3e\x8a\xb0\x42\x42\xd6\x68\x9d\xa5\x7f\x60\x6d\x4a\x58\x02\x03\x04"
+        "\x05\x00",
+            0x30);
+        log_line((char*)arg6 - 0x60);
+
+        if (TEST_BITQ(*(uint64_t*)(arg9 + (arg7 >> 6 << 3)), arg7 % 0x40)
+                && TEST_BIT
+                    Q(*(uint64_t*)(arg9 + ((arg7 + 0x1234) >> 6 << 3)), (arg7 + 0x1234) % 0x40))
+            r15 += may_throw((uint32_t)arg8);
+    }
+}
+
+// sub_400882 @ 0x400882
+{
+    // landing pad of wrapped_tokens(uint64_t const*, uint64_t, int32_t) @ 0x400760
+    //   from 0x40084b..0x400850 (in sub_40083e): cleanup
+
+    void* const var_8 = &data_40088a;
+    /* tailcall */
+    return __Unwind_Resume(arg1);
 }
 
